@@ -48,7 +48,7 @@ export default function RegisterScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.backgroundGradient} />
       
-      <BlurView intensity={20} style={styles.glassCard}>
+      <BlurView intensity={80} tint="dark" style={styles.glassCard}>
         <Text style={styles.headline}>Create Account</Text>
         
         <View style={styles.logo}>
@@ -56,21 +56,23 @@ export default function RegisterScreen({ navigation }) {
         </View>
         
         <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, !validateName(firstName) && firstName.length > 0 && styles.inputError]}
-            placeholder="First Name"
-            placeholderTextColor="#8E8E93"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          
-          <TextInput
-            style={[styles.input, !validateName(lastName) && lastName.length > 0 && styles.inputError]}
-            placeholder="Last Name"
-            placeholderTextColor="#8E8E93"
-            value={lastName}
-            onChangeText={setLastName}
-          />
+          <View style={styles.nameGroup}>
+            <TextInput
+              style={[styles.nameInput, !validateName(firstName) && firstName.length > 0 && styles.inputError]}
+              placeholder="First Name"
+              placeholderTextColor="#8E8E93"
+              value={firstName}
+              onChangeText={setFirstName}
+            />
+            
+            <TextInput
+              style={[styles.nameInput, !validateName(lastName) && lastName.length > 0 && styles.inputError]}
+              placeholder="Last Name"
+              placeholderTextColor="#8E8E93"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+          </View>
           
           <TextInput
             style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
@@ -96,7 +98,7 @@ export default function RegisterScreen({ navigation }) {
             >
               <Feather 
                 name={showPassword ? 'eye-off' : 'eye'} 
-                size={20} 
+                size={18} 
                 color="#8E8E93" 
               />
             </TouchableOpacity>
@@ -139,52 +141,68 @@ const styles = StyleSheet.create({
   },
   glassCard: {
     width: '90%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    maxWidth: 420,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   headline: {
     fontSize: 28,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    marginBottom: 32,
+    marginBottom: 24,
     textAlign: 'center',
   },
   logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
     shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   logoText: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 32,
+  },
+  nameGroup: {
+    marginBottom: 20,
   },
   input: {
     width: '100%',
-    height: 56,
+    height: 52,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    paddingHorizontal: 20,
+    borderRadius: 14,
+    paddingHorizontal: 18,
     marginBottom: 16,
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  nameInput: {
+    width: '100%',
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    marginBottom: 12,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
@@ -193,16 +211,16 @@ const styles = StyleSheet.create({
   passwordContainer: {
     position: 'relative',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   passwordInput: {
     width: '100%',
-    height: 56,
+    height: 52,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    paddingHorizontal: 20,
+    borderRadius: 14,
+    paddingHorizontal: 18,
     paddingRight: 50,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
@@ -210,32 +228,34 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 16,
-    top: 18,
+    right: 14,
+    top: 16,
     padding: 4,
   },
   registerButton: {
     width: '100%',
-    height: 56,
+    height: 52,
     backgroundColor: '#007AFF',
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 28,
     shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   registerButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   link: {
     color: '#007AFF',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
   },
@@ -249,13 +269,14 @@ const styles = StyleSheet.create({
   },
   loginContainer: {
     flexDirection: 'row',
-    marginVertical: 8,
+    marginTop: 4,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 8,
   },
   linkText: {
     color: '#8E8E93',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
   },
   loadingContainer: {

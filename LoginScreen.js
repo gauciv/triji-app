@@ -48,7 +48,7 @@ export default function LoginScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.backgroundGradient} />
       
-      <BlurView intensity={20} style={styles.glassCard}>
+      <BlurView intensity={80} tint="dark" style={styles.glassCard}>
         <Text style={styles.headline}>Welcome Back!</Text>
         
         <View style={styles.logo}>
@@ -137,12 +137,12 @@ const styles = StyleSheet.create({
   glassCard: {
     width: '90%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   headline: {
     fontSize: 28,
