@@ -6,7 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { auth } from './firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,14 @@ export default function LoginScreen() {
   });
 
   if (!fontsLoaded) {
-    return null;
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -100,9 +107,12 @@ export default function LoginScreen() {
           <Text style={styles.link}>Forgot Password?</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.linkContainer}>
-          <Text style={styles.link}>Don't have an account? Sign Up</Text>
-        </TouchableOpacity>
+        <View style={styles.signUpContainer}>
+          <Text style={styles.linkText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.link}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
       </BlurView>
     </View>
   );
@@ -219,6 +229,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: '100%',
   },
+  signUpContainer: {
+    flexDirection: 'row',
+    marginVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkText: {
+    color: '#8E8E93',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+  },
   passwordContainer: {
     position: 'relative',
     width: '100%',
@@ -242,5 +263,14 @@ const styles = StyleSheet.create({
     right: 16,
     top: 18,
     padding: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 18,
   },
 });

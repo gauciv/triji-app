@@ -3,21 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import Filter from 'bad-words';
 
-export default function RegisterScreen() {
+export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  const filter = new Filter();
-  
   const validateName = (name) => {
-    return name.trim().length > 0 && 
-           !/\d/.test(name) && 
-           !filter.isProfane(name);
+    return name.trim().length > 0 && !/\d/.test(name);
   };
   
   const validateEmail = (email) => {
@@ -39,7 +34,14 @@ export default function RegisterScreen() {
   });
 
   if (!fontsLoaded) {
-    return null;
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -108,9 +110,12 @@ export default function RegisterScreen() {
           <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.linkContainer}>
-          <Text style={styles.link}>Already have an account? Log In</Text>
-        </TouchableOpacity>
+        <View style={styles.loginContainer}>
+          <Text style={styles.linkText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.link}>Log In</Text>
+          </TouchableOpacity>
+        </View>
       </BlurView>
     </View>
   );
@@ -228,9 +233,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
   },
-  linkContainer: {
-    marginVertical: 8,
-  },
   link: {
     color: '#007AFF',
     fontSize: 16,
@@ -244,5 +246,25 @@ const styles = StyleSheet.create({
   registerButtonDisabled: {
     backgroundColor: '#4A4A4A',
     opacity: 0.6,
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    marginVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkText: {
+    color: '#8E8E93',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 18,
   },
 });
