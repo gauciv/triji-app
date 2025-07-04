@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -31,6 +34,8 @@ export default function LoginScreen() {
             placeholder="Email"
             placeholderTextColor="#8E8E93"
             keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
           
           <TextInput
@@ -38,6 +43,8 @@ export default function LoginScreen() {
             placeholder="Password"
             placeholderTextColor="#8E8E93"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
         </View>
         
