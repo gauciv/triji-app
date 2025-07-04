@@ -3,8 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth } from './firebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from './firebaseConfig';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -36,7 +37,21 @@ export default function RegisterScreen({ navigation }) {
     setError('');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('Registration successful:', userCredential.user.email);
+      const user = userCredential.user;
+      
+      // Save user profile to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        createdAt: new Date().toISOString(),
+      });
+      
+      // Send verification email
+      await sendEmailVerification(user);
+      
+      console.log('Registration successful:', user.email);
+      navigation.navigate('Verification');
     } catch (error) {
       console.log('Registration error:', error.message);
       setError('Registration failed. Please try again.');
