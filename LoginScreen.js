@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { auth } from './firebaseConfig';
@@ -8,13 +8,20 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const handleLogin = async () => {
+    setLoading(true);
+    setError('');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', userCredential.user.email);
     } catch (error) {
       console.log('Login error:', error.message);
+      setError('Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -59,9 +66,21 @@ export default function LoginScreen() {
           />
         </View>
         
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Log In</Text>
+        <TouchableOpacity 
+          style={[styles.loginButton, loading && styles.loginButtonDisabled]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.loginButtonText}>Log In</Text>
+          )}
         </TouchableOpacity>
+        
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
         
         <TouchableOpacity style={styles.linkContainer}>
           <Text style={styles.link}>Forgot Password?</Text>
@@ -171,5 +190,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    marginTop: 16,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    width: '100%',
   },
 });
