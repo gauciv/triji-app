@@ -12,13 +12,17 @@
     "test": "echo 'No tests configured yet'"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.1",
     "@expo/metro-runtime": "~3.1.3",
+    "@expo/vector-icons": "^14.0.0",
     "expo": "~50.0.0",
+    "expo-blur": "~12.9.2",
+    "expo-font": "~11.10.3",
+    "expo-status-bar": "~1.11.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.73.6",
-    "react-native-web": "~0.19.6",
-    "expo-status-bar": "~1.11.1"
+    "react-native-web": "~0.19.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
