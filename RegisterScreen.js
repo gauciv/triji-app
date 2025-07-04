@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import Filter from 'bad-words';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
@@ -11,8 +12,12 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
+  const filter = new Filter();
+  
   const validateName = (name) => {
-    return name.trim().length > 0 && !/\d/.test(name);
+    return name.trim().length > 0 && 
+           !/\d/.test(name) && 
+           !filter.isProfane(name);
   };
   
   const validateEmail = (email) => {
