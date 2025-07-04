@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import LoginScreen from './LoginScreen';
 import RegisterScreen from './RegisterScreen';
 import VerificationScreen from './VerificationScreen';
+import DashboardScreen from './DashboardScreen';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,7 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Verification" component={VerificationScreen} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>

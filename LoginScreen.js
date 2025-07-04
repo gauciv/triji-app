@@ -19,6 +19,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', userCredential.user.email);
+      navigation.navigate('Dashboard');
     } catch (error) {
       console.log('Login error:', error.message);
       setError('Invalid email or password. Please try again.');
