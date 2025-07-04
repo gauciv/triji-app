@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { auth } from './firebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -10,6 +12,8 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const validateName = (name) => {
     return name.trim().length > 0 && !/\d/.test(name);
@@ -25,6 +29,20 @@ export default function RegisterScreen({ navigation }) {
            validateName(lastName) && 
            validateEmail(email) && 
            password.trim().length > 0;
+  };
+  
+  const handleRegister = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Registration successful:', userCredential.user.email);
+    } catch (error) {
+      console.log('Registration error:', error.message);
+      setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
   
   let [fontsLoaded] = useFonts({
@@ -106,11 +124,20 @@ export default function RegisterScreen({ navigation }) {
         </View>
         
         <TouchableOpacity 
-          style={[styles.registerButton, !isFormValid() && styles.registerButtonDisabled]}
-          disabled={!isFormValid()}
+          style={[styles.registerButton, (!isFormValid() || loading) && styles.registerButtonDisabled]}
+          disabled={!isFormValid() || loading}
+          onPress={handleRegister}
         >
-          <Text style={styles.registerButtonText}>Register</Text>
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.registerButtonText}>Register</Text>
+          )}
         </TouchableOpacity>
+        
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
         
         <View style={styles.loginContainer}>
           <Text style={styles.linkText}>Already have an account? </Text>
@@ -287,5 +314,16 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    marginTop: 16,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    width: '100%',
   },
 });
