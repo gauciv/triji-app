@@ -5,7 +5,27 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  const validateName = (name) => {
+    return name.trim().length > 0 && !/\d/.test(name);
+  };
+  
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  
+  const isFormValid = () => {
+    return validateName(firstName) && 
+           validateName(lastName) && 
+           validateEmail(email) && 
+           password.trim().length > 0;
+  };
   
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -30,22 +50,28 @@ export default function RegisterScreen() {
         
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, !validateName(firstName) && firstName.length > 0 && styles.inputError]}
             placeholder="First Name"
             placeholderTextColor="#8E8E93"
+            value={firstName}
+            onChangeText={setFirstName}
           />
           
           <TextInput
-            style={styles.input}
+            style={[styles.input, !validateName(lastName) && lastName.length > 0 && styles.inputError]}
             placeholder="Last Name"
             placeholderTextColor="#8E8E93"
+            value={lastName}
+            onChangeText={setLastName}
           />
           
           <TextInput
-            style={styles.input}
+            style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
             placeholder="Email"
             placeholderTextColor="#8E8E93"
             keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
           
           <View style={styles.passwordContainer}>
@@ -54,6 +80,8 @@ export default function RegisterScreen() {
               placeholder="Password"
               placeholderTextColor="#8E8E93"
               secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
             />
             <TouchableOpacity 
               style={styles.eyeIcon}
@@ -68,7 +96,10 @@ export default function RegisterScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={styles.registerButton}>
+        <TouchableOpacity 
+          style={[styles.registerButton, !isFormValid() && styles.registerButtonDisabled]}
+          disabled={!isFormValid()}
+        >
           <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
         
@@ -200,5 +231,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 1.5,
+  },
+  registerButtonDisabled: {
+    backgroundColor: '#4A4A4A',
+    opacity: 0.6,
   },
 });
