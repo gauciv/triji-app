@@ -1,39 +1,82 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { Feather } from '@expo/vector-icons';
+import { auth } from './firebaseConfig';
+import { signOut } from 'firebase/auth';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = Math.max(Math.min(SCREEN_WIDTH * 0.7, 340), 220); // even wider
-const SIDE_CARD_WIDTH = Math.max(Math.min(SCREEN_WIDTH * 0.45, 200), 130); // even wider
-const CARD_HEIGHT = 450; // even taller
-const SIDE_CARD_HEIGHT = 285; // even taller
+const featureData = [
+  { id: '1', title: 'Assignments', icon: 'book-open', color: '#007AFF' },
+  { id: '2', title: 'Announcements', icon: 'bell', color: '#FF6B35' },
+  { id: '3', title: 'Grade Calculator', icon: 'calculator', color: '#AF52DE' },
+  { id: '4', title: 'Freedom Wall', icon: 'message-circle', color: '#34C759' },
+  { id: '5', title: 'Student Profile', icon: 'user', color: '#FF9500' },
+];
 
-export default function DashboardScreen() {
+export default function DashboardScreen({ navigation }) {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigation.navigate('Login');
+    } catch (error) {
+      console.log('Logout error:', error.message);
+    }
+  };
+
+  const renderFeatureCard = ({ item }) => {
+    return (
+      <TouchableOpacity style={styles.featureCard}>
+        <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
+          <Feather name={item.icon} size={24} color="#FFFFFF" />
+        </View>
+        <Text style={styles.featureTitle}>{item.title}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Profile Circle */}
-      <View style={styles.profileCircle} />
-
-      {/* Greeting */}
-      <View style={styles.greetingContainer}>
-        <Text style={styles.greetingLine1}>Good</Text>
-        <Text style={styles.greetingLine2}>Morning</Text>
-      </View>
-
-      {/* Carousel Cards */}
-      <View style={styles.carouselWrapper}>
-        <View style={styles.carouselContainer}>
-          {/* Left Card (partially visible) */}
-          <View style={[styles.card, styles.cardLeft]} />
-          {/* Center Card (main) */}
-          <View style={[styles.card, styles.cardCenter]} />
-          {/* Right Card (partially visible) */}
-          <View style={[styles.card, styles.cardRight]} />
-        </View>
-        {/* Only show the label for the center card below the carousel */}
-        <View style={styles.centerLabelContainer}>
-          <Text style={styles.centerLabel}>VIEW ASSIGNMENT</Text>
+      <View style={styles.backgroundGradient} />
+      
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Good Morning</Text>
+        <View style={styles.profilePicture}>
+          <Text style={styles.profileInitial}>U</Text>
         </View>
       </View>
+      
+      <FlatList
+        data={featureData}
+        renderItem={renderFeatureCard}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={styles.gridContainer}
+        columnWrapperStyle={styles.row}
+      />
+      
+      <TouchableOpacity 
+        style={styles.logoutButton}
+        onPress={handleLogout}
+      >
+        <Text style={styles.logoutButtonText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -41,89 +84,108 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 60,
+    backgroundColor: '#121212',
   },
-  profileCircle: {
+  backgroundGradient: {
     position: 'absolute',
-    top: 40,
-    right: 32,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E0E0E0',
-    zIndex: 2,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#007AFF',
+    opacity: 0.05,
   },
-  greetingContainer: {
-    width: '100%',
-    paddingLeft: 32,
-    marginBottom: 36,
-  },
-  greetingLine1: {
-    fontSize: 32,
-    color: '#888',
-    fontWeight: '400',
-  },
-  greetingLine2: {
-    fontSize: 32,
-    color: '#888',
-    fontWeight: '400',
-  },
-  carouselWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  carouselContainer: {
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  greeting: {
+    fontSize: 28,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  profilePicture: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    minHeight: CARD_HEIGHT,
   },
-  card: {
-    borderRadius: 28,
-    marginHorizontal: -24, // overlap for carousel effect
+  profileInitial: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  gridContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 100,
+  },
+  row: {
+    justifyContent: 'space-between',
+  },
+  featureCard: {
+    width: '47%',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-    justifyContent: 'flex-end',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
-    overflow: 'hidden',
-    marginBottom: 30,
+    justifyContent: 'center',
+    marginBottom: 12,
   },
-  cardLeft: {
-    width: SIDE_CARD_WIDTH,
-    height: SIDE_CARD_HEIGHT,
-    backgroundColor: '#E0E0E0',
-    zIndex: 1,
+  featureTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
-  cardCenter: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    backgroundColor: '#8EA9FF',
-    zIndex: 2,
-  },
-  cardRight: {
-    width: SIDE_CARD_WIDTH,
-    height: SIDE_CARD_HEIGHT,
-    backgroundColor: '#F6FF8E',
-    zIndex: 1,
-  },
-  centerLabelContainer: {
-    marginTop: 28,
+  logoutButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 24,
+    right: 24,
+    height: 52,
+    backgroundColor: '#FF3B30',
+    borderRadius: 14,
     alignItems: 'center',
-    width: CARD_WIDTH,
-    alignSelf: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  centerLabel: {
-    color: '#888',
-    fontSize: 17,
-    letterSpacing: 1,
-    fontWeight: '600',
+  logoutButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 18,
   },
 });
