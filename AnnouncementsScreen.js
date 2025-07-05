@@ -115,27 +115,33 @@ export default function AnnouncementsScreen({ navigation }) {
   const renderAnnouncement = ({ item }) => {
     return (
       <TouchableOpacity 
-        style={[styles.announcementCard, { borderLeftColor: getTypeColor(item.type) }]}
+        style={styles.announcementCard}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.authorPicture}>
-            <Text style={styles.authorInitial}>
-              {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
-            </Text>
-          </View>
-          <View style={styles.authorInfo}>
-            <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
-            <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
-            <Text style={styles.expiryText}>{getTimeRemaining(item.expiresAt)}</Text>
-            <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
-              <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
+        <View style={styles.cardMain}>
+          <View style={styles.cardLeft}>
+            <View style={styles.authorPicture}>
+              <Text style={styles.authorInitial}>
+                {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
+              </Text>
             </View>
           </View>
-        </View>
-        
-        <View style={styles.cardBody}>
-          <Text style={styles.title}>{item.title}</Text>
+          
+          <View style={styles.cardRight}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
+              <View style={styles.cardMeta}>
+                <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
+                <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
+                  <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.title}>{item.title}</Text>
+            
+            <Text style={styles.expiryText}>{getTimeRemaining(item.expiresAt)}</Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -262,13 +268,27 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderLeftWidth: 4,
-    height: 140,
+  },
+  cardMain: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cardLeft: {
+    alignItems: 'center',
+  },
+  cardRight: {
+    flex: 1,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   authorPicture: {
     width: 40,
@@ -284,27 +304,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
-  authorInfo: {
-    flex: 1,
-  },
   authorName: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-    marginBottom: 2,
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
-  },
-  cardBody: {
-    paddingLeft: 4,
   },
   title: {
     fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    lineHeight: 24,
     marginBottom: 8,
   },
   content: {
@@ -314,11 +328,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   typeChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
   typeChipText: {
     fontSize: 10,
@@ -331,7 +343,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: '#FF9500',
-    marginTop: 2,
   },
   errorContainer: {
     flex: 1,

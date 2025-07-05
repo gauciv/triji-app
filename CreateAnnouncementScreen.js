@@ -136,6 +136,10 @@ export default function CreateAnnouncementScreen({ navigation }) {
                     key={type}
                     style={[
                       styles.typeCard,
+                      {
+                        backgroundColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.03)',
+                        borderColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.1)',
+                      },
                       selectedType === type && styles.typeCardSelected
                     ]}
                     onPress={() => setSelectedType(type)}
@@ -355,6 +359,7 @@ const styles = StyleSheet.create({
   twitterContainer: {
     flex: 1,
     paddingHorizontal: 24,
+    backgroundColor: '#121212',
   },
   twitterHeader: {
     paddingBottom: 16,
@@ -416,15 +421,12 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 2,
     alignItems: 'center',
   },
   typeCardSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    borderWidth: 2,
   },
   typeCardText: {
     fontSize: 14,
