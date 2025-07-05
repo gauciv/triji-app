@@ -4,24 +4,6 @@ about: "Report or request anything related to the project"
 labels: ""
 ---
 
-<!-- ## 📌 Title Naming Convention -->
-
-<!-- Use this format for the issue title: -->
-
-
-<!-- ### Examples:
-- `[Bug] [UI] - Submit button not working on mobile`
-- `[Feature] [API] - Add search functionality`
-- `[Task] [Docs] - Write setup guide for new users`
-- `[Improvement] [Performance] - Speed up dashboard loading`
-
-**Accepted Types:** Bug, Feature, Task, Improvement, Refactor, Docs  
-**Accepted Categories:** UI, API, UX, Docs, Build, Security
-
-**Note**: Types and Categories are not limited to the examples listed above. Use what's appropriate for the issue.
-
---- -->
-
 ## 🐞 Problem
 
 _Describe what is currently happening or what problem you're seeing._
