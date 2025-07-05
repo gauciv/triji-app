@@ -131,7 +131,9 @@ export default function AnnouncementsScreen({ navigation }) {
           
           <View style={styles.cardRight}>
             <View style={styles.cardHeader}>
-              <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
+              <View style={styles.authorContainer}>
+                <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
+              </View>
               <View style={styles.cardMeta}>
                 <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
                 <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
@@ -306,10 +308,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
+  authorContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
   authorName: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   timestamp: {
     fontSize: 11,
