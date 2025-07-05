@@ -52,11 +52,47 @@ export default function AnnouncementsScreen({ navigation }) {
     return () => unsubscribe();
   }, []);
 
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Critical': return '#FF3B30';
+      case 'Event': return '#AF52DE';
+      case 'Reminder': return '#FF9500';
+      default: return '#007AFF';
+    }
+  };
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const now = new Date();
+    const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const diffMs = now - postTime;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffDays > 0) return `${diffDays}d ago`;
+    if (diffHours > 0) return `${diffHours}h ago`;
+    return 'Just now';
+  };
+
   const renderAnnouncement = ({ item }) => {
     return (
-      <View style={styles.announcementCard}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.content}>{item.content}</Text>
+      <View style={[styles.announcementCard, { borderLeftColor: getTypeColor(item.type) }]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.authorPicture}>
+            <Text style={styles.authorInitial}>
+              {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
+            </Text>
+          </View>
+          <View style={styles.authorInfo}>
+            <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
+            <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
+          </View>
+        </View>
+        
+        <View style={styles.cardBody}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.content}>{item.content}</Text>
+        </View>
       </View>
     );
   };
@@ -133,10 +169,47 @@ const styles = StyleSheet.create({
   announcementCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderLeftWidth: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  authorPicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  authorInitial: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  authorInfo: {
+    flex: 1,
+  },
+  authorName: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  timestamp: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+  },
+  cardBody: {
+    paddingLeft: 4,
   },
   title: {
     fontSize: 18,

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { auth, db } from './firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 
 export default function CreateAnnouncementScreen({ navigation }) {
   const [title, setTitle] = useState('');
@@ -23,12 +23,24 @@ export default function CreateAnnouncementScreen({ navigation }) {
     
     setLoading(true);
     try {
+      const user = auth.currentUser;
+      let authorName = '';
+      
+      // Fetch user's full name from profile
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        authorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+      }
+      
       await addDoc(collection(db, 'announcements'), {
         title: title.trim(),
         content: content.trim(),
         type: selectedType,
+        authorName: authorName,
+        authorId: user.uid,
+        authorPhotoURL: '',
         createdAt: new Date(),
-        authorId: auth.currentUser.uid,
       });
       navigation.goBack();
     } catch (error) {
