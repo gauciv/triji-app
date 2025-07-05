@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { auth } from './firebaseConfig';
+import { signOut } from 'firebase/auth';
+import SettingsRow from './SettingsRow';
 
 export default function AccountSettingsScreen({ navigation }) {
   let [fontsLoaded] = useFonts({
@@ -9,6 +12,15 @@ export default function AccountSettingsScreen({ navigation }) {
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigation.navigate('Login');
+    } catch (error) {
+      console.log('Logout error:', error.message);
+    }
+  };
 
   if (!fontsLoaded) {
     return (
@@ -36,6 +48,37 @@ export default function AccountSettingsScreen({ navigation }) {
           <Text style={styles.headerTitle}>Account Settings</Text>
         </View>
       </View>
+      
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.group}>
+            <SettingsRow 
+              icon="user"
+              title="Edit Profile"
+              onPress={() => navigation.navigate('Profile')}
+            />
+            <SettingsRow 
+              icon="lock"
+              title="Change Password"
+              onPress={() => console.log('Change Password')}
+            />
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>App</Text>
+          <View style={styles.group}>
+            <SettingsRow 
+              icon="log-out"
+              title="Log Out"
+              onPress={handleLogout}
+              isDestructive={true}
+              showArrow={false}
+            />
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -83,5 +126,25 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#8E8E93',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginLeft: 24,
+  },
+  group: {
+    marginHorizontal: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
 });
