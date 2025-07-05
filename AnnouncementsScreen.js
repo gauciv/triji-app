@@ -76,7 +76,10 @@ export default function AnnouncementsScreen({ navigation }) {
 
   const renderAnnouncement = ({ item }) => {
     return (
-      <View style={[styles.announcementCard, { borderLeftColor: getTypeColor(item.type) }]}>
+      <TouchableOpacity 
+        style={[styles.announcementCard, { borderLeftColor: getTypeColor(item.type) }]}
+        onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.authorPicture}>
             <Text style={styles.authorInitial}>
@@ -91,9 +94,8 @@ export default function AnnouncementsScreen({ navigation }) {
         
         <View style={styles.cardBody}>
           <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">{item.content}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -174,6 +176,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     borderLeftWidth: 4,
+    height: 140,
   },
   cardHeader: {
     flexDirection: 'row',
