@@ -171,20 +171,32 @@ export default function AnnouncementsScreen({ navigation }) {
       <View style={styles.backgroundGradient} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Announcements</Text>
-        <View style={styles.headerButtons}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.navigate('Dashboard')}
+          >
+            <Feather name="arrow-left" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Announcements</Text>
+        </View>
+        
+        <View style={styles.headerBottom}>
           <TouchableOpacity 
             style={styles.archiveButton}
             onPress={() => navigation.navigate('ArchivedAnnouncements')}
           >
             <Feather name="archive" size={20} color="#FFFFFF" />
+            <Text style={styles.archiveButtonText}>Archive</Text>
           </TouchableOpacity>
+          
           {userRole === 'officer' && (
             <TouchableOpacity 
               style={styles.addButton}
               onPress={() => navigation.navigate('CreateAnnouncement')}
             >
-              <Feather name="plus" size={24} color="#FFFFFF" />
+              <Feather name="plus" size={20} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>New</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -224,18 +236,21 @@ const styles = StyleSheet.create({
     opacity: 0.05,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
   },
-  headerTitle: {
-    fontSize: 32,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
+  headerBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
   listContainer: {
     paddingHorizontal: 24,
     paddingBottom: 40,
@@ -371,29 +386,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
   },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 12,
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
   },
   archiveButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 8,
+  },
+  archiveButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#007AFF',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    gap: 8,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 3,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
 });

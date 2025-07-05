@@ -142,7 +142,15 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
       <View style={styles.backgroundGradient} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Archived Announcements</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Feather name="arrow-left" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Archived Announcements</Text>
+        </View>
       </View>
       
       {announcements.length === 0 ? (
@@ -183,10 +191,21 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    flex: 1,
   },
   listContainer: {
     paddingHorizontal: 24,
