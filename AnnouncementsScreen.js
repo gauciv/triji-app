@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
-import { db } from './firebaseConfig';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { Feather } from '@expo/vector-icons';
+import { auth, db } from './firebaseConfig';
+import { collection, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 
-export default function AnnouncementsScreen() {
+export default function AnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -15,6 +17,20 @@ export default function AnnouncementsScreen() {
   });
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role || '');
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching user role:', error);
+      }
+    };
+
     const q = query(
       collection(db, 'announcements'),
       orderBy('createdAt', 'desc')
@@ -32,6 +48,7 @@ export default function AnnouncementsScreen() {
       setLoading(false);
     });
 
+    fetchUserRole();
     return () => unsubscribe();
   }, []);
 
@@ -61,6 +78,14 @@ export default function AnnouncementsScreen() {
       
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Announcements</Text>
+        {userRole === 'officer' && (
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => navigation.navigate('CreateAnnouncement')}
+          >
+            <Feather name="plus" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </View>
       
       <FlatList
@@ -89,6 +114,9 @@ const styles = StyleSheet.create({
     opacity: 0.05,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
@@ -130,5 +158,18 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
