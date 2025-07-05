@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
-import { db } from './firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { Feather } from '@expo/vector-icons';
+import { auth, db } from './firebaseConfig';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
-export default function AnnouncementDetailScreen({ route }) {
+export default function AnnouncementDetailScreen({ route, navigation }) {
   const { announcementId } = route.params;
   const [announcement, setAnnouncement] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -16,8 +19,18 @@ export default function AnnouncementDetailScreen({ route }) {
   });
 
   useEffect(() => {
-    const fetchAnnouncement = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch user role
+        const user = auth.currentUser;
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role || '');
+          }
+        }
+        
+        // Fetch announcement
         const docRef = doc(db, 'announcements', announcementId);
         const docSnap = await getDoc(docRef);
         
@@ -28,13 +41,13 @@ export default function AnnouncementDetailScreen({ route }) {
           });
         }
       } catch (error) {
-        console.log('Error fetching announcement:', error);
+        console.log('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnnouncement();
+    fetchData();
   }, [announcementId]);
 
   const getTypeColor = (type) => {
@@ -50,6 +63,20 @@ export default function AnnouncementDetailScreen({ route }) {
     if (!timestamp) return '';
     const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return postTime.toLocaleDateString() + ' at ' + postTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteModal(false);
+    try {
+      await deleteDoc(doc(db, 'announcements', announcementId));
+      navigation.navigate('Announcements');
+    } catch (error) {
+      console.log('Error deleting announcement:', error);
+    }
   };
 
   if (!fontsLoaded || loading) {
@@ -78,7 +105,13 @@ export default function AnnouncementDetailScreen({ route }) {
     <View style={styles.container}>
       <View style={styles.backgroundGradient} />
       
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Feather name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainer}>
         <View style={[styles.card, { borderLeftColor: getTypeColor(announcement.type) }]}>
           <View style={styles.header}>
             <View style={styles.authorPicture}>
@@ -91,12 +124,47 @@ export default function AnnouncementDetailScreen({ route }) {
               <Text style={styles.timestamp}>{formatTimestamp(announcement.createdAt)}</Text>
               <Text style={styles.typeLabel}>{announcement.type || 'General'}</Text>
             </View>
+            {userRole === 'officer' && (
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <Feather name="trash-2" size={20} color="#FF3B30" />
+              </TouchableOpacity>
+            )}
           </View>
           
           <Text style={styles.title}>{announcement.title}</Text>
           <Text style={styles.content}>{announcement.content}</Text>
         </View>
       </ScrollView>
+      
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete Announcement</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to delete this announcement?</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.deleteConfirmButton}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.deleteConfirmButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -115,9 +183,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     opacity: 0.05,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 10,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContainer: {
     padding: 24,
-    paddingTop: 60,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
@@ -189,5 +272,72 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCard: {
+    width: '85%',
+    maxWidth: 350,
+    backgroundColor: 'rgba(18, 18, 18, 0.95)',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelButton: {
+    flex: 1,
+    height: 44,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  deleteConfirmButton: {
+    flex: 1,
+    height: 44,
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteConfirmButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
 });

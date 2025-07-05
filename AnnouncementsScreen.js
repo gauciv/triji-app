@@ -89,6 +89,9 @@ export default function AnnouncementsScreen({ navigation }) {
           <View style={styles.authorInfo}>
             <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
             <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
+            <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
+              <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
+            </View>
           </View>
         </View>
         
@@ -225,6 +228,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
     lineHeight: 20,
+  },
+  typeChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  typeChipText: {
+    fontSize: 10,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   loadingContainer: {
     flex: 1,
