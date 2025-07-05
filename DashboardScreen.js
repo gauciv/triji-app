@@ -64,9 +64,12 @@ export default function DashboardScreen({ navigation }) {
       
       <View style={styles.header}>
         <Text style={styles.greeting}>Good Morning</Text>
-        <View style={styles.profilePicture}>
+        <TouchableOpacity 
+          style={styles.profilePicture}
+          onPress={() => navigation.navigate('Profile')}
+        >
           <Text style={styles.profileInitial}>U</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       
       <FlatList
