@@ -4,12 +4,14 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from './firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import AnnouncementCardSkeleton from './AnnouncementCardSkeleton';
 
 export default function AnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState('');
   const [error, setError] = useState(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -49,10 +51,12 @@ export default function AnnouncementsScreen({ navigation }) {
         });
         setAnnouncements(announcementsList);
         setLoading(false);
+        setInitialLoad(false);
       }, (error) => {
         console.log('Error fetching announcements:', error);
         setError('Could not load announcements. Please check your internet connection.');
         setLoading(false);
+        setInitialLoad(false);
       });
 
       return unsubscribe;
@@ -212,7 +216,14 @@ export default function AnnouncementsScreen({ navigation }) {
         </View>
       </View>
       
-      {announcements.length === 0 ? (
+      {initialLoad ? (
+        <View style={styles.listContainer}>
+          <AnnouncementCardSkeleton />
+          <AnnouncementCardSkeleton />
+          <AnnouncementCardSkeleton />
+          <AnnouncementCardSkeleton />
+        </View>
+      ) : announcements.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Feather name="bell" size={64} color="#8E8E93" />
           <Text style={styles.emptyTitle}>No announcements yet</Text>
