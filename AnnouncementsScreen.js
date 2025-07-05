@@ -91,7 +91,7 @@ export default function AnnouncementsScreen({ navigation }) {
         
         <View style={styles.cardBody}>
           <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.content}>{item.content}</Text>
+          <Text style={styles.content} numberOfLines={3} ellipsizeMode="tail">{item.content}</Text>
         </View>
       </View>
     );
