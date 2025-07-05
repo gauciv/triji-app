@@ -145,13 +145,21 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         <Text style={styles.headerTitle}>Archived Announcements</Text>
       </View>
       
-      <FlatList
-        data={announcements}
-        renderItem={renderAnnouncement}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {announcements.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Feather name="archive" size={64} color="#8E8E93" />
+          <Text style={styles.emptyTitle}>No archived announcements</Text>
+          <Text style={styles.emptyMessage}>Expired announcements will appear here</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={announcements}
+          renderItem={renderAnnouncement}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
@@ -290,5 +298,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    textAlign: 'center',
   },
 });
