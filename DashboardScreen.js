@@ -81,12 +81,7 @@ export default function DashboardScreen({ navigation }) {
         columnWrapperStyle={styles.row}
       />
       
-      <TouchableOpacity 
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutButtonText}>Log Out</Text>
-      </TouchableOpacity>
+
     </View>
   );
 }
@@ -167,28 +162,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
   },
-  logoutButton: {
-    position: 'absolute',
-    bottom: 40,
-    left: 24,
-    right: 24,
-    height: 52,
-    backgroundColor: '#FF3B30',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FF3B30',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
+
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
