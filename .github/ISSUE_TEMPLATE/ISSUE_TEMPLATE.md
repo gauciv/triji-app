@@ -1,7 +1,6 @@
 ---
 name: "General Issue Template"
 about: "Report or request anything related to the project"
-title: "[Type] [Category] - Brief Description"
 labels: ""
 ---
 
