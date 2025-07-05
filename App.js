@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import SplashScreen from './SplashScreen';
+import LoginScreen from './LoginScreen';
+import RegisterScreen from './RegisterScreen';
+import VerificationScreen from './VerificationScreen';
+import DashboardScreen from './DashboardScreen';
 import { initializeApp } from 'firebase/app';
+
+const Stack = createStackNavigator();
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -29,10 +37,27 @@ export default function App() {
     initializeFirebase();
   }, []);
 
+  if (!isFirebaseReady) {
+    return (
+      <>
+        <SplashScreen />
+        <StatusBar style="light" />
+      </>
+    );
+  }
+
   return (
-    <>
-      <SplashScreen />
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName="Login"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Verification" component={VerificationScreen} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      </Stack.Navigator>
       <StatusBar style="light" />
-    </>
+    </NavigationContainer>
   );
 }
