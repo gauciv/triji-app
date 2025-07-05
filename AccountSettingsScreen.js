@@ -56,7 +56,7 @@ export default function AccountSettingsScreen({ navigation }) {
             <SettingsRow 
               icon="user"
               title="Edit Profile"
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => navigation.navigate('EditProfile')}
             />
             <SettingsRow 
               icon="lock"
