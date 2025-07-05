@@ -7,7 +7,10 @@ import { collection, addDoc } from 'firebase/firestore';
 export default function CreateAnnouncementScreen({ navigation }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedType, setSelectedType] = useState('General');
   const [loading, setLoading] = useState(false);
+
+  const announcementTypes = ['General', 'Reminder', 'Event', 'Critical'];
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -23,6 +26,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
       await addDoc(collection(db, 'announcements'), {
         title: title.trim(),
         content: content.trim(),
+        type: selectedType,
         createdAt: new Date(),
         authorId: auth.currentUser.uid,
       });
@@ -77,6 +81,29 @@ export default function CreateAnnouncementScreen({ navigation }) {
             numberOfLines={6}
             textAlignVertical="top"
           />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Announcement Type</Text>
+          <View style={styles.chipContainer}>
+            {announcementTypes.map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.chip,
+                  selectedType === type && styles.chipSelected
+                ]}
+                onPress={() => setSelectedType(type)}
+              >
+                <Text style={[
+                  styles.chipText,
+                  selectedType === type && styles.chipTextSelected
+                ]}>
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <TouchableOpacity 
@@ -177,5 +204,30 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  chipSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  chipText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#8E8E93',
+  },
+  chipTextSelected: {
+    color: '#FFFFFF',
   },
 });
