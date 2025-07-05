@@ -88,11 +88,13 @@ export default function AnnouncementsScreen({ navigation }) {
     const now = new Date();
     const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const diffMs = now - postTime;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
+    if (diffMinutes > 0) return `${diffMinutes}m ago`;
     return 'Just now';
   };
 
