@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth } from './firebaseConfig';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -12,7 +12,30 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
   
+  const handleForgotPassword = async () => {
+    setResetLoading(true);
+    setResetMessage('');
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage('If an account exists for that email, a reset link has been sent.');
+      setTimeout(() => {
+        setShowForgotModal(false);
+        setResetEmail('');
+        setResetMessage('');
+      }, 2000);
+    } catch (error) {
+      console.log('Password reset error:', error.message);
+      setResetMessage('Please enter a valid email address.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     setLoading(true);
     setError('');
@@ -104,7 +127,10 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.errorText}>{error}</Text>
         ) : null}
         
-        <TouchableOpacity style={styles.linkContainer}>
+        <TouchableOpacity 
+          style={styles.linkContainer}
+          onPress={() => setShowForgotModal(true)}
+        >
           <Text style={styles.link}>Forgot Password?</Text>
         </TouchableOpacity>
         
@@ -115,6 +141,51 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </BlurView>
+      
+      <Modal
+        visible={showForgotModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowForgotModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={80} tint="dark" style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Reset Password</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your email"
+              placeholderTextColor="#8E8E93"
+              keyboardType="email-address"
+              value={resetEmail}
+              onChangeText={setResetEmail}
+            />
+            
+            {resetMessage ? (
+              <Text style={styles.resetMessage}>{resetMessage}</Text>
+            ) : null}
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, resetLoading && styles.modalButtonDisabled]}
+              onPress={handleForgotPassword}
+              disabled={resetLoading || !resetEmail.trim()}
+            >
+              {resetLoading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.modalButtonText}>Send Reset Link</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setShowForgotModal(false)}
+            >
+              <Text style={styles.modalCloseText}>Cancel</Text>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -273,5 +344,75 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCard: {
+    width: '85%',
+    maxWidth: 350,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  modalButton: {
+    width: '100%',
+    height: 48,
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalButtonDisabled: {
+    backgroundColor: '#4A4A4A',
+    opacity: 0.6,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  modalCloseButton: {
+    paddingVertical: 8,
+  },
+  modalCloseText: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+  },
+  resetMessage: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#34C759',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
   },
 });
