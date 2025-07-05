@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from './firebaseConfig';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
@@ -12,8 +13,18 @@ export default function CreateAnnouncementScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [expiresAt, setExpiresAt] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // Default 7 days
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [step, setStep] = useState(1);
 
   const announcementTypes = ['General', 'Reminder', 'Event', 'Critical'];
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Critical': return '#FF3B30';
+      case 'Event': return '#AF52DE';
+      case 'Reminder': return '#FF9500';
+      default: return '#007AFF';
+    }
+  };
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -70,97 +81,161 @@ export default function CreateAnnouncementScreen({ navigation }) {
       <View style={styles.backgroundGradient} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Create Announcement</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => step === 1 ? navigation.goBack() : setStep(1)}
+          >
+            <Feather name="arrow-left" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>
+            {step === 1 ? 'New Announcement' : 'Write Content'}
+          </Text>
+        </View>
+        
+        {step === 2 && (
+          <View style={styles.headerBottom}>
+            <TouchableOpacity 
+              style={[styles.publishButton, (!content.trim() || loading) && styles.publishButtonDisabled]}
+              onPress={handleCreateAnnouncement}
+              disabled={!content.trim() || loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.publishButtonText}>Publish</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
       
-      <View style={styles.content}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Title</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter announcement title"
-            placeholderTextColor="#8E8E93"
-          />
-        </View>
+      {step === 1 ? (
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.card}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Title</Text>
+              <TextInput
+                style={styles.input}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="What's this announcement about?"
+                placeholderTextColor="#8E8E93"
+              />
+            </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Content</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Type</Text>
+              <View style={styles.typeGrid}>
+                {announcementTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.typeCard,
+                      selectedType === type && styles.typeCardSelected
+                    ]}
+                    onPress={() => setSelectedType(type)}
+                  >
+                    <Text style={[
+                      styles.typeCardText,
+                      selectedType === type && styles.typeCardTextSelected
+                    ]}>
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Expires On</Text>
+              {Platform.OS === 'web' ? (
+                <input
+                  type="date"
+                  value={expiresAt.toISOString().split('T')[0]}
+                  onChange={(e) => setExpiresAt(new Date(e.target.value))}
+                  min={new Date().toISOString().split('T')[0]}
+                  style={{
+                    height: '52px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '14px',
+                    padding: '0 18px',
+                    fontSize: '15px',
+                    color: '#FFFFFF',
+                    fontFamily: 'Inter_400Regular',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    style={styles.dateButton}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Feather name="calendar" size={20} color="#8E8E93" />
+                    <Text style={styles.dateButtonText}>
+                      {expiresAt.toLocaleDateString()}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={expiresAt}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowDatePicker(false);
+                        if (selectedDate) {
+                          setExpiresAt(selectedDate);
+                        }
+                      }}
+                      minimumDate={new Date()}
+                    />
+                  )}
+                </>
+              )}
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.nextButton, !title.trim() && styles.nextButtonDisabled]}
+              onPress={() => setStep(2)}
+              disabled={!title.trim()}
+            >
+              <Text style={styles.nextButtonText}>Next</Text>
+              <Feather name="arrow-right" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={styles.twitterContainer}>
+          <View style={styles.twitterHeader}>
+            <Text style={styles.twitterTitle}>{title}</Text>
+            <View style={styles.twitterMeta}>
+              <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) }]}>
+                <Text style={styles.twitterTypeText}>{selectedType}</Text>
+              </View>
+              <Text style={styles.twitterExpiry}>Expires {expiresAt.toLocaleDateString()}</Text>
+            </View>
+          </View>
+          
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={styles.twitterTextArea}
             value={content}
             onChangeText={setContent}
-            placeholder="Enter announcement content"
+            placeholder="What do you want to announce?"
             placeholderTextColor="#8E8E93"
             multiline
-            numberOfLines={6}
             textAlignVertical="top"
+            autoFocus
           />
         </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Announcement Type</Text>
-          <View style={styles.chipContainer}>
-            {announcementTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.chip,
-                  selectedType === type && styles.chipSelected
-                ]}
-                onPress={() => setSelectedType(type)}
-              >
-                <Text style={[
-                  styles.chipText,
-                  selectedType === type && styles.chipTextSelected
-                ]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Expires On</Text>
-          <TouchableOpacity 
-            style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.dateButtonText}>
-              {expiresAt.toLocaleDateString()}
-            </Text>
-          </TouchableOpacity>
-          
-          {showDatePicker && (
-            <DateTimePicker
-              value={expiresAt}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setExpiresAt(selectedDate);
-                }
-              }}
-              minimumDate={new Date()}
-            />
-          )}
-        </View>
-
-        <TouchableOpacity 
-          style={[styles.createButton, (!title.trim() || !content.trim() || loading) && styles.createButtonDisabled]}
-          onPress={handleCreateAnnouncement}
-          disabled={!title.trim() || !content.trim() || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text style={styles.createButtonText}>Create Announcement</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
@@ -181,19 +256,45 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingTop: 50,
+    paddingBottom: 16,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  headerBottom: {
+    alignItems: 'flex-end',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    flex: 1,
   },
-  inputContainer: {
-    marginBottom: 20,
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 60,
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  inputGroup: {
+    marginBottom: 24,
   },
   label: {
     fontSize: 16,
@@ -203,41 +304,98 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 52,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    fontSize: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   textArea: {
     height: 120,
-    paddingTop: 18,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
-  createButton: {
-    height: 52,
-    backgroundColor: '#007AFF',
-    borderRadius: 14,
+  nextButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    paddingVertical: 16,
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    gap: 8,
+    marginTop: 8,
   },
-  createButtonDisabled: {
+  nextButtonDisabled: {
     backgroundColor: '#4A4A4A',
     opacity: 0.6,
   },
-  createButtonText: {
+  nextButtonText: {
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
+  },
+  publishButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+  },
+  publishButtonDisabled: {
+    backgroundColor: '#4A4A4A',
+    opacity: 0.6,
+  },
+  publishButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  twitterContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  twitterHeader: {
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 16,
+  },
+  twitterTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  twitterMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  twitterTypeChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  twitterTypeText: {
+    fontSize: 10,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+  twitterExpiry: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+  },
+  twitterTextArea: {
+    flex: 1,
+    fontSize: 18,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    textAlignVertical: 'top',
+    paddingTop: 0,
   },
   loadingContainer: {
     flex: 1,
@@ -248,42 +406,47 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
   },
-  chipContainer: {
+  typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
-  chip: {
+  typeCard: {
+    flex: 1,
+    minWidth: '45%',
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
   },
-  chipSelected: {
+  typeCardSelected: {
     backgroundColor: '#007AFF',
     borderColor: '#007AFF',
   },
-  chipText: {
+  typeCardText: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#8E8E93',
   },
-  chipTextSelected: {
+  typeCardTextSelected: {
     color: '#FFFFFF',
   },
   dateButton: {
     height: 52,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 12,
   },
   dateButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
   },
