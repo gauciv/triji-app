@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
-import { Feather } from '@expo/vector-icons';
-import { auth, db } from './firebaseConfig';
-import { collection, query, orderBy, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { db } from './firebaseConfig';
+import { collection, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 
-export default function AnnouncementsScreen({ navigation }) {
+export default function ArchivedAnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState('');
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -17,25 +15,10 @@ export default function AnnouncementsScreen({ navigation }) {
   });
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUserRole(userDoc.data().role || '');
-          }
-        }
-      } catch (error) {
-        console.log('Error fetching user role:', error);
-      }
-    };
-
     const q = query(
       collection(db, 'announcements'),
-      where('expiresAt', '>', new Date()),
-      orderBy('expiresAt', 'asc'),
-      orderBy('createdAt', 'desc')
+      where('expiresAt', '<=', new Date()),
+      orderBy('expiresAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -50,7 +33,6 @@ export default function AnnouncementsScreen({ navigation }) {
       setLoading(false);
     });
 
-    fetchUserRole();
     return () => unsubscribe();
   }, []);
 
@@ -76,22 +58,6 @@ export default function AnnouncementsScreen({ navigation }) {
     return 'Just now';
   };
 
-  const getTimeRemaining = (expiresAt) => {
-    if (!expiresAt) return '';
-    const now = new Date();
-    const expiry = expiresAt.toDate ? expiresAt.toDate() : new Date(expiresAt);
-    const diffMs = expiry - now;
-    
-    if (diffMs <= 0) return 'Expired';
-    
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (diffDays > 0) return `${diffDays}d remaining`;
-    if (diffHours > 0) return `${diffHours}h remaining`;
-    return 'Expires soon';
-  };
-
   const renderAnnouncement = ({ item }) => {
     return (
       <TouchableOpacity 
@@ -107,7 +73,7 @@ export default function AnnouncementsScreen({ navigation }) {
           <View style={styles.authorInfo}>
             <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
             <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
-            <Text style={styles.expiryText}>{getTimeRemaining(item.expiresAt)}</Text>
+            <Text style={styles.expiredText}>Expired</Text>
             <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
               <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
             </View>
@@ -137,23 +103,7 @@ export default function AnnouncementsScreen({ navigation }) {
       <View style={styles.backgroundGradient} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Announcements</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.archiveButton}
-            onPress={() => navigation.navigate('ArchivedAnnouncements')}
-          >
-            <Feather name="archive" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          {userRole === 'officer' && (
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => navigation.navigate('CreateAnnouncement')}
-            >
-              <Feather name="plus" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text style={styles.headerTitle}>Archived Announcements</Text>
       </View>
       
       <FlatList
@@ -182,9 +132,6 @@ const styles = StyleSheet.create({
     opacity: 0.05,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
@@ -207,6 +154,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
     borderLeftWidth: 4,
     height: 140,
+    opacity: 0.7,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -241,20 +189,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
   },
-  cardBody: {
-    paddingLeft: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  content: {
-    fontSize: 14,
+  expiredText: {
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-    lineHeight: 20,
+    color: '#FF3B30',
+    marginTop: 2,
   },
   typeChip: {
     alignSelf: 'flex-start',
@@ -270,11 +209,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  expiryText: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: '#FF9500',
-    marginTop: 2,
+  cardBody: {
+    paddingLeft: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -284,30 +226,5 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  archiveButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
 });

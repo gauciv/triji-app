@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from './firebaseConfig';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 
@@ -9,6 +10,8 @@ export default function CreateAnnouncementScreen({ navigation }) {
   const [content, setContent] = useState('');
   const [selectedType, setSelectedType] = useState('General');
   const [loading, setLoading] = useState(false);
+  const [expiresAt, setExpiresAt] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // Default 7 days
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const announcementTypes = ['General', 'Reminder', 'Event', 'Critical'];
 
@@ -41,6 +44,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
         authorId: user.uid,
         authorPhotoURL: '',
         createdAt: new Date(),
+        expiresAt: expiresAt,
       });
       navigation.goBack();
     } catch (error) {
@@ -116,6 +120,33 @@ export default function CreateAnnouncementScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Expires On</Text>
+          <TouchableOpacity 
+            style={styles.dateButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.dateButtonText}>
+              {expiresAt.toLocaleDateString()}
+            </Text>
+          </TouchableOpacity>
+          
+          {showDatePicker && (
+            <DateTimePicker
+              value={expiresAt}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) {
+                  setExpiresAt(selectedDate);
+                }
+              }}
+              minimumDate={new Date()}
+            />
+          )}
         </View>
 
         <TouchableOpacity 
@@ -240,6 +271,20 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   chipTextSelected: {
+    color: '#FFFFFF',
+  },
+  dateButton: {
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  dateButtonText: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
   },
 });
