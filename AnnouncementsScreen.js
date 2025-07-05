@@ -9,6 +9,7 @@ export default function AnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState('');
+  const [error, setError] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -16,42 +17,61 @@ export default function AnnouncementsScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUserRole(userDoc.data().role || '');
-          }
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch user role
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || '');
         }
-      } catch (error) {
-        console.log('Error fetching user role:', error);
       }
-    };
 
-    const q = query(
-      collection(db, 'announcements'),
-      where('expiresAt', '>', new Date()),
-      orderBy('expiresAt', 'asc'),
-      orderBy('createdAt', 'desc')
-    );
+      // Set up announcements listener
+      const q = query(
+        collection(db, 'announcements'),
+        where('expiresAt', '>', new Date()),
+        orderBy('expiresAt', 'asc'),
+        orderBy('createdAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const announcementsList = [];
-      querySnapshot.forEach((doc) => {
-        announcementsList.push({
-          id: doc.id,
-          ...doc.data(),
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const announcementsList = [];
+        querySnapshot.forEach((doc) => {
+          announcementsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
+        setAnnouncements(announcementsList);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching announcements:', error);
+        setError('Could not load announcements. Please check your internet connection.');
+        setLoading(false);
       });
-      setAnnouncements(announcementsList);
-      setLoading(false);
-    });
 
-    fetchUserRole();
-    return () => unsubscribe();
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error setting up data fetch:', error);
+      setError('Could not load announcements. Please check your internet connection.');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribe;
+    fetchData().then((unsub) => {
+      unsubscribe = unsub;
+    });
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const getTypeColor = (type) => {
@@ -127,6 +147,20 @@ export default function AnnouncementsScreen({ navigation }) {
         <View style={styles.backgroundGradient} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -275,6 +309,31 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#FF9500',
     marginTop: 2,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,

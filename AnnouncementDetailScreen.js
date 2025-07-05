@@ -11,6 +11,7 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [error, setError] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -18,35 +19,41 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch user role
-        const user = auth.currentUser;
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUserRole(userDoc.data().role || '');
-          }
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch user role
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || '');
         }
-        
-        // Fetch announcement
-        const docRef = doc(db, 'announcements', announcementId);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setAnnouncement({
-            id: docSnap.id,
-            ...docSnap.data(),
-          });
-        }
-      } catch (error) {
-        console.log('Error fetching data:', error);
-      } finally {
-        setLoading(false);
       }
-    };
+      
+      // Fetch announcement
+      const docRef = doc(db, 'announcements', announcementId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        setAnnouncement({
+          id: docSnap.id,
+          ...docSnap.data(),
+        });
+      } else {
+        setError('Announcement not found.');
+      }
+    } catch (error) {
+      console.log('Error fetching data:', error);
+      setError('Could not load announcement. Please check your internet connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [announcementId]);
 
@@ -90,12 +97,26 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   if (!announcement) {
     return (
       <View style={styles.container}>
         <View style={styles.backgroundGradient} />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Announcement not found</Text>
+          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </View>
     );
@@ -336,6 +357,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deleteConfirmButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',

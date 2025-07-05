@@ -7,6 +7,7 @@ import { collection, query, orderBy, where, onSnapshot } from 'firebase/firestor
 export default function ArchivedAnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -14,26 +15,50 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    const q = query(
-      collection(db, 'announcements'),
-      where('expiresAt', '<=', new Date()),
-      orderBy('expiresAt', 'desc')
-    );
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const q = query(
+        collection(db, 'announcements'),
+        where('expiresAt', '<=', new Date()),
+        orderBy('expiresAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const announcementsList = [];
-      querySnapshot.forEach((doc) => {
-        announcementsList.push({
-          id: doc.id,
-          ...doc.data(),
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const announcementsList = [];
+        querySnapshot.forEach((doc) => {
+          announcementsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
+        setAnnouncements(announcementsList);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching archived announcements:', error);
+        setError('Could not load archived announcements. Please check your internet connection.');
+        setLoading(false);
       });
-      setAnnouncements(announcementsList);
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error setting up archived announcements fetch:', error);
+      setError('Could not load archived announcements. Please check your internet connection.');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribe;
+    fetchData().then((unsub) => {
+      unsubscribe = unsub;
+    });
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const getTypeColor = (type) => {
@@ -93,6 +118,20 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         <View style={styles.backgroundGradient} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.backgroundGradient} />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -226,5 +265,30 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
 });
