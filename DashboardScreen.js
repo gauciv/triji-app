@@ -66,7 +66,7 @@ export default function DashboardScreen({ navigation }) {
         <Text style={styles.greeting}>Good Morning</Text>
         <TouchableOpacity 
           style={styles.profilePicture}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate('AccountSettings')}
         >
           <Text style={styles.profileInitial}>U</Text>
         </TouchableOpacity>

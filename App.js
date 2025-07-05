@@ -12,6 +12,7 @@ import ProfileScreen from './ProfileScreen';
 import CreateAnnouncementScreen from './CreateAnnouncementScreen';
 import AnnouncementDetailScreen from './AnnouncementDetailScreen';
 import ArchivedAnnouncementsScreen from './ArchivedAnnouncementsScreen';
+import AccountSettingsScreen from './AccountSettingsScreen';
 import { initializeApp } from 'firebase/app';
 
 const Stack = createStackNavigator();
@@ -66,6 +67,7 @@ export default function App() {
         <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
         <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
         <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
+        <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>

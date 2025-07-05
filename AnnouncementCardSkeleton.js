@@ -1,28 +1,34 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 
 export default function AnnouncementCardSkeleton() {
-  const shimmerValue = useSharedValue(0);
+  const shimmerValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    shimmerValue.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      true
+    const shimmerAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerValue, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerValue, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
     );
+    shimmerAnimation.start();
+    return () => shimmerAnimation.stop();
   }, []);
 
-  const shimmerStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(shimmerValue.value, [0, 1], [0.3, 0.7]);
-    return { opacity };
-  });
+  const shimmerStyle = {
+    opacity: shimmerValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.3, 0.7],
+    }),
+  };
 
   return (
     <View style={styles.card}>
