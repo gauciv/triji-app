@@ -30,8 +30,15 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const renderFeatureCard = ({ item }) => {
+    const handlePress = () => {
+      if (item.title === 'Announcements') {
+        navigation.navigate('Announcements');
+      }
+      // Add other navigation cases here as screens are created
+    };
+
     return (
-      <TouchableOpacity style={styles.featureCard}>
+      <TouchableOpacity style={styles.featureCard} onPress={handlePress}>
         <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
           <Feather name={item.icon} size={24} color="#FFFFFF" />
         </View>
