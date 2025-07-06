@@ -15,6 +15,7 @@ import ArchivedAnnouncementsScreen from './ArchivedAnnouncementsScreen';
 import AccountSettingsScreen from './AccountSettingsScreen';
 import EditProfileScreen from './EditProfileScreen';
 import { initializeApp } from 'firebase/app';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createStackNavigator();
 
@@ -30,11 +31,27 @@ const firebaseConfig = {
 
 export default function App() {
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+  const [initialRouteName, setInitialRouteName] = useState('Login');
 
   useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const savedSession = await AsyncStorage.getItem('user_session');
+        if (savedSession) {
+          setInitialRouteName('Dashboard');
+        } else {
+          setInitialRouteName('Login');
+        }
+      } catch (error) {
+        console.log('Error checking session:', error);
+        setInitialRouteName('Login');
+      }
+    };
+
     const initializeFirebase = async () => {
       try {
         initializeApp(firebaseConfig);
+        await checkUserSession();
         setIsFirebaseReady(true);
       } catch (error) {
         console.log('Firebase initialization error:', error);
@@ -56,7 +73,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator 
-        initialRouteName="Login"
+        initialRouteName={initialRouteName}
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
