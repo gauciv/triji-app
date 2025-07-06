@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth, db } from './firebaseConfig';
+import { auth, db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import AnnouncementCardSkeleton from './AnnouncementCardSkeleton';
+import AnnouncementCardSkeleton from '../components/AnnouncementCardSkeleton';
 
 export default function AnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);

@@ -1,0 +1,13 @@
+// Screen exports for cleaner imports
+export { default as SplashScreen } from './SplashScreen';
+export { default as LoginScreen } from './LoginScreen';
+export { default as RegisterScreen } from './RegisterScreen';
+export { default as VerificationScreen } from './VerificationScreen';
+export { default as DashboardScreen } from './DashboardScreen';
+export { default as AnnouncementsScreen } from './AnnouncementsScreen';
+export { default as ProfileScreen } from './ProfileScreen';
+export { default as CreateAnnouncementScreen } from './CreateAnnouncementScreen';
+export { default as AnnouncementDetailScreen } from './AnnouncementDetailScreen';
+export { default as ArchivedAnnouncementsScreen } from './ArchivedAnnouncementsScreen';
+export { default as AccountSettingsScreen } from './AccountSettingsScreen';
+export { default as EditProfileScreen } from './EditProfileScreen';

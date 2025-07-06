@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth, db } from './firebaseConfig';
+import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
 export default function AnnouncementDetailScreen({ route, navigation }) {

@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import SplashScreen from './SplashScreen';
-import LoginScreen from './LoginScreen';
-import RegisterScreen from './RegisterScreen';
-import VerificationScreen from './VerificationScreen';
-import DashboardScreen from './DashboardScreen';
-import AnnouncementsScreen from './AnnouncementsScreen';
-import ProfileScreen from './ProfileScreen';
-import CreateAnnouncementScreen from './CreateAnnouncementScreen';
-import AnnouncementDetailScreen from './AnnouncementDetailScreen';
-import ArchivedAnnouncementsScreen from './ArchivedAnnouncementsScreen';
-import AccountSettingsScreen from './AccountSettingsScreen';
-import EditProfileScreen from './EditProfileScreen';
+import {
+  SplashScreen,
+  LoginScreen,
+  RegisterScreen,
+  VerificationScreen,
+  DashboardScreen,
+  AnnouncementsScreen,
+  ProfileScreen,
+  CreateAnnouncementScreen,
+  AnnouncementDetailScreen,
+  ArchivedAnnouncementsScreen,
+  AccountSettingsScreen,
+  EditProfileScreen
+} from './src/screens';
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

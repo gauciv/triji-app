@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Activi
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { auth, db } from './firebaseConfig';
+import { auth, db } from '../config/firebaseConfig';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 
 export default function CreateAnnouncementScreen({ navigation }) {

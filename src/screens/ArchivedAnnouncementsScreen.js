@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { db } from './firebaseConfig';
+import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 
 export default function ArchivedAnnouncementsScreen({ navigation }) {
