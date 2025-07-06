@@ -21,6 +21,7 @@ export default function AccountSettingsScreen({ navigation }) {
 
   const handleLogout = async () => {
     try {
+      await AsyncStorage.removeItem('user_session');
       await signOut(auth);
       navigation.navigate('Login');
     } catch (error) {

@@ -5,6 +5,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { auth } from './firebaseConfig';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -41,6 +42,7 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await AsyncStorage.setItem('user_session', JSON.stringify(userCredential.user));
       console.log('Login successful:', userCredential.user.email);
       navigation.navigate('Dashboard');
     } catch (error) {

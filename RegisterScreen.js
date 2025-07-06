@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { auth, db } from './firebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -50,6 +51,7 @@ export default function RegisterScreen({ navigation }) {
       // Send verification email
       await sendEmailVerification(user);
       
+      await AsyncStorage.setItem('user_session', JSON.stringify(user));
       console.log('Registration successful:', user.email);
       navigation.navigate('Verification');
     } catch (error) {
