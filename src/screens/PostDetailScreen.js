@@ -1,16 +1,103 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, TextInput, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { db } from '../config/firebaseConfig';
+import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
 
 export default function PostDetailScreen({ route, navigation }) {
   const { post, timestamp } = route.params;
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [posting, setPosting] = useState(false);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'freedom-wall-posts', post.id, 'comments'),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const commentsList = [];
+      querySnapshot.forEach((doc) => {
+        commentsList.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+      setComments(commentsList);
+    });
+
+    return () => unsubscribe();
+  }, [post.id]);
+
+  const generatePersona = () => {
+    const adjectives = ['Blue', 'Red', 'Green', 'Purple', 'Orange', 'Pink', 'Yellow', 'Silver'];
+    const animals = ['Koala', 'Panda', 'Fox', 'Cat', 'Bird', 'Fish', 'Owl', 'Bear'];
+    const colors = ['#007AFF', '#FF3B30', '#34C759', '#AF52DE', '#FF9500', '#FF2D92', '#FFCC00', '#8E8E93'];
+    
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const animal = animals[Math.floor(Math.random() * animals.length)];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    return { name: `${adjective} ${animal}`, color };
+  };
+
+  const handlePostComment = async () => {
+    if (!commentText.trim()) {
+      Alert.alert('Error', 'Please write a comment.');
+      return;
+    }
+
+    setPosting(true);
+    try {
+      const persona = generatePersona();
+      await addDoc(collection(db, 'freedom-wall-posts', post.id, 'comments'), {
+        text: commentText.trim(),
+        createdAt: new Date(),
+        persona: persona.name,
+        personaColor: persona.color,
+      });
+      setCommentText('');
+    } catch (error) {
+      console.log('Error posting comment:', error);
+      Alert.alert('Error', 'Failed to post comment. Please try again.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const formatCommentTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const renderComment = ({ item }) => (
+    <View style={styles.commentBubble}>
+      <View style={styles.commentHeader}>
+        <View style={[styles.commentPersonaDot, { backgroundColor: item.personaColor }]} />
+        <Text style={[styles.commentPersona, { color: item.personaColor }]}>
+          {item.persona}
+        </Text>
+        <Text style={styles.commentTimestamp}>
+          {formatCommentTimestamp(item.createdAt)}
+        </Text>
+      </View>
+      <Text style={styles.commentText}>{item.text}</Text>
+    </View>
+  );
 
   if (!fontsLoaded) {
     return (
@@ -32,22 +119,55 @@ export default function PostDetailScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>Post Detail</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.postCard}>
-          <View style={styles.personaContainer}>
-            <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
-            <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
-              {post.persona || 'Anonymous'}
-            </Text>
+      <View style={styles.content}>
+        <ScrollView style={styles.postSection} showsVerticalScrollIndicator={false}>
+          <View style={styles.postCard}>
+            <View style={styles.personaContainer}>
+              <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+              <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+                {post.persona || 'Anonymous'}
+              </Text>
+            </View>
+            
+            <Text style={styles.postText}>{post.content}</Text>
+            
+            <View style={styles.cardFooter}>
+              <Text style={styles.timestamp}>{timestamp}</Text>
+            </View>
           </View>
+        </ScrollView>
+        
+        <View style={styles.commentsSection}>
+          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
           
-          <Text style={styles.postText}>{post.content}</Text>
+          <FlatList
+            data={comments}
+            keyExtractor={(item) => item.id}
+            renderItem={renderComment}
+            style={styles.commentsList}
+            showsVerticalScrollIndicator={false}
+          />
           
-          <View style={styles.cardFooter}>
-            <Text style={styles.timestamp}>{timestamp}</Text>
+          <View style={styles.commentInput}>
+            <TextInput
+              style={styles.textInput}
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder="Write a comment..."
+              placeholderTextColor="#8E8E93"
+              multiline
+              maxLength={200}
+            />
+            <TouchableOpacity 
+              style={[styles.sendButton, posting && styles.sendButtonDisabled]}
+              onPress={handlePostComment}
+              disabled={posting || !commentText.trim()}
+            >
+              <Feather name="send" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -77,7 +197,93 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  postSection: {
     paddingHorizontal: 24,
+    maxHeight: '40%',
+  },
+  commentsSection: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    marginTop: 16,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#F5F5DC',
+    marginBottom: 16,
+  },
+  commentsList: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  commentBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  commentPersonaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  commentPersona: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    marginRight: 8,
+  },
+  commentTimestamp: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    marginLeft: 'auto',
+  },
+  commentText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    lineHeight: 18,
+  },
+  commentInput: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 12,
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#34C759',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#8E8E93',
+    opacity: 0.6,
   },
   postCard: {
     backgroundColor: '#FFFACD',
