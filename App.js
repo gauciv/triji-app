@@ -14,7 +14,8 @@ import {
   AnnouncementDetailScreen,
   ArchivedAnnouncementsScreen,
   AccountSettingsScreen,
-  EditProfileScreen
+  EditProfileScreen,
+  GradeCalculatorScreen
 } from './src/screens';
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -89,6 +90,7 @@ export default function App() {
         <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
         <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>
