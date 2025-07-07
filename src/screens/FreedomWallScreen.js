@@ -15,6 +15,25 @@ export default function FreedomWallScreen({ navigation }) {
   const [postContent, setPostContent] = useState('');
   const [customNickname, setCustomNickname] = useState('');
   const [posting, setPosting] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('#FFFACD');
+
+  const colorPalette = [
+    '#FFFACD', // Pale yellow
+    '#E6F3FF', // Light blue
+    '#FFE6F0', // Soft pink
+    '#E6FFE6', // Mint green
+    '#F0E6FF', // Light purple
+    '#FFE6CC', // Peach
+  ];
+
+  const getTextColor = (backgroundColor) => {
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? '#2C2C2C' : '#FFFFFF';
+  };
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -101,11 +120,13 @@ export default function FreedomWallScreen({ navigation }) {
         createdAt: new Date(),
         persona: finalPersona,
         personaColor: persona.color,
+        noteColor: selectedColor,
         likeCount: 0,
         likedBy: [],
       });
       setPostContent('');
       setCustomNickname('');
+      setSelectedColor('#FFFACD');
       setShowModal(false);
     } catch (error) {
       console.log('Error posting:', error);
@@ -234,38 +255,55 @@ export default function FreedomWallScreen({ navigation }) {
         onRequestClose={() => setShowModal(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.stickyNoteModal}>
+          <View style={[styles.stickyNoteModal, { backgroundColor: selectedColor }]}>
             <View style={styles.modalHeader}>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={() => setShowModal(false)}
               >
-                <Feather name="x" size={24} color="#666666" />
+                <Feather name="x" size={24} color={getTextColor(selectedColor)} />
               </TouchableOpacity>
             </View>
             
             <TextInput
-              style={styles.nicknameInput}
+              style={[styles.nicknameInput, { 
+                color: getTextColor(selectedColor),
+                borderBottomColor: getTextColor(selectedColor) + '40'
+              }]}
               value={customNickname}
               onChangeText={setCustomNickname}
               placeholder="Nickname (optional)"
-              placeholderTextColor="#999999"
+              placeholderTextColor={getTextColor(selectedColor) + '80'}
               maxLength={15}
             />
             
             <TextInput
-              style={styles.modalTextInput}
+              style={[styles.modalTextInput, { color: getTextColor(selectedColor) }]}
               value={postContent}
               onChangeText={setPostContent}
               placeholder="What's on your mind?"
-              placeholderTextColor="#999999"
+              placeholderTextColor={getTextColor(selectedColor) + '80'}
               multiline
               textAlignVertical="top"
               autoFocus
               maxLength={100}
             />
             
-            <Text style={styles.characterCounter}>
+            <View style={styles.colorPalette}>
+              {colorPalette.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorCircle,
+                    { backgroundColor: color },
+                    selectedColor === color && styles.selectedColorCircle
+                  ]}
+                  onPress={() => setSelectedColor(color)}
+                />
+              ))}
+            </View>
+            
+            <Text style={[styles.characterCounter, { color: getTextColor(selectedColor) }]}>
               {postContent.length}/100
             </Text>
             
@@ -395,7 +433,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     height: '70%',
-    backgroundColor: '#FFFACD',
     borderRadius: 8,
     padding: 20,
     shadowColor: '#000',
@@ -403,6 +440,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 10,
+    transform: [{ rotate: '1deg' }],
   },
   modalHeader: {
     alignItems: 'flex-end',
@@ -415,7 +453,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    color: '#2C2C2C',
     textAlignVertical: 'top',
     letterSpacing: 0.3,
     outline: 'none',
@@ -423,17 +460,31 @@ const styles = StyleSheet.create({
   characterCounter: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#666666',
     textAlign: 'right',
     marginBottom: 10,
+  },
+  colorPalette: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginVertical: 16,
+  },
+  colorCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedColorCircle: {
+    borderColor: '#333333',
+    borderWidth: 3,
   },
   nicknameInput: {
     height: 40,
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: '#2C2C2C',
     borderBottomWidth: 1,
-    borderBottomColor: '#DDD',
     marginBottom: 16,
     paddingHorizontal: 4,
     outline: 'none',

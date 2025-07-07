@@ -14,7 +14,13 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
 
   return (
     <TouchableOpacity 
-      style={[styles.card, { transform: [{ rotate: rotation }] }]}
+      style={[
+        styles.card, 
+        { 
+          transform: [{ rotate: rotation }],
+          backgroundColor: post.noteColor || '#FFFACD'
+        }
+      ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -58,7 +64,6 @@ const styles = StyleSheet.create({
   card: {
     width: 100,
     height: 140,
-    backgroundColor: '#FFFACD',
     borderRadius: 4,
     margin: 4,
     shadowColor: '#000',
