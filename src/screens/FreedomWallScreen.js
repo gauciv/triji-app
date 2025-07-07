@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Mo
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, increment } from 'firebase/firestore';
 import PostCard from '../components/PostCard';
 
 export default function FreedomWallScreen({ navigation }) {
@@ -54,6 +54,18 @@ export default function FreedomWallScreen({ navigation }) {
     });
   };
 
+  const generatePersona = () => {
+    const adjectives = ['Brave', 'Wise', 'Swift', 'Bold', 'Calm', 'Bright', 'Cool', 'Wild', 'Free', 'Kind'];
+    const animals = ['Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Owl', 'Hawk', 'Deer', 'Cat'];
+    const colors = ['#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C', '#AF52DE', '#FF3B30', '#34C759', '#007AFF'];
+    
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const animal = animals[Math.floor(Math.random() * animals.length)];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    return { name: `${adjective} ${animal}`, color };
+  };
+
   const handlePost = async () => {
     if (!postContent.trim()) {
       Alert.alert('Error', 'Please write something before posting.');
@@ -62,9 +74,18 @@ export default function FreedomWallScreen({ navigation }) {
 
     setPosting(true);
     try {
+      const persona = generatePersona();
       await addDoc(collection(db, 'freedom-wall-posts'), {
         content: postContent.trim(),
         createdAt: new Date(),
+        persona: persona.name,
+        personaColor: persona.color,
+        reactions: {
+          '👍': 0,
+          '😂': 0,
+          '❤️': 0,
+          '😮': 0,
+        },
       });
       setPostContent('');
       setShowModal(false);
@@ -73,6 +94,16 @@ export default function FreedomWallScreen({ navigation }) {
       Alert.alert('Error', 'Failed to post. Please try again.');
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleReaction = async (postId, emoji) => {
+    try {
+      await updateDoc(doc(db, 'freedom-wall-posts', postId), {
+        [`reactions.${emoji}`]: increment(1)
+      });
+    } catch (error) {
+      console.log('Error adding reaction:', error);
     }
   };
 
@@ -114,6 +145,7 @@ export default function FreedomWallScreen({ navigation }) {
               post={item} 
               timestamp={formatTimestamp(item.createdAt)}
               rotation={getRandomRotation(index)}
+              onReaction={(emoji) => handleReaction(item.id, emoji)}
             />
           )}
           contentContainerStyle={styles.postsContainer}

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
-export default function PostCard({ post, timestamp, rotation }) {
+export default function PostCard({ post, timestamp, rotation, onReaction }) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -15,7 +15,30 @@ export default function PostCard({ post, timestamp, rotation }) {
   return (
     <View style={[styles.card, { transform: [{ rotate: rotation }] }]}>
       <View style={styles.cardContent}>
+        <View style={styles.personaContainer}>
+          <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+          <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+            {post.persona || 'Anonymous'}
+          </Text>
+        </View>
+        
         <Text style={styles.postText}>{post.content}</Text>
+        
+        <View style={styles.reactionsContainer}>
+          {['👍', '😂', '❤️', '😮'].map((emoji) => (
+            <TouchableOpacity 
+              key={emoji}
+              style={styles.reactionButton}
+              onPress={() => onReaction(emoji)}
+            >
+              <Text style={styles.reactionEmoji}>{emoji}</Text>
+              <Text style={styles.reactionCount}>
+                {post.reactions?.[emoji] || 0}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
         <View style={styles.cardFooter}>
           <Text style={styles.timestamp}>{timestamp}</Text>
         </View>
@@ -67,6 +90,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#666666',
     fontStyle: 'italic',
+  },
+  personaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  personaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  personaText: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '600',
+  },
+  reactionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  reactionButton: {
+    alignItems: 'center',
+    padding: 4,
+  },
+  reactionEmoji: {
+    fontSize: 16,
+  },
+  reactionCount: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#666666',
+    marginTop: 2,
   },
   tape: {
     position: 'absolute',
