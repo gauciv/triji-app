@@ -120,8 +120,8 @@ export default function PostDetailScreen({ route, navigation }) {
       </View>
 
       <View style={styles.content}>
-        <ScrollView style={styles.postSection} showsVerticalScrollIndicator={false}>
-          <View style={styles.postCard}>
+        <View style={styles.postSection}>
+          <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
             <View style={styles.personaContainer}>
               <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
               <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
@@ -132,10 +132,14 @@ export default function PostDetailScreen({ route, navigation }) {
             <Text style={styles.postText}>{post.content}</Text>
             
             <View style={styles.cardFooter}>
+              <View style={styles.likeInfo}>
+                <Text style={styles.heartIcon}>♥</Text>
+                <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
+              </View>
               <Text style={styles.timestamp}>{timestamp}</Text>
             </View>
           </View>
-        </ScrollView>
+        </View>
         
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
@@ -144,8 +148,8 @@ export default function PostDetailScreen({ route, navigation }) {
             data={comments}
             keyExtractor={(item) => item.id}
             renderItem={renderComment}
-            style={styles.commentsList}
             showsVerticalScrollIndicator={false}
+            style={styles.commentsList}
           />
           
           <View style={styles.commentInput}>
@@ -200,15 +204,18 @@ const styles = StyleSheet.create({
   },
   postSection: {
     paddingHorizontal: 24,
-    maxHeight: '40%',
+    paddingVertical: 20,
   },
   commentsSection: {
-    flex: 1,
+    position: 'absolute',
+    top: 280,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
-    marginTop: 16,
   },
   commentsTitle: {
     fontSize: 18,
@@ -323,7 +330,24 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   cardFooter: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  likeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heartIcon: {
+    fontSize: 16,
+    color: '#FF3B30',
+    marginRight: 4,
+  },
+  likeCount: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#666666',
   },
   timestamp: {
     fontSize: 12,
