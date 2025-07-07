@@ -36,7 +36,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
           {post.content}
         </Text>
         
-        <View style={styles.likeContainer}>
+        <View style={styles.cardFooter}>
           <TouchableOpacity 
             style={styles.likeButton}
             onPress={(e) => {
@@ -47,9 +47,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
             <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
           </TouchableOpacity>
-        </View>
-        
-        <View style={styles.cardFooter}>
+          
           <Text style={styles.timestamp}>{timestamp}</Text>
         </View>
       </View>
@@ -77,7 +75,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   cardContent: {
-    padding: 8,
+    padding: 5,
     flex: 1,
     justifyContent: 'space-between',
   },
@@ -91,8 +89,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardFooter: {
-    marginTop: 12,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 2,
   },
   timestamp: {
     fontSize: 8,
@@ -116,25 +117,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     fontWeight: '600',
   },
-  likeContainer: {
-    marginTop: 4,
-    marginBottom: 2,
-  },
+
   likeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 2,
+    padding: 4,
   },
   heartIcon: {
-    fontSize: 14,
-    color: '#CCC',
+    fontSize: 16,
+    color: '#8E8E93',
     marginRight: 4,
   },
   heartLiked: {
     color: '#FF3B30',
   },
   likeCount: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
   },
