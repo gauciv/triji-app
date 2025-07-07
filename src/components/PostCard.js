@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
-export default function PostCard({ post, timestamp, rotation }) {
+export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -13,9 +13,42 @@ export default function PostCard({ post, timestamp, rotation }) {
   }
 
   return (
-    <View style={[styles.card, { transform: [{ rotate: rotation }] }]}>
+    <TouchableOpacity 
+      style={[
+        styles.card, 
+        { 
+          transform: [{ rotate: rotation }],
+          backgroundColor: post.noteColor || '#FFFACD'
+        }
+      ]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <View style={styles.cardContent}>
-        <Text style={styles.postText}>{post.content}</Text>
+        <View style={styles.personaContainer}>
+          <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+          <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+            {post.persona || 'Anonymous'}
+          </Text>
+        </View>
+        
+        <Text style={styles.postText} numberOfLines={4} ellipsizeMode="tail">
+          {post.content}
+        </Text>
+        
+        <View style={styles.likeContainer}>
+          <TouchableOpacity 
+            style={styles.likeButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onLike();
+            }}
+          >
+            <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
+            <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
+          </TouchableOpacity>
+        </View>
+        
         <View style={styles.cardFooter}>
           <Text style={styles.timestamp}>{timestamp}</Text>
         </View>
@@ -23,17 +56,16 @@ export default function PostCard({ post, timestamp, rotation }) {
       
       {/* Sticky note tape effect */}
       <View style={styles.tape} />
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
-    minHeight: 140,
-    backgroundColor: '#FFFACD',
+    width: 100,
+    height: 140,
     borderRadius: 4,
-    margin: 8,
+    margin: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 2,
@@ -45,28 +77,66 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   cardContent: {
-    padding: 16,
+    padding: 8,
     flex: 1,
     justifyContent: 'space-between',
   },
   postText: {
-    fontSize: 14,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: '#2C2C2C',
-    lineHeight: 20,
+    lineHeight: 14,
     textAlign: 'left',
-    // Simulating handwriting style with letter spacing
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    flex: 1,
   },
   cardFooter: {
     marginTop: 12,
     alignItems: 'flex-end',
   },
   timestamp: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
     fontStyle: 'italic',
+  },
+  personaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  personaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  personaText: {
+    fontSize: 9,
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '600',
+  },
+  likeContainer: {
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  likeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 2,
+  },
+  heartIcon: {
+    fontSize: 14,
+    color: '#CCC',
+    marginRight: 4,
+  },
+  heartLiked: {
+    color: '#FF3B30',
+  },
+  likeCount: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#666666',
   },
   tape: {
     position: 'absolute',

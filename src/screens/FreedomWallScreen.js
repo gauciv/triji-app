@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
+import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
 
 export default function FreedomWallScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [customNickname, setCustomNickname] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('#FFFACD');
+
+  const colorPalette = [
+    '#FFFACD', // Pale yellow
+    '#E6F3FF', // Light blue
+    '#FFE6F0', // Soft pink
+    '#E6FFE6', // Mint green
+    '#F0E6FF', // Light purple
+    '#FFE6CC', // Peach
+  ];
+
+  const getTextColor = (backgroundColor) => {
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? '#2C2C2C' : '#FFFFFF';
+  };
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -15,28 +41,44 @@ export default function FreedomWallScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    const q = query(
-      collection(db, 'freedom-wall-posts'),
-      orderBy('createdAt', 'desc')
-    );
+  const fetchPosts = () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const q = query(
+        collection(db, 'freedom-wall-posts'),
+        orderBy('createdAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsList = [];
-      querySnapshot.forEach((doc) => {
-        postsList.push({
-          id: doc.id,
-          ...doc.data(),
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const postsList = [];
+        querySnapshot.forEach((doc) => {
+          postsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
+        setPosts(postsList);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching posts:', error);
+        setError('Could not load the Freedom Wall');
+        setLoading(false);
       });
-      setPosts(postsList);
-      setLoading(false);
-    }, (error) => {
-      console.log('Error fetching posts:', error);
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error setting up listener:', error);
+      setError('Could not load the Freedom Wall');
+      setLoading(false);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = fetchPosts();
+    return () => unsubscribe && unsubscribe();
   }, []);
 
   const formatTimestamp = (timestamp) => {
@@ -50,11 +92,107 @@ export default function FreedomWallScreen({ navigation }) {
     });
   };
 
+  const generatePersona = () => {
+    const adjectives = ['Brave', 'Wise', 'Swift', 'Bold', 'Calm', 'Bright', 'Cool', 'Wild', 'Free', 'Kind'];
+    const animals = ['Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Owl', 'Hawk', 'Deer', 'Cat'];
+    const colors = ['#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C', '#AF52DE', '#FF3B30', '#34C759', '#007AFF'];
+    
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const animal = animals[Math.floor(Math.random() * animals.length)];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    return { name: `${adjective} ${animal}`, color };
+  };
+
+  const handlePost = async () => {
+    if (!postContent.trim()) {
+      Alert.alert('Error', 'Please write something before posting.');
+      return;
+    }
+
+    setPosting(true);
+    try {
+      const persona = generatePersona();
+      const finalPersona = customNickname.trim() || persona.name;
+      
+      await addDoc(collection(db, 'freedom-wall-posts'), {
+        content: postContent.trim(),
+        createdAt: new Date(),
+        persona: finalPersona,
+        personaColor: persona.color,
+        noteColor: selectedColor,
+        likeCount: 0,
+        likedBy: [],
+      });
+      setPostContent('');
+      setCustomNickname('');
+      setSelectedColor('#FFFACD');
+      setShowModal(false);
+    } catch (error) {
+      console.log('Error posting:', error);
+      Alert.alert('Error', 'Could not create post. Please try again.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleLike = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const postRef = doc(db, 'freedom-wall-posts', postId);
+      
+      await runTransaction(db, async (transaction) => {
+        const postDoc = await transaction.get(postRef);
+        if (!postDoc.exists()) return;
+        
+        const data = postDoc.data();
+        const likedBy = data.likedBy || [];
+        const currentLikeCount = data.likeCount || 0;
+        const userHasLiked = likedBy.includes(user.uid);
+        
+        if (userHasLiked) {
+          // Unlike
+          transaction.update(postRef, {
+            likeCount: Math.max(0, currentLikeCount - 1),
+            likedBy: likedBy.filter(id => id !== user.uid)
+          });
+        } else {
+          // Like
+          transaction.update(postRef, {
+            likeCount: currentLikeCount + 1,
+            likedBy: [...likedBy, user.uid]
+          });
+        }
+      });
+    } catch (error) {
+      console.log('Error updating like:', error);
+      Alert.alert('Error', 'Failed to update like. Please try again.');
+    }
+  };
+
   if (!fontsLoaded) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => fetchPosts()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -68,26 +206,156 @@ export default function FreedomWallScreen({ navigation }) {
         resizeMode="repeat"
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Freedom Wall</Text>
-          <Text style={styles.headerSubtitle}>Share your thoughts anonymously</Text>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.navigate('Dashboard')}
+          >
+            <Feather name="arrow-left" size={24} color="#F5F5DC" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Freedom Wall</Text>
+            <Text style={styles.headerSubtitle}>Share your thoughts anonymously</Text>
+          </View>
         </View>
 
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <PostCard 
-              post={item} 
-              timestamp={formatTimestamp(item.createdAt)}
-              rotation={getRandomRotation(index)}
-            />
-          )}
-          contentContainerStyle={styles.postsContainer}
-          showsVerticalScrollIndicator={false}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-        />
+        {posts.length === 0 && !loading ? (
+          <View style={styles.emptyState}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.emptyStateText}>
+              There are no sticky notes for today yet.{"\n"}Be the first!
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <PostCard 
+                post={item} 
+                timestamp={formatTimestamp(item.createdAt)}
+                rotation={getRandomRotation(index)}
+                onLike={() => handleLike(item.id)}
+                isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
+                onPress={() => navigation.navigate('PostDetail', { 
+                  post: item, 
+                  timestamp: formatTimestamp(item.createdAt) 
+                })}
+              />
+            )}
+            contentContainerStyle={styles.postsContainer}
+            showsVerticalScrollIndicator={false}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+          />
+        )}
+        
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => setShowModal(true)}
+        >
+          <Feather name="plus" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
       </ImageBackground>
+      
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.createNoteContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => setShowModal(false)}
+            >
+              <Feather name="arrow-left" size={24} color="#F5F5DC" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Create Note</Text>
+          </View>
+          
+          {/* Preview Area */}
+          <View style={styles.previewArea}>
+            <Text style={styles.previewLabel}>Preview</Text>
+            <View style={styles.previewContainer}>
+              <PostCard 
+                post={{
+                  content: postContent || "What's on your mind?",
+                  persona: customNickname || 'Anonymous',
+                  personaColor: '#34C759',
+                  noteColor: selectedColor,
+                  likeCount: 0,
+                  likedBy: []
+                }}
+                timestamp="Just now"
+                rotation="2deg"
+                onLike={() => {}}
+                isLiked={false}
+                onPress={() => {}}
+              />
+            </View>
+          </View>
+          
+          {/* Form Area */}
+          <View style={styles.formArea}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nickname (optional)</Text>
+              <TextInput
+                style={styles.formInput}
+                value={customNickname}
+                onChangeText={setCustomNickname}
+                placeholder="Enter your nickname"
+                placeholderTextColor="#8E8E93"
+                maxLength={15}
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Message</Text>
+              <TextInput
+                style={styles.messageInput}
+                value={postContent}
+                onChangeText={setPostContent}
+                placeholder="What's on your mind?"
+                placeholderTextColor="#8E8E93"
+                multiline
+                textAlignVertical="top"
+                maxLength={100}
+              />
+              <Text style={styles.characterCounter}>
+                {postContent.length}/100
+              </Text>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Color</Text>
+              <View style={styles.colorPalette}>
+                {colorPalette.map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorCircle,
+                      { backgroundColor: color },
+                      selectedColor === color && styles.selectedColorCircle
+                    ]}
+                    onPress={() => setSelectedColor(color)}
+                  />
+                ))}
+              </View>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.postButton, posting && styles.postButtonDisabled]}
+              onPress={handlePost}
+              disabled={posting}
+            >
+              <Text style={styles.postButtonText}>
+                {posting ? 'Posting...' : 'Post It'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -106,9 +374,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 30,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 245, 220, 0.1)',
+  },
+  headerContent: {
+    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
@@ -139,5 +418,201 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: 'Inter_400Regular',
+  },
+  retryButton: {
+    backgroundColor: '#34C759',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#34C759',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(42, 42, 42, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  stickyNoteModal: {
+    width: '100%',
+    maxWidth: 400,
+    height: '70%',
+    borderRadius: 8,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+    transform: [{ rotate: '1deg' }],
+  },
+  modalHeader: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  modalTextInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    textAlignVertical: 'top',
+    letterSpacing: 0.3,
+    outline: 'none',
+  },
+  characterCounter: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    textAlign: 'right',
+    marginTop: 8,
+  },
+  colorPalette: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  colorCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedColorCircle: {
+    borderColor: '#333333',
+    borderWidth: 3,
+  },
+  createNoteContainer: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+  },
+  previewArea: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  previewLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#F5F5DC',
+    marginBottom: 16,
+  },
+  previewContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formArea: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  formInput: {
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  messageInput: {
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    textAlignVertical: 'top',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontFamily: 'Inter_400Regular',
+    color: '#D3D3D3',
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 24,
+  },
+  nicknameInput: {
+    height: 40,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    borderBottomWidth: 1,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+    outline: 'none',
+  },
+  postButton: {
+    backgroundColor: '#34C759',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  postButtonDisabled: {
+    backgroundColor: '#A0A0A0',
+  },
+  postButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });

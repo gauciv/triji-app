@@ -13,3 +13,4 @@ export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as EditProfileScreen } from './EditProfileScreen';
 export { default as GradeCalculatorScreen } from './GradeCalculatorScreen';
 export { default as FreedomWallScreen } from './FreedomWallScreen';
+export { default as PostDetailScreen } from './PostDetailScreen';
