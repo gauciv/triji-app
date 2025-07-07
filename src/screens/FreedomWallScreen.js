@@ -218,27 +218,36 @@ export default function FreedomWallScreen({ navigation }) {
           </View>
         </View>
 
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <PostCard 
-              post={item} 
-              timestamp={formatTimestamp(item.createdAt)}
-              rotation={getRandomRotation(index)}
-              onLike={() => handleLike(item.id)}
-              isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
-              onPress={() => navigation.navigate('PostDetail', { 
-                post: item, 
-                timestamp: formatTimestamp(item.createdAt) 
-              })}
-            />
-          )}
-          contentContainerStyle={styles.postsContainer}
-          showsVerticalScrollIndicator={false}
-          numColumns={3}
-          columnWrapperStyle={styles.row}
-        />
+        {posts.length === 0 && !loading ? (
+          <View style={styles.emptyState}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.emptyStateText}>
+              There are no sticky notes for today yet.{"\n"}Be the first!
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <PostCard 
+                post={item} 
+                timestamp={formatTimestamp(item.createdAt)}
+                rotation={getRandomRotation(index)}
+                onLike={() => handleLike(item.id)}
+                isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
+                onPress={() => navigation.navigate('PostDetail', { 
+                  post: item, 
+                  timestamp: formatTimestamp(item.createdAt) 
+                })}
+              />
+            )}
+            contentContainerStyle={styles.postsContainer}
+            showsVerticalScrollIndicator={false}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+          />
+        )}
         
         <TouchableOpacity 
           style={styles.fab}
@@ -479,6 +488,20 @@ const styles = StyleSheet.create({
   selectedColorCircle: {
     borderColor: '#333333',
     borderWidth: 3,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontFamily: 'Inter_400Regular',
+    color: '#D3D3D3',
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 24,
   },
   nicknameInput: {
     height: 40,
