@@ -10,6 +10,7 @@ import PostCard from '../components/PostCard';
 export default function FreedomWallScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [customNickname, setCustomNickname] = useState('');
@@ -21,28 +22,44 @@ export default function FreedomWallScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    const q = query(
-      collection(db, 'freedom-wall-posts'),
-      orderBy('createdAt', 'desc')
-    );
+  const fetchPosts = () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const q = query(
+        collection(db, 'freedom-wall-posts'),
+        orderBy('createdAt', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsList = [];
-      querySnapshot.forEach((doc) => {
-        postsList.push({
-          id: doc.id,
-          ...doc.data(),
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const postsList = [];
+        querySnapshot.forEach((doc) => {
+          postsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
+        setPosts(postsList);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching posts:', error);
+        setError('Could not load the Freedom Wall');
+        setLoading(false);
       });
-      setPosts(postsList);
-      setLoading(false);
-    }, (error) => {
-      console.log('Error fetching posts:', error);
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error setting up listener:', error);
+      setError('Could not load the Freedom Wall');
+      setLoading(false);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = fetchPosts();
+    return () => unsubscribe && unsubscribe();
   }, []);
 
   const formatTimestamp = (timestamp) => {
@@ -92,7 +109,7 @@ export default function FreedomWallScreen({ navigation }) {
       setShowModal(false);
     } catch (error) {
       console.log('Error posting:', error);
-      Alert.alert('Error', 'Failed to post. Please try again.');
+      Alert.alert('Error', 'Could not create post. Please try again.');
     } finally {
       setPosting(false);
     }
@@ -139,6 +156,22 @@ export default function FreedomWallScreen({ navigation }) {
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => fetchPosts()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -310,6 +343,30 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: 'Inter_400Regular',
+  },
+  retryButton: {
+    backgroundColor: '#34C759',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
   },
   fab: {
     position: 'absolute',
