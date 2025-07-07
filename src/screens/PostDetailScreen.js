@@ -10,6 +10,7 @@ export default function PostDetailScreen({ route, navigation }) {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [posting, setPosting] = useState(false);
+  const [userPersona, setUserPersona] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -18,6 +19,10 @@ export default function PostDetailScreen({ route, navigation }) {
   });
 
   useEffect(() => {
+    // Generate user persona once for this session
+    const persona = generatePersona();
+    setUserPersona(persona);
+    
     const q = query(
       collection(db, 'freedom-wall-posts', post.id, 'comments'),
       orderBy('createdAt', 'asc')
@@ -50,19 +55,18 @@ export default function PostDetailScreen({ route, navigation }) {
   };
 
   const handlePostComment = async () => {
-    if (!commentText.trim()) {
+    if (!commentText.trim() || !userPersona) {
       Alert.alert('Error', 'Please write a comment.');
       return;
     }
 
     setPosting(true);
     try {
-      const persona = generatePersona();
       await addDoc(collection(db, 'freedom-wall-posts', post.id, 'comments'), {
         text: commentText.trim(),
         createdAt: new Date(),
-        persona: persona.name,
-        personaColor: persona.color,
+        persona: userPersona.name,
+        personaColor: userPersona.color,
       });
       setCommentText('');
     } catch (error) {
