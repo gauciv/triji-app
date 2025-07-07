@@ -11,4 +11,8 @@ export { default as AnnouncementDetailScreen } from './AnnouncementDetailScreen'
 export { default as ArchivedAnnouncementsScreen } from './ArchivedAnnouncementsScreen';
 export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as EditProfileScreen } from './EditProfileScreen';
+<<<<<<< HEAD
 export { default as GradeCalculatorScreen } from './GradeCalculatorScreen';
+=======
+export { default as FreedomWallScreen } from './FreedomWallScreen';
+>>>>>>> 3c57f74 (feat(freedom-wall): build initial UI with sticky note card style)
