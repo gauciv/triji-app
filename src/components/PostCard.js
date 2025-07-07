@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
-export default function PostCard({ post, timestamp, rotation, onReaction }) {
+export default function PostCard({ post, timestamp, rotation, onReaction, onPress }) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -13,7 +13,11 @@ export default function PostCard({ post, timestamp, rotation, onReaction }) {
   }
 
   return (
-    <View style={[styles.card, { transform: [{ rotate: rotation }] }]}>
+    <TouchableOpacity 
+      style={[styles.card, { transform: [{ rotate: rotation }] }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <View style={styles.cardContent}>
         <View style={styles.personaContainer}>
           <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
@@ -22,7 +26,9 @@ export default function PostCard({ post, timestamp, rotation, onReaction }) {
           </Text>
         </View>
         
-        <Text style={styles.postText}>{post.content}</Text>
+        <Text style={styles.postText} numberOfLines={4} ellipsizeMode="tail">
+          {post.content}
+        </Text>
         
         <View style={styles.reactionsContainer}>
           {['👍', '😂', '❤️', '😮'].map((emoji) => (
@@ -46,17 +52,17 @@ export default function PostCard({ post, timestamp, rotation, onReaction }) {
       
       {/* Sticky note tape effect */}
       <View style={styles.tape} />
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
-    minHeight: 140,
+    width: 100,
+    height: 140,
     backgroundColor: '#FFFACD',
     borderRadius: 4,
-    margin: 8,
+    margin: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 2,
@@ -68,25 +74,25 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   cardContent: {
-    padding: 16,
+    padding: 8,
     flex: 1,
     justifyContent: 'space-between',
   },
   postText: {
-    fontSize: 14,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: '#2C2C2C',
-    lineHeight: 20,
+    lineHeight: 14,
     textAlign: 'left',
-    // Simulating handwriting style with letter spacing
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    flex: 1,
   },
   cardFooter: {
     marginTop: 12,
     alignItems: 'flex-end',
   },
   timestamp: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
     fontStyle: 'italic',
@@ -103,28 +109,28 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   personaText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: 'Inter_500Medium',
     fontWeight: '600',
   },
   reactionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 4,
+    marginBottom: 2,
   },
   reactionButton: {
     alignItems: 'center',
-    padding: 4,
+    padding: 2,
   },
   reactionEmoji: {
-    fontSize: 16,
+    fontSize: 12,
   },
   reactionCount: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
-    marginTop: 2,
+    marginTop: 1,
   },
   tape: {
     position: 'absolute',

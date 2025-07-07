@@ -99,11 +99,13 @@ export default function FreedomWallScreen({ navigation }) {
 
   const handleReaction = async (postId, emoji) => {
     try {
-      await updateDoc(doc(db, 'freedom-wall-posts', postId), {
+      const postRef = doc(db, 'freedom-wall-posts', postId);
+      await updateDoc(postRef, {
         [`reactions.${emoji}`]: increment(1)
       });
     } catch (error) {
       console.log('Error adding reaction:', error);
+      Alert.alert('Error', 'Failed to add reaction. Please try again.');
     }
   };
 
@@ -146,11 +148,15 @@ export default function FreedomWallScreen({ navigation }) {
               timestamp={formatTimestamp(item.createdAt)}
               rotation={getRandomRotation(index)}
               onReaction={(emoji) => handleReaction(item.id, emoji)}
+              onPress={() => navigation.navigate('PostDetail', { 
+                post: item, 
+                timestamp: formatTimestamp(item.createdAt) 
+              })}
             />
           )}
           contentContainerStyle={styles.postsContainer}
           showsVerticalScrollIndicator={false}
-          numColumns={2}
+          numColumns={3}
           columnWrapperStyle={styles.row}
         />
         
