@@ -194,7 +194,12 @@ export default function FreedomWallScreen({ navigation }) {
               multiline
               textAlignVertical="top"
               autoFocus
+              maxLength={100}
             />
+            
+            <Text style={styles.characterCounter}>
+              {postContent.length}/100
+            </Text>
             
             <TouchableOpacity 
               style={[styles.postButton, posting && styles.postButtonDisabled]}
@@ -321,6 +326,14 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     textAlignVertical: 'top',
     letterSpacing: 0.3,
+    outline: 'none',
+  },
+  characterCounter: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#666666',
+    textAlign: 'right',
+    marginBottom: 10,
   },
   postButton: {
     backgroundColor: '#34C759',
