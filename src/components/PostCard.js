@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
-export default function PostCard({ post, timestamp, rotation, onReaction, onPress }) {
+export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -30,19 +30,17 @@ export default function PostCard({ post, timestamp, rotation, onReaction, onPres
           {post.content}
         </Text>
         
-        <View style={styles.reactionsContainer}>
-          {['👍', '😂', '❤️', '😮'].map((emoji) => (
-            <TouchableOpacity 
-              key={emoji}
-              style={styles.reactionButton}
-              onPress={() => onReaction(emoji)}
-            >
-              <Text style={styles.reactionEmoji}>{emoji}</Text>
-              <Text style={styles.reactionCount}>
-                {post.reactions?.[emoji] || 0}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.likeContainer}>
+          <TouchableOpacity 
+            style={styles.likeButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onLike();
+            }}
+          >
+            <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
+            <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
+          </TouchableOpacity>
         </View>
         
         <View style={styles.cardFooter}>
@@ -113,24 +111,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     fontWeight: '600',
   },
-  reactionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  likeContainer: {
     marginTop: 4,
     marginBottom: 2,
   },
-  reactionButton: {
+  likeButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     padding: 2,
   },
-  reactionEmoji: {
-    fontSize: 12,
+  heartIcon: {
+    fontSize: 14,
+    color: '#CCC',
+    marginRight: 4,
   },
-  reactionCount: {
-    fontSize: 8,
+  heartLiked: {
+    color: '#FF3B30',
+  },
+  likeCount: {
+    fontSize: 10,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
-    marginTop: 1,
   },
   tape: {
     position: 'absolute',

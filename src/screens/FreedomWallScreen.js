@@ -3,7 +3,8 @@ import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Mo
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, increment } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
+import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
 
 export default function FreedomWallScreen({ navigation }) {
@@ -83,12 +84,8 @@ export default function FreedomWallScreen({ navigation }) {
         createdAt: new Date(),
         persona: finalPersona,
         personaColor: persona.color,
-        reactions: {
-          '👍': 0,
-          '😂': 0,
-          '❤️': 0,
-          '😮': 0,
-        },
+        likeCount: 0,
+        likedBy: [],
       });
       setPostContent('');
       setCustomNickname('');
@@ -101,15 +98,39 @@ export default function FreedomWallScreen({ navigation }) {
     }
   };
 
-  const handleReaction = async (postId, emoji) => {
+  const handleLike = async (postId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
       const postRef = doc(db, 'freedom-wall-posts', postId);
-      await updateDoc(postRef, {
-        [`reactions.${emoji}`]: increment(1)
+      
+      await runTransaction(db, async (transaction) => {
+        const postDoc = await transaction.get(postRef);
+        if (!postDoc.exists()) return;
+        
+        const data = postDoc.data();
+        const likedBy = data.likedBy || [];
+        const currentLikeCount = data.likeCount || 0;
+        const userHasLiked = likedBy.includes(user.uid);
+        
+        if (userHasLiked) {
+          // Unlike
+          transaction.update(postRef, {
+            likeCount: Math.max(0, currentLikeCount - 1),
+            likedBy: likedBy.filter(id => id !== user.uid)
+          });
+        } else {
+          // Like
+          transaction.update(postRef, {
+            likeCount: currentLikeCount + 1,
+            likedBy: [...likedBy, user.uid]
+          });
+        }
       });
     } catch (error) {
-      console.log('Error adding reaction:', error);
-      Alert.alert('Error', 'Failed to add reaction. Please try again.');
+      console.log('Error updating like:', error);
+      Alert.alert('Error', 'Failed to update like. Please try again.');
     }
   };
 
@@ -151,7 +172,8 @@ export default function FreedomWallScreen({ navigation }) {
               post={item} 
               timestamp={formatTimestamp(item.createdAt)}
               rotation={getRandomRotation(index)}
-              onReaction={(emoji) => handleReaction(item.id, emoji)}
+              onLike={() => handleLike(item.id)}
+              isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
               onPress={() => navigation.navigate('PostDetail', { 
                 post: item, 
                 timestamp: formatTimestamp(item.createdAt) 
