@@ -406,9 +406,12 @@ const styles = StyleSheet.create({
   postsContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,
+    justifyContent: 'flex-start',
   },
   row: {
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingHorizontal: 8,
   },
   loadingContainer: {
     flex: 1,
