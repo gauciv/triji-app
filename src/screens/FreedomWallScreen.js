@@ -17,7 +17,7 @@ export default function FreedomWallScreen({ navigation }) {
   const [posting, setPosting] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FFFACD');
   const [showSortModal, setShowSortModal] = useState(false);
-  const [sortBy, setSortBy] = useState('Newest to Oldest');
+  const [sortBy, setSortBy] = useState('Oldest to Newest');
 
   const colorPalette = [
     '#FFFACD', // Pale yellow
@@ -48,10 +48,39 @@ export default function FreedomWallScreen({ navigation }) {
     setError(null);
     
     try {
-      const q = query(
-        collection(db, 'freedom-wall-posts'),
-        orderBy('createdAt', 'desc')
-      );
+      let q;
+      
+      switch (sortBy) {
+        case 'Newest to Oldest':
+          q = query(
+            collection(db, 'freedom-wall-posts'),
+            orderBy('createdAt', 'desc')
+          );
+          break;
+        case 'Oldest to Newest':
+          q = query(
+            collection(db, 'freedom-wall-posts'),
+            orderBy('createdAt', 'asc')
+          );
+          break;
+        case 'Most Hearts':
+          q = query(
+            collection(db, 'freedom-wall-posts'),
+            orderBy('likeCount', 'desc')
+          );
+          break;
+        case 'Fewest Hearts':
+          q = query(
+            collection(db, 'freedom-wall-posts'),
+            orderBy('likeCount', 'asc')
+          );
+          break;
+        default:
+          q = query(
+            collection(db, 'freedom-wall-posts'),
+            orderBy('createdAt', 'asc')
+          );
+      }
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const postsList = [];
@@ -81,7 +110,7 @@ export default function FreedomWallScreen({ navigation }) {
   useEffect(() => {
     const unsubscribe = fetchPosts();
     return () => unsubscribe && unsubscribe();
-  }, []);
+  }, [sortBy]);
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
