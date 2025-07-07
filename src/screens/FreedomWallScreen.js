@@ -16,6 +16,8 @@ export default function FreedomWallScreen({ navigation }) {
   const [customNickname, setCustomNickname] = useState('');
   const [posting, setPosting] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FFFACD');
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [sortBy, setSortBy] = useState('Newest to Oldest');
 
   const colorPalette = [
     '#FFFACD', // Pale yellow
@@ -215,6 +217,14 @@ export default function FreedomWallScreen({ navigation }) {
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Freedom Wall</Text>
             <Text style={styles.headerSubtitle}>Share your thoughts anonymously</Text>
+            
+            <TouchableOpacity 
+              style={styles.sortButton}
+              onPress={() => setShowSortModal(true)}
+            >
+              <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
+              <Feather name="chevron-down" size={16} color="#D3D3D3" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -355,6 +365,45 @@ export default function FreedomWallScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+      
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.sortModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
+          <View style={styles.sortDropdown}>
+            {['Newest to Oldest', 'Oldest to Newest', 'Most Hearts', 'Fewest Hearts'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.sortOption,
+                  sortBy === option && styles.sortOptionSelected
+                ]}
+                onPress={() => {
+                  setSortBy(option);
+                  setShowSortModal(false);
+                }}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === option && styles.sortOptionTextSelected
+                ]}>
+                  {option}
+                </Text>
+                {sortBy === option && (
+                  <Feather name="check" size={16} color="#34C759" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -579,6 +628,55 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     textAlignVertical: 'top',
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  sortButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#D3D3D3',
+  },
+  sortModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    paddingTop: 140,
+  },
+  sortDropdown: {
+    backgroundColor: 'rgba(42, 42, 42, 0.95)',
+    borderRadius: 12,
+    minWidth: 200,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sortOptionSelected: {
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+  },
+  sortOptionText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  sortOptionTextSelected: {
+    color: '#34C759',
+    fontFamily: 'Inter_500Medium',
   },
   emptyState: {
     flex: 1,
