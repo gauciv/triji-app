@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   tape: {
     position: 'absolute',
-    top: -4,
+    top: -10,
     right: 20,
     width: 30,
     height: 16,

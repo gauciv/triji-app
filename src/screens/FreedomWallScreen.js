@@ -307,14 +307,14 @@ export default function FreedomWallScreen({ navigation }) {
         onRequestClose={() => setShowModal(false)}
       >
         <View style={styles.createNoteContainer}>
-          <View style={styles.header}>
+          <View style={styles.createNoteHeader}>
             <TouchableOpacity 
-              style={styles.backButton}
+              style={styles.createNoteBackButton}
               onPress={() => setShowModal(false)}
             >
               <Feather name="arrow-left" size={24} color="#F5F5DC" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Create Note</Text>
+            <Text style={styles.createNoteTitle}>Create Note</Text>
           </View>
           
           {/* Preview Area */}
@@ -717,6 +717,28 @@ const styles = StyleSheet.create({
   sortOptionTextSelected: {
     color: '#34C759',
     fontFamily: 'Inter_500Medium',
+  },
+  createNoteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  createNoteBackButton: {
+    width: 50,
+    alignItems: 'flex-start',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 245, 220, 0.1)',
+  },
+  createNoteTitle: {
+    flex: 1,
+    fontSize: 28,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#F5F5DC',
+    textAlign: 'center',
+    marginRight: 50,
   },
   emptyState: {
     flex: 1,
