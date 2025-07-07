@@ -118,14 +118,14 @@ export default function GradeCalculatorScreen({ navigation }) {
               <CardWrapper key={idx} style={cardStyle}>
                 <BlurView intensity={40} tint="dark" style={styles.glassCard}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { marginRight: 8 }]}
                     placeholder="Subject Name"
                     placeholderTextColor="#aaa"
                     value={subject.name}
                     onChangeText={text => handleInputChange(idx, 'name', text)}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { marginRight: 8 }]}
                     placeholder="Units"
                     placeholderTextColor="#aaa"
                     keyboardType="numeric"
@@ -240,11 +240,12 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     backgroundColor: '#232323',
     color: '#fff',
     borderRadius: 8,
     padding: 10,
-    marginRight: 8,
     fontSize: 15,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
