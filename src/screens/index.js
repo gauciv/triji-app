@@ -11,3 +11,4 @@ export { default as AnnouncementDetailScreen } from './AnnouncementDetailScreen'
 export { default as ArchivedAnnouncementsScreen } from './ArchivedAnnouncementsScreen';
 export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as EditProfileScreen } from './EditProfileScreen';
+export { default as GradeCalculatorScreen } from './GradeCalculatorScreen';
