@@ -263,58 +263,86 @@ export default function FreedomWallScreen({ navigation }) {
         presentationStyle="fullScreen"
         onRequestClose={() => setShowModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={[styles.stickyNoteModal, { backgroundColor: selectedColor }]}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowModal(false)}
-              >
-                <Feather name="x" size={24} color={getTextColor(selectedColor)} />
-              </TouchableOpacity>
+        <View style={styles.createNoteContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => setShowModal(false)}
+            >
+              <Feather name="arrow-left" size={24} color="#F5F5DC" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Create Note</Text>
+          </View>
+          
+          {/* Preview Area */}
+          <View style={styles.previewArea}>
+            <Text style={styles.previewLabel}>Preview</Text>
+            <View style={styles.previewContainer}>
+              <PostCard 
+                post={{
+                  content: postContent || "What's on your mind?",
+                  persona: customNickname || 'Anonymous',
+                  personaColor: '#34C759',
+                  noteColor: selectedColor,
+                  likeCount: 0,
+                  likedBy: []
+                }}
+                timestamp="Just now"
+                rotation="2deg"
+                onLike={() => {}}
+                isLiked={false}
+                onPress={() => {}}
+              />
+            </View>
+          </View>
+          
+          {/* Form Area */}
+          <View style={styles.formArea}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nickname (optional)</Text>
+              <TextInput
+                style={styles.formInput}
+                value={customNickname}
+                onChangeText={setCustomNickname}
+                placeholder="Enter your nickname"
+                placeholderTextColor="#8E8E93"
+                maxLength={15}
+              />
             </View>
             
-            <TextInput
-              style={[styles.nicknameInput, { 
-                color: getTextColor(selectedColor),
-                borderBottomColor: getTextColor(selectedColor) + '40'
-              }]}
-              value={customNickname}
-              onChangeText={setCustomNickname}
-              placeholder="Nickname (optional)"
-              placeholderTextColor={getTextColor(selectedColor) + '80'}
-              maxLength={15}
-            />
-            
-            <TextInput
-              style={[styles.modalTextInput, { color: getTextColor(selectedColor) }]}
-              value={postContent}
-              onChangeText={setPostContent}
-              placeholder="What's on your mind?"
-              placeholderTextColor={getTextColor(selectedColor) + '80'}
-              multiline
-              textAlignVertical="top"
-              autoFocus
-              maxLength={100}
-            />
-            
-            <View style={styles.colorPalette}>
-              {colorPalette.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorCircle,
-                    { backgroundColor: color },
-                    selectedColor === color && styles.selectedColorCircle
-                  ]}
-                  onPress={() => setSelectedColor(color)}
-                />
-              ))}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Message</Text>
+              <TextInput
+                style={styles.messageInput}
+                value={postContent}
+                onChangeText={setPostContent}
+                placeholder="What's on your mind?"
+                placeholderTextColor="#8E8E93"
+                multiline
+                textAlignVertical="top"
+                maxLength={100}
+              />
+              <Text style={styles.characterCounter}>
+                {postContent.length}/100
+              </Text>
             </View>
             
-            <Text style={[styles.characterCounter, { color: getTextColor(selectedColor) }]}>
-              {postContent.length}/100
-            </Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Color</Text>
+              <View style={styles.colorPalette}>
+                {colorPalette.map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorCircle,
+                      { backgroundColor: color },
+                      selectedColor === color && styles.selectedColorCircle
+                    ]}
+                    onPress={() => setSelectedColor(color)}
+                  />
+                ))}
+              </View>
+            </View>
             
             <TouchableOpacity 
               style={[styles.postButton, posting && styles.postButtonDisabled]}
@@ -469,14 +497,14 @@ const styles = StyleSheet.create({
   characterCounter: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
     textAlign: 'right',
-    marginBottom: 10,
+    marginTop: 8,
   },
   colorPalette: {
     flexDirection: 'row',
-    justifyContent: 'center',
     gap: 12,
-    marginVertical: 16,
+    marginTop: 8,
   },
   colorCircle: {
     width: 32,
@@ -488,6 +516,66 @@ const styles = StyleSheet.create({
   selectedColorCircle: {
     borderColor: '#333333',
     borderWidth: 3,
+  },
+  createNoteContainer: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+  },
+  previewArea: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  previewLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#F5F5DC',
+    marginBottom: 16,
+  },
+  previewContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formArea: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  formInput: {
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  messageInput: {
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    textAlignVertical: 'top',
   },
   emptyState: {
     flex: 1,
@@ -517,7 +605,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 8,
   },
   postButtonDisabled: {
     backgroundColor: '#A0A0A0',
