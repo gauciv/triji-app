@@ -11,6 +11,7 @@ export default function FreedomWallScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [postContent, setPostContent] = useState('');
+  const [customNickname, setCustomNickname] = useState('');
   const [posting, setPosting] = useState(false);
 
   let [fontsLoaded] = useFonts({
@@ -75,10 +76,12 @@ export default function FreedomWallScreen({ navigation }) {
     setPosting(true);
     try {
       const persona = generatePersona();
+      const finalPersona = customNickname.trim() || persona.name;
+      
       await addDoc(collection(db, 'freedom-wall-posts'), {
         content: postContent.trim(),
         createdAt: new Date(),
-        persona: persona.name,
+        persona: finalPersona,
         personaColor: persona.color,
         reactions: {
           '👍': 0,
@@ -88,6 +91,7 @@ export default function FreedomWallScreen({ navigation }) {
         },
       });
       setPostContent('');
+      setCustomNickname('');
       setShowModal(false);
     } catch (error) {
       console.log('Error posting:', error);
@@ -184,6 +188,15 @@ export default function FreedomWallScreen({ navigation }) {
                 <Feather name="x" size={24} color="#666666" />
               </TouchableOpacity>
             </View>
+            
+            <TextInput
+              style={styles.nicknameInput}
+              value={customNickname}
+              onChangeText={setCustomNickname}
+              placeholder="Nickname (optional)"
+              placeholderTextColor="#999999"
+              maxLength={15}
+            />
             
             <TextInput
               style={styles.modalTextInput}
@@ -334,6 +347,17 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'right',
     marginBottom: 10,
+  },
+  nicknameInput: {
+    height: 40,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#2C2C2C',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DDD',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+    outline: 'none',
   },
   postButton: {
     backgroundColor: '#34C759',
