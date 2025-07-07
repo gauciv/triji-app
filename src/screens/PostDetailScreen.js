@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert, KeyboardAvoidingView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
@@ -111,77 +111,82 @@ export default function PostDetailScreen({ route, navigation }) {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Feather name="arrow-left" size={24} color="#F5F5DC" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Post Detail</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.postSection}>
-          <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
-            <View style={styles.personaContainer}>
-              <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
-              <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
-                {post.persona || 'Anonymous'}
-              </Text>
-            </View>
-            
-            <Text style={styles.postText}>{post.content}</Text>
-            
-            <View style={styles.cardFooter}>
-              <View style={styles.likeInfo}>
-                <Text style={styles.heartIcon}>♥</Text>
-                <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
-              </View>
-              <Text style={styles.timestamp}>{timestamp}</Text>
-            </View>
-          </View>
+  const renderPostHeader = () => (
+    <View style={styles.postHeaderContainer}>
+      <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
+        <View style={styles.personaContainer}>
+          <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+          <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+            {post.persona || 'Anonymous'}
+          </Text>
         </View>
         
-        <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
-          
-          <FlatList
-            data={comments}
-            keyExtractor={(item) => item.id}
-            renderItem={renderComment}
-            showsVerticalScrollIndicator={false}
-            style={styles.commentsList}
-          />
-          
-          <View style={styles.commentInput}>
-            <TextInput
-              style={styles.textInput}
-              value={commentText}
-              onChangeText={setCommentText}
-              placeholder="Write a comment..."
-              placeholderTextColor="#8E8E93"
-              multiline
-              maxLength={200}
-            />
-            <TouchableOpacity 
-              style={[styles.sendButton, posting && styles.sendButtonDisabled]}
-              onPress={handlePostComment}
-              disabled={posting || !commentText.trim()}
-            >
-              <Feather name="send" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+        <Text style={styles.postText}>{post.content}</Text>
+        
+        <View style={styles.cardFooter}>
+          <View style={styles.likeInfo}>
+            <Text style={styles.heartIcon}>♥</Text>
+            <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
           </View>
+          <Text style={styles.timestamp}>{timestamp}</Text>
         </View>
       </View>
+      
+      <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
     </View>
+  );
+
+  return (
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <View style={styles.mainContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Feather name="arrow-left" size={24} color="#F5F5DC" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Post Detail</Text>
+        </View>
+
+        <FlatList
+          data={comments}
+          keyExtractor={(item) => item.id}
+          renderItem={renderComment}
+          ListHeaderComponent={renderPostHeader}
+          showsVerticalScrollIndicator={false}
+          style={styles.flatList}
+          contentContainerStyle={styles.flatListContent}
+        />
+        
+        <View style={styles.commentInput}>
+          <TextInput
+            style={styles.textInput}
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder="Write a comment..."
+            placeholderTextColor="#8E8E93"
+            multiline
+            maxLength={200}
+          />
+          <TouchableOpacity 
+            style={[styles.sendButton, posting && styles.sendButtonDisabled]}
+            onPress={handlePostComment}
+            disabled={posting || !commentText.trim()}
+          >
+            <Feather name="send" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  mainContainer: {
     flex: 1,
     backgroundColor: '#2A2A2A',
   },
@@ -203,32 +208,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#F5F5DC',
   },
-  content: {
+  flatList: {
     flex: 1,
   },
-  postSection: {
+  flatListContent: {
+    paddingBottom: 16,
+  },
+  postHeaderContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-  },
-  commentsSection: {
-    position: 'absolute',
-    top: 280,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
+    backgroundColor: '#2A2A2A',
   },
   commentsTitle: {
     fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
     color: '#F5F5DC',
-    marginBottom: 16,
-  },
-  commentsList: {
-    flex: 1,
+    marginTop: 20,
     marginBottom: 16,
   },
   commentBubble: {
@@ -236,6 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
+    marginHorizontal: 16,
   },
   commentHeader: {
     flexDirection: 'row',
@@ -269,6 +265,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 12,
+    padding: 16,
+    backgroundColor: '#2A2A2A',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   textInput: {
     flex: 1,
