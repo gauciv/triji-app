@@ -236,25 +236,29 @@ export default function FreedomWallScreen({ navigation }) {
         style={styles.backgroundTexture}
         resizeMode="repeat"
       >
-        <View style={styles.header}>
+        <View style={styles.headerBar}>
           <TouchableOpacity 
-            style={styles.backButton}
+            style={styles.backButtonContainer}
             onPress={() => navigation.navigate('Dashboard')}
           >
             <Feather name="arrow-left" size={24} color="#F5F5DC" />
           </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Freedom Wall</Text>
-            <Text style={styles.headerSubtitle}>Share your thoughts anonymously</Text>
-            
-            <TouchableOpacity 
-              style={styles.sortButton}
-              onPress={() => setShowSortModal(true)}
-            >
-              <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
-              <Feather name="chevron-down" size={16} color="#D3D3D3" />
-            </TouchableOpacity>
-          </View>
+          
+          <Text style={styles.headerTitle}>Freedom Wall</Text>
+          
+          <View style={styles.spacer} />
+        </View>
+        
+        <View style={styles.subHeader}>
+          <Text style={styles.headerSubtitle}>Share your thoughts anonymously</Text>
+          
+          <TouchableOpacity 
+            style={styles.sortButton}
+            onPress={() => setShowSortModal(true)}
+          >
+            <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
+            <Feather name="chevron-down" size={16} color="#D3D3D3" />
+          </TouchableOpacity>
         </View>
 
         {posts.length === 0 && !loading ? (
@@ -451,35 +455,42 @@ const styles = StyleSheet.create({
   backgroundTexture: {
     flex: 1,
   },
-  header: {
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 16,
   },
-  backButton: {
+  backButtonContainer: {
+    width: 50,
+    alignItems: 'flex-start',
     padding: 8,
-    marginRight: 16,
     borderRadius: 8,
     backgroundColor: 'rgba(245, 245, 220, 0.1)',
   },
-  headerContent: {
-    flex: 1,
+  spacer: {
+    width: 50,
+  },
+  subHeader: {
     alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   headerTitle: {
-    fontSize: 32,
+    flex: 1,
+    fontSize: 28,
     fontFamily: 'Inter_600SemiBold',
     color: '#F5F5DC',
+    textAlign: 'center',
     textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-    marginBottom: 8,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#D3D3D3',
     textAlign: 'center',
+    marginBottom: 16,
   },
   postsContainer: {
     paddingHorizontal: 16,
