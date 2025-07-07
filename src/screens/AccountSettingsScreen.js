@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { auth } from '../config/firebaseConfig';
 import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 import SettingsRow from '../components/SettingsRow';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
