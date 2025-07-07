@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, CheckBox, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, CheckBox, Linking, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather, FontAwesome } from '@expo/vector-icons';
@@ -96,6 +96,9 @@ export default function RegisterScreen({ navigation }) {
               value={firstName}
               onChangeText={setFirstName}
               autoCapitalize="words"
+              selectionColor="#007AFF"
+              underlineColorAndroid="transparent"
+              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -107,6 +110,9 @@ export default function RegisterScreen({ navigation }) {
               value={lastName}
               onChangeText={setLastName}
               autoCapitalize="words"
+              selectionColor="#007AFF"
+              underlineColorAndroid="transparent"
+              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -119,6 +125,9 @@ export default function RegisterScreen({ navigation }) {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              selectionColor="#007AFF"
+              underlineColorAndroid="transparent"
+              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -131,6 +140,9 @@ export default function RegisterScreen({ navigation }) {
               value={password}
               onChangeText={setPassword}
               autoCapitalize="none"
+              selectionColor="#007AFF"
+              underlineColorAndroid="transparent"
+              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
               <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
@@ -146,6 +158,9 @@ export default function RegisterScreen({ navigation }) {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               autoCapitalize="none"
+              selectionColor="#007AFF"
+              underlineColorAndroid="transparent"
+              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
               <Feather name={showConfirmPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
