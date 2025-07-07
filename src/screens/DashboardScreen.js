@@ -33,6 +33,8 @@ export default function DashboardScreen({ navigation }) {
     const handlePress = () => {
       if (item.title === 'Announcements') {
         navigation.navigate('Announcements');
+      } else if (item.title === 'Freedom Wall') {
+        navigation.navigate('FreedomWall');
       } else if (item.title === 'Grade Calculator') {
         navigation.navigate('GradeCalculator');
       }
