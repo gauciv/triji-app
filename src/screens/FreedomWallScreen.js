@@ -6,8 +6,10 @@ import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
+import { useNetwork } from '../context/NetworkContext';
 
 export default function FreedomWallScreen({ navigation }) {
+  const { isConnected } = useNetwork();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -390,12 +392,18 @@ export default function FreedomWallScreen({ navigation }) {
             </View>
             
             <TouchableOpacity 
-              style={[styles.postButton, posting && styles.postButtonDisabled]}
+              style={[
+                styles.postButton, 
+                (posting || !isConnected) && styles.postButtonDisabled
+              ]}
               onPress={handlePost}
-              disabled={posting}
+              disabled={posting || !isConnected}
             >
-              <Text style={styles.postButtonText}>
-                {posting ? 'Posting...' : 'Post It'}
+              <Text style={[
+                styles.postButtonText,
+                !isConnected && styles.postButtonTextDisabled
+              ]}>
+                {!isConnected ? 'Offline - Cannot Post' : posting ? 'Posting...' : 'Post It'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -779,5 +787,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+  },
+  postButtonTextDisabled: {
+    color: '#666666',
   },
 });
