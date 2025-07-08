@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 
 export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   const [countdown, setCountdown] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [description, setDescription] = useState('');
   
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -105,11 +108,84 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
         style={styles.reportButton}
         onPress={(e) => {
           e.stopPropagation();
-          console.log('Report button pressed');
+          setShowReportModal(true);
         }}
       >
         <Feather name="alert-triangle" size={12} color="#FF3B30" />
       </TouchableOpacity>
+      
+      {/* Report Modal */}
+      <Modal
+        visible={showReportModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View style={styles.reportModalContainer}>
+          <View style={styles.reportHeader}>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setShowReportModal(false)}
+            >
+              <Feather name="x" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.reportTitle}>Report Post</Text>
+          </View>
+          
+          <ScrollView style={styles.reportContent}>
+            <Text style={styles.sectionTitle}>Please select a reason:</Text>
+            
+            {['Spam', 'Harassment or Hate Speech', 'Personal Information', 'Inappropriate Content'].map((reason) => (
+              <TouchableOpacity
+                key={reason}
+                style={[
+                  styles.reasonOption,
+                  selectedReason === reason && styles.reasonOptionSelected
+                ]}
+                onPress={() => setSelectedReason(reason)}
+              >
+                <Text style={[
+                  styles.reasonText,
+                  selectedReason === reason && styles.reasonTextSelected
+                ]}>
+                  {reason}
+                </Text>
+                {selectedReason === reason && (
+                  <Feather name="check" size={16} color="#FF3B30" />
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            <Text style={styles.sectionTitle}>Additional Description (Optional):</Text>
+            <TextInput
+              style={styles.descriptionInput}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Provide more details about this report..."
+              placeholderTextColor="#8E8E93"
+              multiline
+              textAlignVertical="top"
+              maxLength={200}
+            />
+            
+            <TouchableOpacity 
+              style={[
+                styles.submitButton,
+                !selectedReason && styles.submitButtonDisabled
+              ]}
+              onPress={() => {
+                console.log('Report submitted:', { reason: selectedReason, description });
+                setShowReportModal(false);
+                setSelectedReason('');
+                setDescription('');
+              }}
+              disabled={!selectedReason}
+            >
+              <Text style={styles.submitButtonText}>Submit Report</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </TouchableOpacity>
   );
 }
@@ -242,5 +318,100 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  reportModalContainer: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  reportTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 56,
+  },
+  reportContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    marginTop: 20,
+  },
+  reasonOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  reasonOptionSelected: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderColor: '#FF3B30',
+  },
+  reasonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  reasonTextSelected: {
+    color: '#FF3B30',
+    fontFamily: 'Inter_500Medium',
+  },
+  descriptionInput: {
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 30,
+  },
+  submitButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#666666',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });
