@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { db } from '../config/firebaseConfig';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '../config/firebaseConfig';
 
 export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   const [countdown, setCountdown] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -42,6 +46,38 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
     
     return () => clearInterval(interval);
   }, [post.expiresAt]);
+
+  const handleSubmitReport = async () => {
+    const user = auth.currentUser;
+    if (!user || !selectedReason) return;
+
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'reports'), {
+        postId: post.id,
+        postContent: post.content,
+        reason: selectedReason,
+        description: description.trim(),
+        reporterId: user.uid,
+        reportedAt: serverTimestamp()
+      });
+
+      setShowReportModal(false);
+      setSelectedReason('');
+      setDescription('');
+      
+      Alert.alert(
+        'Report Submitted',
+        'Thank you for helping keep our community safe.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.log('Error submitting report:', error);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -171,17 +207,14 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             <TouchableOpacity 
               style={[
                 styles.submitButton,
-                !selectedReason && styles.submitButtonDisabled
+                (!selectedReason || submitting) && styles.submitButtonDisabled
               ]}
-              onPress={() => {
-                console.log('Report submitted:', { reason: selectedReason, description });
-                setShowReportModal(false);
-                setSelectedReason('');
-                setDescription('');
-              }}
-              disabled={!selectedReason}
+              onPress={handleSubmitReport}
+              disabled={!selectedReason || submitting}
             >
-              <Text style={styles.submitButtonText}>Submit Report</Text>
+              <Text style={styles.submitButtonText}>
+                {submitting ? 'Submitting...' : 'Submit Report'}
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
