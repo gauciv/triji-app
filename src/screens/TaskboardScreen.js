@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
@@ -176,93 +176,93 @@ export default function TaskboardScreen({ navigation }) {
         <Text style={styles.headerTitle}>Taskboard</Text>
       </View>
 
-      <View style={styles.semesterSelector}>
-        <TouchableOpacity
-          style={[
-            styles.semesterButton,
-            selectedSemester === 1 && styles.semesterButtonActive
-          ]}
-          onPress={() => setSelectedSemester(1)}
-        >
-          <Text style={[
-            styles.semesterButtonText,
-            selectedSemester === 1 && styles.semesterButtonTextActive
-          ]}>
-            1st Sem
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.semesterButton,
-            selectedSemester === 2 && styles.semesterButtonActive
-          ]}
-          onPress={() => setSelectedSemester(2)}
-        >
-          <Text style={[
-            styles.semesterButtonText,
-            selectedSemester === 2 && styles.semesterButtonTextActive
-          ]}>
-            2nd Sem
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statusFilter}>
-        {['All', 'To Do', 'In Progress', 'Completed'].map((status) => (
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.semesterSelector}>
           <TouchableOpacity
-            key={status}
             style={[
-              styles.filterButton,
-              selectedStatus === status && styles.filterButtonActive
+              styles.semesterButton,
+              selectedSemester === 1 && styles.semesterButtonActive
             ]}
-            onPress={() => setSelectedStatus(status)}
+            onPress={() => setSelectedSemester(1)}
           >
             <Text style={[
-              styles.filterButtonText,
-              selectedStatus === status && styles.filterButtonTextActive
+              styles.semesterButtonText,
+              selectedSemester === 1 && styles.semesterButtonTextActive
             ]}>
-              {status}
+              1st Sem
             </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      {loading ? (
-        <FlatList
-          data={Array.from({ length: 6 }, (_, i) => ({ id: i }))}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={() => <TaskCardSkeleton />}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : error ? (
-        <View style={styles.errorState}>
-          <Feather name="wifi-off" size={64} color="#FF3B30" />
-          <Text style={styles.errorText}>{error}</Text>
+          
           <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => fetchTasks()}
+            style={[
+              styles.semesterButton,
+              selectedSemester === 2 && styles.semesterButtonActive
+            ]}
+            onPress={() => setSelectedSemester(2)}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={[
+              styles.semesterButtonText,
+              selectedSemester === 2 && styles.semesterButtonTextActive
+            ]}>
+              2nd Sem
+            </Text>
           </TouchableOpacity>
         </View>
-      ) : tasks.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Feather name="clipboard" size={64} color="#8E8E93" />
-          <Text style={styles.emptyStateText}>
-            No tasks for {selectedSemester === 1 ? '1st' : '2nd'} semester yet
-          </Text>
+
+        <View style={styles.statusFilter}>
+          {['All', 'To Do', 'In Progress', 'Completed'].map((status) => (
+            <TouchableOpacity
+              key={status}
+              style={[
+                styles.filterButton,
+                selectedStatus === status && styles.filterButtonActive
+              ]}
+              onPress={() => setSelectedStatus(status)}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                selectedStatus === status && styles.filterButtonTextActive
+              ]}>
+                {status}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          renderItem={renderTask}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+
+        {loading ? (
+          <View style={styles.listContainer}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <TaskCardSkeleton key={i} />
+            ))}
+          </View>
+        ) : error ? (
+          <View style={styles.errorState}>
+            <Feather name="wifi-off" size={64} color="#FF3B30" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => fetchTasks()}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : tasks.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="clipboard" size={64} color="#8E8E93" />
+            <Text style={styles.emptyStateText}>
+              No tasks for {selectedSemester === 1 ? '1st' : '2nd'} semester yet
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {tasks.map((item, index) => (
+              <View key={item.id}>
+                {renderTask({ item, index })}
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
       
       <TouchableOpacity
         style={styles.fab}
@@ -278,6 +278,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#2A2A2A',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -328,6 +331,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 20,
+    paddingBottom: 100,
   },
   taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
