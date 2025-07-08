@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Share } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../config/firebaseConfig';
 import { doc, runTransaction } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
+import * as Clipboard from 'expo-clipboard';
 
 export default function PostDetailScreen({ route, navigation }) {
   const { post } = route.params;
@@ -117,6 +118,25 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   };
 
+  const handleCopyText = async () => {
+    try {
+      await Clipboard.setStringAsync(post.content);
+      Alert.alert('Copied', 'Text copied to clipboard!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy text.');
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: post.content,
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share text.');
+    }
+  };
+
   const getGradientColors = () => {
     const baseColor = post.noteColor || '#FFFACD';
     return [baseColor + '20', baseColor + '10', baseColor + '05'];
@@ -190,6 +210,24 @@ export default function PostDetailScreen({ route, navigation }) {
               <Text style={styles.countdownText}>{countdown}</Text>
             </View>
           )}
+        </View>
+        
+        <View style={styles.utilityButtons}>
+          <TouchableOpacity 
+            style={styles.utilityButton}
+            onPress={handleCopyText}
+          >
+            <Feather name="copy" size={18} color="#FFFFFF" />
+            <Text style={styles.utilityButtonText}>Copy Text</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.utilityButton}
+            onPress={handleShare}
+          >
+            <Feather name="share" size={18} color="#FFFFFF" />
+            <Text style={styles.utilityButtonText}>Share</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -326,5 +364,25 @@ const styles = StyleSheet.create({
     color: '#FF6B35',
     marginLeft: 6,
     flexShrink: 1,
+  },
+  utilityButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  utilityButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  utilityButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
 });
