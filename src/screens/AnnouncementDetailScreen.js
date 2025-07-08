@@ -133,7 +133,14 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
       </View>
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.card, { borderLeftColor: getTypeColor(announcement.type) }]}>
+        <View style={[
+          styles.card,
+          {
+            borderLeftColor: getTypeColor(announcement.type),
+            shadowColor: getTypeColor(announcement.type),
+            boxShadow: Platform.OS === 'web' ? `0px 4px 24px 0px ${getTypeColor(announcement.type)}33` : undefined,
+          },
+        ]}>
           <View style={styles.header}>
             <View style={styles.authorPicture}>
               <Text style={styles.authorInitial}>

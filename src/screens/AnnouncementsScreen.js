@@ -122,9 +122,19 @@ export default function AnnouncementsScreen({ navigation }) {
   };
 
   const renderAnnouncement = ({ item }) => {
+    const typeColor = getTypeColor(item.type);
+    const shadowColor = typeColor + '55'; // semi-transparent for shadow
+    const boxShadow = Platform.OS === 'web' ? `0px 4px 24px 0px ${typeColor}33` : undefined;
     return (
       <TouchableOpacity 
-        style={styles.announcementCardModern}
+        style={[
+          styles.announcementCardModern,
+          {
+            borderLeftColor: typeColor,
+            shadowColor: typeColor,
+            boxShadow,
+          },
+        ]}
         activeOpacity={0.88}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
@@ -200,11 +210,11 @@ export default function AnnouncementsScreen({ navigation }) {
           </TouchableOpacity>
           {userRole === 'officer' && (
             <TouchableOpacity 
-              style={styles.addButtonModern}
+              style={styles.addButtonGhost}
               onPress={() => navigation.navigate('CreateAnnouncement')}
             >
-              <Feather name="plus" size={18} color="#FFFFFF" />
-              <Text style={styles.addButtonTextModern}>New</Text>
+              <Feather name="plus" size={18} color="#007AFF" />
+              <Text style={styles.addButtonTextGhost}>New</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -293,24 +303,22 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '600',
   },
-  addButtonModern: {
+  addButtonGhost: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#007AFF',
+    borderWidth: 1.5,
+    borderColor: '#007AFF',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     gap: 8,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  addButtonTextModern: {
+  addButtonTextGhost: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
+    color: '#007AFF',
+    fontWeight: '600',
   },
   listContainerModern: {
     paddingHorizontal: 16,
@@ -328,27 +336,27 @@ const styles = StyleSheet.create({
     borderLeftWidth: 5,
     marginBottom: 0,
     marginTop: 0,
-    shadowColor: '#007AFF', // blue highlight
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
+    // shadowColor and boxShadow will be set dynamically
     elevation: 8,
     width: '100%',
     maxWidth: 700,
     alignSelf: 'center',
     minWidth: 0,
     backdropFilter: 'blur(16px)', // web only
-    boxShadow: Platform.OS === 'web' ? '0px 4px 24px 0px #007AFF33' : undefined,
   },
   cardMainModern: {
     flexDirection: 'row',
     gap: 18,
     alignItems: 'flex-start',
+    // Allow wrapping for dynamic content
+    flexWrap: 'wrap',
   },
   cardLeftModern: {
     alignItems: 'center',
     marginRight: 18,
     minWidth: 70,
+    // Allow vertical expansion for long names
+    flexShrink: 0,
   },
   authorPictureModern: {
     width: 54,
@@ -378,10 +386,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     textAlign: 'center',
     opacity: 0.85,
+    flexWrap: 'wrap',
+    maxWidth: 90,
   },
   cardRightModern: {
     flex: 1,
     minWidth: 0,
+    // Allow content to wrap and expand
+    flexShrink: 1,
   },
   titleModern: {
     fontSize: 22,
@@ -392,6 +404,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
+    flexWrap: 'wrap',
   },
   cardMetaModern: {
     flexDirection: 'row',

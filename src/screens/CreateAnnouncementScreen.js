@@ -218,18 +218,29 @@ export default function CreateAnnouncementScreen({ navigation }) {
         </ScrollView>
       ) : (
         <View style={styles.twitterContainer}>
-          <View style={styles.twitterHeader}>
+          <View style={[styles.twitterHeader, {
+            backgroundColor: 'rgba(30, 32, 40, 0.55)',
+            shadowColor: getTypeColor(selectedType),
+            ...(Platform.OS === 'web' ? { boxShadow: `0px 4px 24px 0px ${getTypeColor(selectedType)}33`, backdropFilter: 'blur(16px)' } : { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 }),
+          }]}> 
             <Text style={styles.twitterTitle}>{title}</Text>
             <View style={styles.twitterMeta}>
-              <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) }]}>
-                <Text style={styles.twitterTypeText}>{selectedType}</Text>
+              <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) + '22', shadowColor: getTypeColor(selectedType), ...(Platform.OS === 'web' ? { boxShadow: `0px 2px 6px ${getTypeColor(selectedType)}22` } : { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 4, elevation: 2 }) }]}> 
+                <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>{selectedType}</Text>
               </View>
               <Text style={styles.twitterExpiry}>Expires {expiresAt.toLocaleDateString()}</Text>
             </View>
           </View>
           
           <TextInput
-            style={styles.twitterTextArea}
+            style={[
+              styles.twitterTextArea,
+              {
+                backgroundColor: 'rgba(30, 32, 40, 0.55)',
+                shadowColor: getTypeColor(selectedType),
+                ...(Platform.OS === 'web' ? { boxShadow: `0px 4px 24px 0px ${getTypeColor(selectedType)}22`, backdropFilter: 'blur(12px)' } : { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 16, elevation: 4 }),
+              },
+            ]}
             value={content}
             onChangeText={setContent}
             placeholder="What do you want to announce?"
@@ -344,17 +355,22 @@ const styles = StyleSheet.create({
   publishButton: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-    backgroundColor: '#007AFF',
     borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#007AFF',
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    // Ghost style
+    shadowColor: 'transparent',
   },
   publishButtonDisabled: {
-    backgroundColor: '#4A4A4A',
+    borderColor: '#4A4A4A',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     opacity: 0.6,
   },
   publishButtonText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    color: '#007AFF',
   },
   twitterContainer: {
     flex: 1,
@@ -364,30 +380,36 @@ const styles = StyleSheet.create({
   twitterHeader: {
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 16,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
   },
   twitterTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
     marginBottom: 8,
+    flexWrap: 'wrap',
   },
   twitterMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginBottom: 4,
   },
   twitterTypeChip: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 14,
+    marginRight: 8,
   },
   twitterTypeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   twitterExpiry: {
     fontSize: 12,
@@ -400,7 +422,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     textAlignVertical: 'top',
-    paddingTop: 0,
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    marginTop: 12,
+    marginBottom: 8,
   },
   loadingContainer: {
     flex: 1,
