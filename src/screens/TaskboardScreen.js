@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
+import TaskCardSkeleton from '../components/TaskCardSkeleton';
 
 export default function TaskboardScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
@@ -222,7 +223,15 @@ export default function TaskboardScreen({ navigation }) {
         ))}
       </View>
 
-      {error ? (
+      {loading ? (
+        <FlatList
+          data={Array.from({ length: 6 }, (_, i) => ({ id: i }))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={() => <TaskCardSkeleton />}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : error ? (
         <View style={styles.errorState}>
           <Feather name="wifi-off" size={64} color="#FF3B30" />
           <Text style={styles.errorText}>{error}</Text>
@@ -233,7 +242,7 @@ export default function TaskboardScreen({ navigation }) {
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
-      ) : tasks.length === 0 && !loading ? (
+      ) : tasks.length === 0 ? (
         <View style={styles.emptyState}>
           <Feather name="clipboard" size={64} color="#8E8E93" />
           <Text style={styles.emptyStateText}>
