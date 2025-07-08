@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth } from '../config/firebaseConfig';
-import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { auth, db } from '../config/firebaseConfig';
+import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword, deleteUser } from 'firebase/auth';
+import { doc, deleteDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -71,6 +72,41 @@ export default function AccountSettingsScreen({ navigation }) {
     }
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This action cannot be undone. All your data will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              if (!user) return;
+
+              // Delete user document from Firestore
+              await deleteDoc(doc(db, 'users', user.uid));
+              
+              // Delete user from Firebase Authentication
+              await deleteUser(user);
+              
+              // Clear local storage
+              await AsyncStorage.removeItem('user_session');
+              
+              // Navigate to login
+              navigation.navigate('Login');
+            } catch (error) {
+              console.log('Delete account error:', error);
+              Alert.alert('Error', 'Failed to delete account. Please try again or contact support.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (!fontsLoaded) {
     return (
       <View style={styles.container}>
@@ -122,6 +158,19 @@ export default function AccountSettingsScreen({ navigation }) {
               icon="log-out"
               title="Log Out"
               onPress={handleLogout}
+              isDestructive={true}
+              showArrow={false}
+            />
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Danger Zone</Text>
+          <View style={styles.group}>
+            <SettingsRow 
+              icon="trash-2"
+              title="Delete Account"
+              onPress={handleDeleteAccount}
               isDestructive={true}
               showArrow={false}
             />
