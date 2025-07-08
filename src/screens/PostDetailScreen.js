@@ -12,6 +12,7 @@ export default function PostDetailScreen({ route, navigation }) {
   const { post } = route.params;
   const [countdown, setCountdown] = useState('');
   const [currentPost, setCurrentPost] = useState(post);
+  const [showCopied, setShowCopied] = useState(false);
   const animatedValue = new Animated.Value(0);
 
   const isLiked = currentPost.likedBy?.includes(auth.currentUser?.uid) || false;
@@ -121,7 +122,8 @@ export default function PostDetailScreen({ route, navigation }) {
   const handleCopyText = async () => {
     try {
       await Clipboard.setStringAsync(post.content);
-      Alert.alert('Copied', 'Text copied to clipboard!');
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
     } catch (error) {
       Alert.alert('Error', 'Failed to copy text.');
     }
@@ -129,10 +131,13 @@ export default function PostDetailScreen({ route, navigation }) {
 
   const handleShare = async () => {
     try {
-      await Share.share({
+      const result = await Share.share({
         message: post.content,
+        title: 'Shared from Freedom Wall'
       });
+      console.log('Share result:', result);
     } catch (error) {
+      console.log('Share error:', error);
       Alert.alert('Error', 'Failed to share text.');
     }
   };
@@ -214,11 +219,13 @@ export default function PostDetailScreen({ route, navigation }) {
         
         <View style={styles.utilityButtons}>
           <TouchableOpacity 
-            style={styles.utilityButton}
+            style={[styles.utilityButton, showCopied && styles.copiedButton]}
             onPress={handleCopyText}
           >
-            <Feather name="copy" size={18} color="#FFFFFF" />
-            <Text style={styles.utilityButtonText}>Copy Text</Text>
+            <Feather name={showCopied ? "check" : "copy"} size={18} color={showCopied ? "#34C759" : "#FFFFFF"} />
+            <Text style={[styles.utilityButtonText, showCopied && styles.copiedText]}>
+              {showCopied ? 'Copied!' : 'Copy Text'}
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -384,5 +391,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
+  },
+  copiedButton: {
+    backgroundColor: 'rgba(52, 199, 89, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 199, 89, 0.4)',
+  },
+  copiedText: {
+    color: '#34C759',
   },
 });
