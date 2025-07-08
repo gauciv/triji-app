@@ -198,9 +198,17 @@ export default function PostDetailScreen({ route, navigation }) {
       // Update post with reportedBy array
       const postRef = doc(db, 'freedom-wall-posts', post.id);
       const reportedBy = post.reportedBy || [];
+      const updatedReportedBy = [...reportedBy, user.uid];
+      
       await updateDoc(postRef, {
-        reportedBy: [...reportedBy, user.uid]
+        reportedBy: updatedReportedBy
       });
+
+      // Update local state to reflect the change
+      setCurrentPost(prev => ({
+        ...prev,
+        reportedBy: updatedReportedBy
+      }));
 
       setShowReportModal(false);
       setSelectedReason('');
@@ -208,7 +216,7 @@ export default function PostDetailScreen({ route, navigation }) {
       
       Alert.alert(
         'Report Submitted',
-        'Thank you for helping keep our community safe.',
+        'Thank you for helping keep our community safe. The post has been reported for review.',
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -259,21 +267,34 @@ export default function PostDetailScreen({ route, navigation }) {
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Details</Text>
-        <TouchableOpacity 
-          style={styles.moreButton}
-          onPress={() => {
-            const user = auth.currentUser;
-            const reportedBy = post.reportedBy || [];
-            
-            if (user && reportedBy.includes(user.uid)) {
-              Alert.alert('Already Reported', 'You have already reported this post.');
-            } else {
-              setShowReportModal(true);
-            }
-          }}
-        >
-          <Feather name="alert-triangle" size={20} color="#FF3B30" />
-        </TouchableOpacity>
+        {(() => {
+          const user = auth.currentUser;
+          const reportedBy = currentPost.reportedBy || [];
+          const hasReported = user && reportedBy.includes(user.uid);
+          
+          return (
+            <TouchableOpacity 
+              style={[
+                styles.moreButton,
+                hasReported && styles.reportedButton
+              ]}
+              onPress={() => {
+                if (hasReported) {
+                  Alert.alert('Already Reported', 'You have already reported this post.');
+                } else {
+                  setShowReportModal(true);
+                }
+              }}
+              disabled={hasReported}
+            >
+              <Feather 
+                name={hasReported ? "check" : "alert-triangle"} 
+                size={20} 
+                color={hasReported ? "#34C759" : "#FF3B30"} 
+              />
+            </TouchableOpacity>
+          );
+        })()}
       </View>
 
       <View style={styles.content}>
@@ -448,6 +469,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  reportedButton: {
+    backgroundColor: 'rgba(52, 199, 89, 0.2)',
   },
   content: {
     flex: 1,
