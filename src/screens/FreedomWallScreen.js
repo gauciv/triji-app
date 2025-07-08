@@ -9,7 +9,7 @@ import PostCard from '../components/PostCard';
 import { useNetwork } from '../context/NetworkContext';
 
 export default function FreedomWallScreen({ navigation }) {
-  const { isConnected } = useNetwork();
+  const { isConnected, registerSyncCallback } = useNetwork();
   const [posts, setPosts] = useState([]);
   const [pendingPosts, setPendingPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +118,29 @@ export default function FreedomWallScreen({ navigation }) {
     const unsubscribe = fetchPosts();
     return () => unsubscribe && unsubscribe();
   }, [sortBy]);
+
+  const syncPendingPosts = async () => {
+    if (pendingPosts.length === 0) return;
+    
+    console.log(`Syncing ${pendingPosts.length} pending posts...`);
+    
+    for (const pendingPost of pendingPosts) {
+      try {
+        const { id, status, ...postData } = pendingPost;
+        await addDoc(collection(db, 'freedom-wall-posts'), postData);
+        
+        // Remove from pending posts after successful sync
+        setPendingPosts(prev => prev.filter(p => p.id !== pendingPost.id));
+        console.log('Synced post:', pendingPost.id);
+      } catch (error) {
+        console.log('Error syncing post:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    registerSyncCallback(syncPendingPosts);
+  }, [pendingPosts, registerSyncCallback]);
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
