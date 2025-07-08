@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, SectionList, TouchableOpacity } from 'react-nat
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 
 export default function TaskboardScreen({ navigation }) {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userRole, setUserRole] = useState('');
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -116,7 +117,22 @@ export default function TaskboardScreen({ navigation }) {
     return sections;
   };
 
+  const fetchUserRole = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || '');
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching user role:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchUserRole();
     const unsubscribe = fetchTasks();
     return () => unsubscribe && unsubscribe();
   }, []);
@@ -201,6 +217,15 @@ export default function TaskboardScreen({ navigation }) {
           stickySectionHeadersEnabled={false}
         />
       )}
+
+      {(userRole === 'officer' || userRole === 'admin') && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('CreateTask')}
+        >
+          <Feather name="plus" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -284,6 +309,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   emptyState: {
     flex: 1,
