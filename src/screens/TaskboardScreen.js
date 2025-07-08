@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 
 export default function TaskboardScreen({ navigation }) {
@@ -43,10 +43,49 @@ export default function TaskboardScreen({ navigation }) {
     return () => unsubscribe();
   }, [selectedSemester]);
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'To Do': return '#FF9500';
+      case 'In Progress': return '#007AFF';
+      case 'Completed': return '#34C759';
+      default: return '#8E8E93';
+    }
+  };
+
+  const getNextStatus = (currentStatus) => {
+    switch (currentStatus) {
+      case 'To Do': return 'In Progress';
+      case 'In Progress': return 'Completed';
+      case 'Completed': return 'To Do';
+      default: return 'To Do';
+    }
+  };
+
+  const handleStatusUpdate = async (taskId, currentStatus) => {
+    try {
+      const nextStatus = getNextStatus(currentStatus);
+      await updateDoc(doc(db, 'tasks', taskId), {
+        status: nextStatus
+      });
+    } catch (error) {
+      console.log('Error updating status:', error);
+    }
+  };
+
   const renderTask = ({ item }) => (
     <View style={styles.taskCard}>
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskSubject}>{item.subject}</Text>
+      <View style={styles.taskHeader}>
+        <View style={styles.taskInfo}>
+          <Text style={styles.taskTitle}>{item.title}</Text>
+          <Text style={styles.taskSubject}>{item.subject}</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.statusButton, { backgroundColor: getStatusColor(item.status) }]}
+          onPress={() => handleStatusUpdate(item.id, item.status)}
+        >
+          <Text style={styles.statusText}>{item.status}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -118,6 +157,13 @@ export default function TaskboardScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         />
       )}
+      
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('CreateTask', { semester: selectedSemester })}
+      >
+        <Feather name="plus" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -185,6 +231,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  taskInfo: {
+    flex: 1,
+  },
   taskTitle: {
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
@@ -195,6 +249,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
+  },
+  statusButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   emptyState: {
     flex: 1,
