@@ -118,6 +118,14 @@ export default function AccountSettingsScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App</Text>
           <View style={styles.group}>
+            {/* Conditional officer-only button */}
+            {auth.currentUser?.role === 'officer' && (
+              <SettingsRow 
+                icon="shield"
+                title="Review Reports"
+                onPress={() => navigation.navigate('ReviewReports')}
+              />
+            )}
             <SettingsRow 
               icon="log-out"
               title="Log Out"

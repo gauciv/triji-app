@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Share, Modal, TextInput, ScrollView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../config/firebaseConfig';
-import { doc, runTransaction, updateDoc } from 'firebase/firestore';
+import { doc, runTransaction, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
 
@@ -13,6 +13,10 @@ export default function PostDetailScreen({ route, navigation }) {
   const [countdown, setCountdown] = useState('');
   const [currentPost, setCurrentPost] = useState(post);
   const [showCopied, setShowCopied] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const animatedValue = new Animated.Value(0);
 
   const isLiked = currentPost.likedBy?.includes(auth.currentUser?.uid) || false;
@@ -175,18 +179,35 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   };
 
-  const handleReport = async () => {
+  const handleSubmitReport = async () => {
+    const user = auth.currentUser;
+    if (!user || !selectedReason) return;
+
+    setSubmitting(true);
     try {
-      const postRef = doc(db, 'freedom-wall-posts', post.id);
-      await updateDoc(postRef, {
-        isReported: true,
-        reportCount: (post.reportCount || 0) + 1
+      await addDoc(collection(db, 'reports'), {
+        postId: post.id,
+        postContent: post.content,
+        reason: selectedReason,
+        description: description.trim(),
+        reporterId: user.uid,
+        reportedAt: serverTimestamp()
       });
+
+      setShowReportModal(false);
+      setSelectedReason('');
+      setDescription('');
       
-      Alert.alert('Reported', 'Post has been reported for review.');
+      Alert.alert(
+        'Report Submitted',
+        'Thank you for helping keep our community safe.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
-      console.log('Error reporting post:', error);
-      Alert.alert('Error', 'Failed to report post. Please try again.');
+      console.log('Error submitting report:', error);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -232,22 +253,9 @@ export default function PostDetailScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>Note Details</Text>
         <TouchableOpacity 
           style={styles.moreButton}
-          onPress={() => {
-            Alert.alert(
-              'Report Post',
-              'Are you sure you want to report this post for review?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { 
-                  text: 'Report', 
-                  style: 'destructive',
-                  onPress: handleReport
-                }
-              ]
-            );
-          }}
+          onPress={() => setShowReportModal(true)}
         >
-          <Feather name="more-vertical" size={20} color="#FFFFFF" />
+          <Feather name="alert-triangle" size={20} color="#FF3B30" />
         </TouchableOpacity>
       </View>
 
@@ -309,6 +317,76 @@ export default function PostDetailScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+      
+      {/* Report Modal */}
+      <Modal
+        visible={showReportModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View style={styles.reportModalContainer}>
+          <View style={styles.reportHeader}>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setShowReportModal(false)}
+            >
+              <Feather name="x" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.reportTitle}>Report Post</Text>
+          </View>
+          
+          <ScrollView style={styles.reportContent}>
+            <Text style={styles.sectionTitle}>Please select a reason:</Text>
+            
+            {['Spam', 'Harassment or Hate Speech', 'Personal Information', 'Inappropriate Content'].map((reason) => (
+              <TouchableOpacity
+                key={reason}
+                style={[
+                  styles.reasonOption,
+                  selectedReason === reason && styles.reasonOptionSelected
+                ]}
+                onPress={() => setSelectedReason(reason)}
+              >
+                <Text style={[
+                  styles.reasonText,
+                  selectedReason === reason && styles.reasonTextSelected
+                ]}>
+                  {reason}
+                </Text>
+                {selectedReason === reason && (
+                  <Feather name="check" size={16} color="#FF3B30" />
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            <Text style={styles.sectionTitle}>Additional Description (Optional):</Text>
+            <TextInput
+              style={styles.descriptionInput}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Provide more details about this report..."
+              placeholderTextColor="#8E8E93"
+              multiline
+              textAlignVertical="top"
+              maxLength={200}
+            />
+            
+            <TouchableOpacity 
+              style={[
+                styles.submitButton,
+                (!selectedReason || submitting) && styles.submitButtonDisabled
+              ]}
+              onPress={handleSubmitReport}
+              disabled={!selectedReason || submitting}
+            >
+              <Text style={styles.submitButtonText}>
+                {submitting ? 'Submitting...' : 'Submit Report'}
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -504,5 +582,100 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
     color: '#666666',
+  },
+  reportModalContainer: {
+    flex: 1,
+    backgroundColor: '#2A2A2A',
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  reportTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 56,
+  },
+  reportContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    marginTop: 20,
+  },
+  reasonOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  reasonOptionSelected: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderColor: '#FF3B30',
+  },
+  reasonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  reasonTextSelected: {
+    color: '#FF3B30',
+    fontFamily: 'Inter_500Medium',
+  },
+  descriptionInput: {
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 30,
+  },
+  submitButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#666666',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });
