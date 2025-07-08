@@ -7,6 +7,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } f
 import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
 import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FreedomWallScreen({ navigation }) {
   const { isConnected, registerSyncCallback } = useNetwork();
@@ -21,6 +22,8 @@ export default function FreedomWallScreen({ navigation }) {
   const [selectedColor, setSelectedColor] = useState('#FFFACD');
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy] = useState('Oldest to Newest');
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const combinedPosts = useMemo(() => {
     return [...posts, ...pendingPosts];
@@ -142,6 +145,47 @@ export default function FreedomWallScreen({ navigation }) {
     registerSyncCallback(syncPendingPosts);
   }, [pendingPosts, registerSyncCallback]);
 
+  useEffect(() => {
+    checkCooldown();
+  }, [showModal]);
+
+  const checkCooldown = async () => {
+    try {
+      const lastPostTime = await AsyncStorage.getItem('lastPostTime');
+      if (lastPostTime) {
+        const timeDiff = Date.now() - parseInt(lastPostTime);
+        const cooldownTime = 90000; // 90 seconds
+        
+        if (timeDiff < cooldownTime) {
+          const remainingTime = Math.ceil((cooldownTime - timeDiff) / 1000);
+          setIsOnCooldown(true);
+          setCooldownSeconds(remainingTime);
+          
+          const interval = setInterval(() => {
+            setCooldownSeconds(prev => {
+              if (prev <= 1) {
+                setIsOnCooldown(false);
+                clearInterval(interval);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          
+          return () => clearInterval(interval);
+        }
+      }
+    } catch (error) {
+      console.log('Error checking cooldown:', error);
+    }
+  };
+
+  const formatCooldownTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -166,6 +210,11 @@ export default function FreedomWallScreen({ navigation }) {
   };
 
   const handlePost = async () => {
+    if (isOnCooldown) {
+      Alert.alert('Cooldown Active', 'Please wait for the cooldown to finish. This was implemented to avoid spam.');
+      return;
+    }
+    
     if (!postContent.trim()) {
       Alert.alert('Error', 'Please write something before posting.');
       return;
@@ -200,6 +249,9 @@ export default function FreedomWallScreen({ navigation }) {
       };
       setPendingPosts(prev => [...prev, pendingPost]);
       
+      // Save timestamp for cooldown (offline posts)
+      await AsyncStorage.setItem('lastPostTime', Date.now().toString());
+      
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
@@ -210,6 +262,10 @@ export default function FreedomWallScreen({ navigation }) {
     
     try {
       await addDoc(collection(db, 'freedom-wall-posts'), postData);
+      
+      // Save timestamp for cooldown
+      await AsyncStorage.setItem('lastPostTime', Date.now().toString());
+      
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
@@ -440,12 +496,18 @@ export default function FreedomWallScreen({ navigation }) {
             </View>
             
             <TouchableOpacity 
-              style={[styles.postButton, posting && styles.postButtonDisabled]}
+              style={[
+                styles.postButton, 
+                (posting || isOnCooldown) && styles.postButtonDisabled
+              ]}
               onPress={handlePost}
-              disabled={posting}
+              disabled={posting || isOnCooldown}
             >
-              <Text style={styles.postButtonText}>
-                {posting ? 'Posting...' : 'Post It'}
+              <Text style={[
+                styles.postButtonText,
+                isOnCooldown && styles.cooldownText
+              ]}>
+                {posting ? 'Posting...' : isOnCooldown ? formatCooldownTime(cooldownSeconds) : 'Post It'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -832,5 +894,8 @@ const styles = StyleSheet.create({
   },
   postButtonTextDisabled: {
     color: '#666666',
+  },
+  cooldownText: {
+    color: '#FF3B30',
   },
 });
