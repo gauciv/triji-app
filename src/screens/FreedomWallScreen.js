@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
@@ -21,6 +21,10 @@ export default function FreedomWallScreen({ navigation }) {
   const [selectedColor, setSelectedColor] = useState('#FFFACD');
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy] = useState('Oldest to Newest');
+
+  const combinedPosts = useMemo(() => {
+    return [...posts, ...pendingPosts];
+  }, [posts, pendingPosts]);
 
   const colorPalette = [
     '#FFFACD', // Pale yellow
@@ -289,7 +293,7 @@ export default function FreedomWallScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {posts.length === 0 && !loading ? (
+        {combinedPosts.length === 0 && !loading ? (
           <View style={styles.emptyState}>
             <Feather name="message-circle" size={64} color="#8E8E93" />
             <Text style={styles.emptyStateText}>
@@ -298,7 +302,7 @@ export default function FreedomWallScreen({ navigation }) {
           </View>
         ) : (
           <FlatList
-            data={posts}
+            data={combinedPosts}
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
               <PostCard 

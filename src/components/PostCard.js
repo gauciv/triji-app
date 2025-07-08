@@ -49,7 +49,8 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
         styles.card, 
         { 
           transform: [{ rotate: rotation }],
-          backgroundColor: post.noteColor || '#FFFACD'
+          backgroundColor: post.noteColor || '#FFFACD',
+          opacity: post.status === 'pending' ? 0.7 : 1
         }
       ]}
       onPress={onPress}
@@ -84,7 +85,12 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             <Text style={styles.seenCount}>{post.viewCount || 0}</Text>
           </View>
           
-          {countdown && (
+          {post.status === 'pending' ? (
+            <View style={styles.pendingIndicator}>
+              <Text style={styles.clockIcon}>🕰</Text>
+              <Text style={styles.pendingText}>Syncing...</Text>
+            </View>
+          ) : countdown && (
             <Text style={styles.countdown}>{countdown}</Text>
           )}
         </View>
@@ -204,5 +210,19 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
+  },
+  pendingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clockIcon: {
+    fontSize: 8,
+    marginRight: 2,
+  },
+  pendingText: {
+    fontSize: 7,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF9500',
+    fontStyle: 'italic',
   },
 });
