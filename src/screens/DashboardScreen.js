@@ -6,7 +6,7 @@ import { auth } from '../config/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
 const featureData = [
-  { id: '1', title: 'Assignments', icon: 'book-open', color: '#007AFF' },
+  { id: '1', title: 'Taskboard', icon: 'book-open', color: '#007AFF' },
   { id: '2', title: 'Announcements', icon: 'bell', color: '#FF6B35' },
   { id: '3', title: 'Grade Calculator', icon: 'calculator', color: '#AF52DE' },
   { id: '4', title: 'Freedom Wall', icon: 'message-circle', color: '#34C759' },
@@ -31,7 +31,9 @@ export default function DashboardScreen({ navigation }) {
 
   const renderFeatureCard = ({ item }) => {
     const handlePress = () => {
-      if (item.title === 'Announcements') {
+      if (item.title === 'Taskboard') {
+        navigation.navigate('Taskboard');
+      } else if (item.title === 'Announcements') {
         navigation.navigate('Announcements');
       } else if (item.title === 'Freedom Wall') {
         navigation.navigate('FreedomWall');

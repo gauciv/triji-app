@@ -16,10 +16,15 @@ import {
   AccountSettingsScreen,
   EditProfileScreen,
   GradeCalculatorScreen,
-  FreedomWallScreen
+  FreedomWallScreen,
+  PostDetailScreen,
+  TaskboardScreen,
+  CreateTaskScreen
 } from './src/screens';
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NetworkProvider } from './src/context/NetworkContext';
+import OfflineBanner from './src/components/OfflineBanner';
 
 const Stack = createStackNavigator();
 
@@ -75,26 +80,32 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName={initialRouteName}
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Verification" component={VerificationScreen} />
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
-        <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
-        <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
-        <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
-        <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="FreedomWall" component={FreedomWallScreen} />
-        <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-      </Stack.Navigator>
-      <StatusBar style="light" />
-    </NavigationContainer>
+    <NetworkProvider>
+      <OfflineBanner />
+      <NavigationContainer>
+        <Stack.Navigator 
+          initialRouteName={initialRouteName}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Verification" component={VerificationScreen} />
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
+          <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
+          <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
+          <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="FreedomWall" component={FreedomWallScreen} />
+          <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
+          <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+          <Stack.Screen name="Taskboard" component={TaskboardScreen} />
+          <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+        </Stack.Navigator>
+        <StatusBar style="light" />
+      </NavigationContainer>
+    </NetworkProvider>
   );
 }
