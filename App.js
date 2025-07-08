@@ -22,6 +22,7 @@ import {
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkProvider } from './src/context/NetworkContext';
+import OfflineBanner from './src/components/OfflineBanner';
 
 const Stack = createStackNavigator();
 
@@ -78,6 +79,7 @@ export default function App() {
 
   return (
     <NetworkProvider>
+      <OfflineBanner />
       <NavigationContainer>
         <Stack.Navigator 
           initialRouteName={initialRouteName}
