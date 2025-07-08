@@ -1,12 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
 export default function PostCard({ post, timestamp, rotation, onLike, isLiked }) {
+  const [countdown, setCountdown] = useState('');
+  
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
   });
+
+  useEffect(() => {
+    const calculateCountdown = () => {
+      if (!post.expiresAt) return;
+      
+      const now = new Date();
+      const expiresAt = post.expiresAt.toDate ? post.expiresAt.toDate() : new Date(post.expiresAt);
+      const timeDiff = expiresAt.getTime() - now.getTime();
+      
+      if (timeDiff <= 0) {
+        setCountdown('expired');
+        return;
+      }
+      
+      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (days > 0) {
+        setCountdown(`${days}d, ${hours}h`);
+      } else {
+        setCountdown(`${hours}h`);
+      }
+    };
+    
+    calculateCountdown();
+    const interval = setInterval(calculateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [post.expiresAt]);
 
   if (!fontsLoaded) {
     return null;
@@ -46,7 +77,9 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked })
             <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
           </TouchableOpacity>
           
-          <Text style={styles.timestamp}>{timestamp}</Text>
+          {countdown && (
+            <Text style={styles.countdown}>{countdown}</Text>
+          )}
         </View>
       </View>
       
@@ -93,12 +126,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 2,
   },
-  timestamp: {
-    fontSize: 8,
-    fontFamily: 'Inter_400Regular',
-    color: '#666666',
-    fontStyle: 'italic',
-  },
+
   personaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -150,5 +178,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+  },
+  countdown: {
+    fontSize: 8,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF6B35',
+    fontStyle: 'italic',
   },
 });
