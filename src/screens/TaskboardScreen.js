@@ -9,6 +9,7 @@ import { auth } from '../config/firebaseConfig';
 export default function TaskboardScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState(1);
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const [loading, setLoading] = useState(true);
 
   let [fontsLoaded] = useFonts({
@@ -21,12 +22,23 @@ export default function TaskboardScreen({ navigation }) {
     const user = auth.currentUser;
     if (!user) return;
 
-    const q = query(
-      collection(db, 'tasks'),
-      where('userId', '==', user.uid),
-      where('semester', '==', selectedSemester),
-      orderBy('createdAt', 'desc')
-    );
+    let q;
+    if (selectedStatus === 'All') {
+      q = query(
+        collection(db, 'tasks'),
+        where('userId', '==', user.uid),
+        where('semester', '==', selectedSemester),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      q = query(
+        collection(db, 'tasks'),
+        where('userId', '==', user.uid),
+        where('semester', '==', selectedSemester),
+        where('status', '==', selectedStatus),
+        orderBy('createdAt', 'desc')
+      );
+    }
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const tasksList = [];
@@ -41,7 +53,7 @@ export default function TaskboardScreen({ navigation }) {
     });
 
     return () => unsubscribe();
-  }, [selectedSemester]);
+  }, [selectedSemester, selectedStatus]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -62,22 +74,50 @@ export default function TaskboardScreen({ navigation }) {
   };
 
   const handleStatusUpdate = async (taskId, currentStatus) => {
+    const nextStatus = getNextStatus(currentStatus);
+    
+    // Optimistic UI update
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === taskId ? { ...task, status: nextStatus } : task
+      )
+    );
+    
+    // Background database update
     try {
-      const nextStatus = getNextStatus(currentStatus);
       await updateDoc(doc(db, 'tasks', taskId), {
         status: nextStatus
       });
     } catch (error) {
       console.log('Error updating status:', error);
+      // Revert optimistic update on error
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId ? { ...task, status: currentStatus } : task
+        )
+      );
     }
   };
 
   const renderTask = ({ item }) => (
-    <View style={styles.taskCard}>
+    <View style={[
+      styles.taskCard,
+      item.status === 'Completed' && styles.taskCardCompleted
+    ]}>
       <View style={styles.taskHeader}>
         <View style={styles.taskInfo}>
-          <Text style={styles.taskTitle}>{item.title}</Text>
-          <Text style={styles.taskSubject}>{item.subject}</Text>
+          <Text style={[
+            styles.taskTitle,
+            item.status === 'Completed' && styles.taskTitleCompleted
+          ]}>
+            {item.title}
+          </Text>
+          <Text style={[
+            styles.taskSubject,
+            item.status === 'Completed' && styles.taskSubjectCompleted
+          ]}>
+            {item.subject}
+          </Text>
         </View>
         <TouchableOpacity
           style={[styles.statusButton, { backgroundColor: getStatusColor(item.status) }]}
@@ -139,6 +179,26 @@ export default function TaskboardScreen({ navigation }) {
             2nd Sem
           </Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.statusFilter}>
+        {['All', 'To Do', 'In Progress', 'Completed'].map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.filterButton,
+              selectedStatus === status && styles.filterButtonActive
+            ]}
+            onPress={() => setSelectedStatus(status)}
+          >
+            <Text style={[
+              styles.filterButtonText,
+              selectedStatus === status && styles.filterButtonTextActive
+            ]}>
+              {status}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {tasks.length === 0 && !loading ? (
@@ -276,6 +336,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  statusFilter: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterButtonText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#8E8E93',
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  taskCardCompleted: {
+    opacity: 0.6,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  },
+  taskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    color: '#8E8E93',
+  },
+  taskSubjectCompleted: {
+    color: '#666666',
   },
   emptyState: {
     flex: 1,
