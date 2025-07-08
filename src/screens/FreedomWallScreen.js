@@ -24,6 +24,7 @@ export default function FreedomWallScreen({ navigation }) {
   const [sortBy, setSortBy] = useState('Oldest to Newest');
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const combinedPosts = useMemo(() => {
     return [...posts, ...pendingPosts];
@@ -102,10 +103,12 @@ export default function FreedomWallScreen({ navigation }) {
         });
         setPosts(postsList);
         setLoading(false);
+        setIsInitialLoading(false);
       }, (error) => {
         console.log('Error fetching posts:', error);
         setError('Could not load the Freedom Wall');
         setLoading(false);
+        setIsInitialLoading(false);
       });
 
       return unsubscribe;
@@ -372,7 +375,12 @@ export default function FreedomWallScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {combinedPosts.length === 0 && !loading ? (
+        {isInitialLoading ? (
+          <View style={styles.loadingContainer}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
+          </View>
+        ) : combinedPosts.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="message-circle" size={64} color="#8E8E93" />
             <Text style={styles.emptyStateText}>
@@ -620,10 +628,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 40,
   },
   loadingText: {
-    color: '#FFFFFF',
+    color: '#D3D3D3',
     fontSize: 18,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 20,
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
