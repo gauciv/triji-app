@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
+import { Feather } from '@expo/vector-icons';
 
 export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   const [countdown, setCountdown] = useState('');
@@ -81,13 +82,13 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
           </TouchableOpacity>
           
           <View style={styles.seenCounter}>
-            <Text style={styles.eyeIcon}>👁</Text>
+            <Feather name="eye" size={8} color="#666666" />
             <Text style={styles.seenCount}>{post.viewCount || 0}</Text>
           </View>
           
           {post.status === 'pending' ? (
             <View style={styles.pendingIndicator}>
-              <Text style={styles.clockIcon}>🕰</Text>
+              <Feather name="clock" size={6} color="#FF9500" />
               <Text style={styles.pendingText}>Syncing...</Text>
             </View>
           ) : countdown && (
@@ -98,6 +99,17 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
       
       {/* Sticky note tape effect */}
       <View style={styles.tape} />
+      
+      {/* Report button */}
+      <TouchableOpacity 
+        style={styles.reportButton}
+        onPress={(e) => {
+          e.stopPropagation();
+          console.log('Report button pressed');
+        }}
+      >
+        <Feather name="alert-triangle" size={12} color="#FF3B30" />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
@@ -203,7 +215,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyeIcon: {
-    fontSize: 10,
     marginRight: 2,
   },
   seenCount: {
@@ -216,7 +227,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clockIcon: {
-    fontSize: 8,
     marginRight: 2,
   },
   pendingText: {
@@ -224,5 +234,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#FF9500',
     fontStyle: 'italic',
+  },
+  reportButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
 });

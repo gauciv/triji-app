@@ -4,7 +4,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../config/firebaseConfig';
-import { doc, runTransaction } from 'firebase/firestore';
+import { doc, runTransaction, updateDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
 
@@ -175,6 +175,21 @@ export default function PostDetailScreen({ route, navigation }) {
     }
   };
 
+  const handleReport = async () => {
+    try {
+      const postRef = doc(db, 'freedom-wall-posts', post.id);
+      await updateDoc(postRef, {
+        isReported: true,
+        reportCount: (post.reportCount || 0) + 1
+      });
+      
+      Alert.alert('Reported', 'Post has been reported for review.');
+    } catch (error) {
+      console.log('Error reporting post:', error);
+      Alert.alert('Error', 'Failed to report post. Please try again.');
+    }
+  };
+
   const getGradientColors = () => {
     const baseColor = post.noteColor || '#FFFACD';
     return [baseColor + '20', baseColor + '10', baseColor + '05'];
@@ -215,6 +230,25 @@ export default function PostDetailScreen({ route, navigation }) {
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Details</Text>
+        <TouchableOpacity 
+          style={styles.moreButton}
+          onPress={() => {
+            Alert.alert(
+              'Report Post',
+              'Are you sure you want to report this post for review?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Report', 
+                  style: 'destructive',
+                  onPress: handleReport
+                }
+              ]
+            );
+          }}
+        >
+          <Feather name="more-vertical" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -232,7 +266,7 @@ export default function PostDetailScreen({ route, navigation }) {
             </View>
             
             <View style={styles.seenCounter}>
-              <Text style={styles.eyeIcon}>👁</Text>
+              <Feather name="eye" size={12} color="#666666" />
               <Text style={styles.seenCount}>{currentPost.viewCount || 0}</Text>
             </View>
           </View>
@@ -287,6 +321,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
@@ -307,6 +342,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
@@ -453,10 +499,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  eyeIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
+
   seenCount: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
