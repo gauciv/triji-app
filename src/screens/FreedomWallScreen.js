@@ -145,10 +145,13 @@ export default function FreedomWallScreen({ navigation }) {
     try {
       const persona = generatePersona();
       const finalPersona = customNickname.trim() || persona.name;
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
       
       await addDoc(collection(db, 'freedom-wall-posts'), {
         content: postContent.trim(),
-        createdAt: new Date(),
+        createdAt: now,
+        expiresAt: expiresAt,
         persona: finalPersona,
         personaColor: persona.color,
         noteColor: selectedColor,
@@ -279,10 +282,6 @@ export default function FreedomWallScreen({ navigation }) {
                 rotation={getRandomRotation(index)}
                 onLike={() => handleLike(item.id)}
                 isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
-                onPress={() => navigation.navigate('PostDetail', { 
-                  post: item, 
-                  timestamp: formatTimestamp(item.createdAt) 
-                })}
               />
             )}
             contentContainerStyle={styles.postsContainer}

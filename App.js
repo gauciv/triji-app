@@ -16,8 +16,7 @@ import {
   AccountSettingsScreen,
   EditProfileScreen,
   GradeCalculatorScreen,
-  FreedomWallScreen,
-  PostDetailScreen
+  FreedomWallScreen
 } from './src/screens';
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -94,7 +93,6 @@ export default function App() {
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="FreedomWall" component={FreedomWallScreen} />
         <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-        <Stack.Screen name="PostDetail" component={PostDetailScreen} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>
