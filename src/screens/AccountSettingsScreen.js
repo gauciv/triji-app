@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth } from '../config/firebaseConfig';
+import { auth, db } from '../config/firebaseConfig';
 import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -13,12 +14,31 @@ export default function AccountSettingsScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role);
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching user role:', error);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -119,7 +139,7 @@ export default function AccountSettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>App</Text>
           <View style={styles.group}>
             {/* Conditional officer-only button */}
-            {auth.currentUser?.role === 'officer' && (
+            {userRole === 'officer' && (
               <SettingsRow 
                 icon="shield"
                 title="Review Reports"
