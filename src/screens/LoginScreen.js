@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -55,7 +55,20 @@ export default function LoginScreen({ navigation }) {
         return;
       }
       
-      // User document exists, proceed with login
+      // Check if email is verified
+      if (!user.emailVerified) {
+        // Email not verified, send new verification and log out
+        try {
+          await sendEmailVerification(user);
+        } catch (verificationError) {
+          console.log('Error sending verification email:', verificationError);
+        }
+        await signOut(auth);
+        setError('Please verify your email address before logging in. A new verification link has been sent.');
+        return;
+      }
+      
+      // User document exists and email verified, proceed with login
       if (!userCredential.user.emailVerified) {
         setError('Please verify your email before logging in. Check your inbox for the verification link.');
         // Optionally, you could offer to resend the verification email here.
