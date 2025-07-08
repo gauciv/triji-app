@@ -3,8 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { auth } from '../config/firebaseConfig';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { auth, db } from '../config/firebaseConfig';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
@@ -42,13 +43,26 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Check if user document exists in Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (!userDoc.exists()) {
+        // User document doesn't exist, log them out and show error
+        await signOut(auth);
+        setError('Your account data could not be found. Please contact support.');
+        return;
+      }
+      
+      // User document exists, proceed with login
       if (!userCredential.user.emailVerified) {
         setError('Please verify your email before logging in. Check your inbox for the verification link.');
         // Optionally, you could offer to resend the verification email here.
         return;
       }
-      await AsyncStorage.setItem('user_session', JSON.stringify(userCredential.user));
-      console.log('Login successful:', userCredential.user.email);
+      await AsyncStorage.setItem('user_session', JSON.stringify(user));
+      console.log('Login successful:', user.email);
       navigation.navigate('Dashboard');
     } catch (error) {
       console.log('Login error:', error.message);
