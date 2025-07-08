@@ -282,6 +282,7 @@ export default function FreedomWallScreen({ navigation }) {
                 rotation={getRandomRotation(index)}
                 onLike={() => handleLike(item.id)}
                 isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
+                onPress={() => navigation.navigate('PostDetail', { post: item })}
               />
             )}
             contentContainerStyle={styles.postsContainer}

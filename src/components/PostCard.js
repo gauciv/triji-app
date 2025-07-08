@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 
-export default function PostCard({ post, timestamp, rotation, onLike, isLiked }) {
+export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   const [countdown, setCountdown] = useState('');
   
   let [fontsLoaded] = useFonts({
@@ -44,7 +44,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked })
   }
 
   return (
-    <View 
+    <TouchableOpacity 
       style={[
         styles.card, 
         { 
@@ -52,6 +52,8 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked })
           backgroundColor: post.noteColor || '#FFFACD'
         }
       ]}
+      onPress={onPress}
+      activeOpacity={0.8}
     >
       <View style={styles.cardContent}>
         <View style={styles.personaContainer}>
@@ -85,7 +87,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked })
       
       {/* Sticky note tape effect */}
       <View style={styles.tape} />
-    </View>
+    </TouchableOpacity>
   );
 }
 
