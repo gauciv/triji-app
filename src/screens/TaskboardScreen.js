@@ -97,7 +97,7 @@ export default function TaskboardScreen({ navigation }) {
   const handleStatusUpdate = async (taskId, currentStatus) => {
     const nextStatus = getNextStatus(currentStatus);
     
-    // Optimistic UI update
+    // Optimistic UI update - instant response
     setTasks(prevTasks => 
       prevTasks.map(task => 
         task.id === taskId ? { ...task, status: nextStatus } : task
@@ -111,13 +111,18 @@ export default function TaskboardScreen({ navigation }) {
       });
     } catch (error) {
       console.log('Error updating status:', error);
-      Alert.alert('Error', 'Failed to update task status. Please try again.');
+      
       // Revert optimistic update on error
       setTasks(prevTasks => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, status: currentStatus } : task
         )
       );
+      
+      // Show brief error message
+      Alert.alert('Update Failed', 'Could not update task. Please try again.', [
+        { text: 'OK' }
+      ]);
     }
   };
 
