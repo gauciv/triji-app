@@ -11,6 +11,7 @@ import { useNetwork } from '../context/NetworkContext';
 export default function FreedomWallScreen({ navigation }) {
   const { isConnected } = useNetwork();
   const [posts, setPosts] = useState([]);
+  const [pendingPosts, setPendingPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -144,24 +145,44 @@ export default function FreedomWallScreen({ navigation }) {
     }
 
     setPosting(true);
-    try {
-      const persona = generatePersona();
-      const finalPersona = customNickname.trim() || persona.name;
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+    
+    const persona = generatePersona();
+    const finalPersona = customNickname.trim() || persona.name;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    
+    const postData = {
+      content: postContent.trim(),
+      createdAt: now,
+      expiresAt: expiresAt,
+      persona: finalPersona,
+      personaColor: persona.color,
+      noteColor: selectedColor,
+      likeCount: 0,
+      likedBy: [],
+      viewCount: 0,
+      viewedBy: [],
+    };
+    
+    if (!isConnected) {
+      // Add to pending posts for offline
+      const pendingPost = {
+        ...postData,
+        id: `pending_${Date.now()}`,
+        status: 'pending'
+      };
+      setPendingPosts(prev => [...prev, pendingPost]);
       
-      await addDoc(collection(db, 'freedom-wall-posts'), {
-        content: postContent.trim(),
-        createdAt: now,
-        expiresAt: expiresAt,
-        persona: finalPersona,
-        personaColor: persona.color,
-        noteColor: selectedColor,
-        likeCount: 0,
-        likedBy: [],
-        viewCount: 0,
-        viewedBy: [],
-      });
+      setPostContent('');
+      setCustomNickname('');
+      setSelectedColor('#FFFACD');
+      setShowModal(false);
+      setPosting(false);
+      return;
+    }
+    
+    try {
+      await addDoc(collection(db, 'freedom-wall-posts'), postData);
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
@@ -392,18 +413,12 @@ export default function FreedomWallScreen({ navigation }) {
             </View>
             
             <TouchableOpacity 
-              style={[
-                styles.postButton, 
-                (posting || !isConnected) && styles.postButtonDisabled
-              ]}
+              style={[styles.postButton, posting && styles.postButtonDisabled]}
               onPress={handlePost}
-              disabled={posting || !isConnected}
+              disabled={posting}
             >
-              <Text style={[
-                styles.postButtonText,
-                !isConnected && styles.postButtonTextDisabled
-              ]}>
-                {!isConnected ? 'Offline - Cannot Post' : posting ? 'Posting...' : 'Post It'}
+              <Text style={styles.postButtonText}>
+                {posting ? 'Posting...' : 'Post It'}
               </Text>
             </TouchableOpacity>
           </View>
