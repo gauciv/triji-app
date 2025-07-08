@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
@@ -11,6 +11,7 @@ export default function TaskboardScreen({ navigation }) {
   const [selectedSemester, setSelectedSemester] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -18,41 +19,60 @@ export default function TaskboardScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  useEffect(() => {
+  const fetchTasks = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    let q;
-    if (selectedStatus === 'All') {
-      q = query(
-        collection(db, 'tasks'),
-        where('userId', '==', user.uid),
-        where('semester', '==', selectedSemester),
-        orderBy('createdAt', 'desc')
-      );
-    } else {
-      q = query(
-        collection(db, 'tasks'),
-        where('userId', '==', user.uid),
-        where('semester', '==', selectedSemester),
-        where('status', '==', selectedStatus),
-        orderBy('createdAt', 'desc')
-      );
-    }
+    setLoading(true);
+    setError(null);
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const tasksList = [];
-      querySnapshot.forEach((doc) => {
-        tasksList.push({
-          id: doc.id,
-          ...doc.data(),
+    try {
+      let q;
+      if (selectedStatus === 'All') {
+        q = query(
+          collection(db, 'tasks'),
+          where('userId', '==', user.uid),
+          where('semester', '==', selectedSemester),
+          orderBy('createdAt', 'desc')
+        );
+      } else {
+        q = query(
+          collection(db, 'tasks'),
+          where('userId', '==', user.uid),
+          where('semester', '==', selectedSemester),
+          where('status', '==', selectedStatus),
+          orderBy('createdAt', 'desc')
+        );
+      }
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const tasksList = [];
+        querySnapshot.forEach((doc) => {
+          tasksList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
+        setTasks(tasksList);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching tasks:', error);
+        setError('Could not load tasks. Please check your connection.');
+        setLoading(false);
       });
-      setTasks(tasksList);
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error setting up listener:', error);
+      setError('Could not load tasks. Please check your connection.');
+      setLoading(false);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = fetchTasks();
+    return () => unsubscribe && unsubscribe();
   }, [selectedSemester, selectedStatus]);
 
   const getStatusColor = (status) => {
@@ -90,6 +110,7 @@ export default function TaskboardScreen({ navigation }) {
       });
     } catch (error) {
       console.log('Error updating status:', error);
+      Alert.alert('Error', 'Failed to update task status. Please try again.');
       // Revert optimistic update on error
       setTasks(prevTasks => 
         prevTasks.map(task => 
@@ -201,7 +222,18 @@ export default function TaskboardScreen({ navigation }) {
         ))}
       </View>
 
-      {tasks.length === 0 && !loading ? (
+      {error ? (
+        <View style={styles.errorState}>
+          <Feather name="wifi-off" size={64} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchTasks()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : tasks.length === 0 && !loading ? (
         <View style={styles.emptyState}>
           <Feather name="clipboard" size={64} color="#8E8E93" />
           <Text style={styles.emptyStateText}>
@@ -370,6 +402,31 @@ const styles = StyleSheet.create({
   },
   taskSubjectCompleted: {
     color: '#666666',
+  },
+  errorState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
   },
   emptyState: {
     flex: 1,

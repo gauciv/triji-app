@@ -29,6 +29,11 @@ export default function CreateTaskScreen({ route, navigation }) {
     setSaving(true);
     try {
       const user = auth.currentUser;
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to create tasks.');
+        return;
+      }
+
       await addDoc(collection(db, 'tasks'), {
         title: title.trim(),
         subject: subject.trim(),
@@ -40,10 +45,20 @@ export default function CreateTaskScreen({ route, navigation }) {
         createdAt: serverTimestamp()
       });
 
-      navigation.goBack();
+      Alert.alert('Success', 'Task created successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
     } catch (error) {
       console.log('Error creating task:', error);
-      Alert.alert('Error', 'Failed to create task. Please try again.');
+      let errorMessage = 'Failed to save task. Please try again later.';
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = 'You do not have permission to create tasks.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Service is currently unavailable. Please check your connection.';
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setSaving(false);
     }
