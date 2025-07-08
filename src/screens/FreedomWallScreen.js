@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
@@ -6,9 +6,13 @@ import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FreedomWallScreen({ navigation }) {
+  const { isConnected, registerSyncCallback } = useNetwork();
   const [posts, setPosts] = useState([]);
+  const [pendingPosts, setPendingPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -18,6 +22,13 @@ export default function FreedomWallScreen({ navigation }) {
   const [selectedColor, setSelectedColor] = useState('#FFFACD');
   const [showSortModal, setShowSortModal] = useState(false);
   const [sortBy, setSortBy] = useState('Oldest to Newest');
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  const combinedPosts = useMemo(() => {
+    return [...posts, ...pendingPosts];
+  }, [posts, pendingPosts]);
 
   const colorPalette = [
     '#FFFACD', // Pale yellow
@@ -92,10 +103,12 @@ export default function FreedomWallScreen({ navigation }) {
         });
         setPosts(postsList);
         setLoading(false);
+        setIsInitialLoading(false);
       }, (error) => {
         console.log('Error fetching posts:', error);
         setError('Could not load the Freedom Wall');
         setLoading(false);
+        setIsInitialLoading(false);
       });
 
       return unsubscribe;
@@ -111,6 +124,70 @@ export default function FreedomWallScreen({ navigation }) {
     const unsubscribe = fetchPosts();
     return () => unsubscribe && unsubscribe();
   }, [sortBy]);
+
+  const syncPendingPosts = async () => {
+    if (pendingPosts.length === 0) return;
+    
+    console.log(`Syncing ${pendingPosts.length} pending posts...`);
+    
+    for (const pendingPost of pendingPosts) {
+      try {
+        const { id, status, ...postData } = pendingPost;
+        await addDoc(collection(db, 'freedom-wall-posts'), postData);
+        
+        // Remove from pending posts after successful sync
+        setPendingPosts(prev => prev.filter(p => p.id !== pendingPost.id));
+        console.log('Synced post:', pendingPost.id);
+      } catch (error) {
+        console.log('Error syncing post:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    registerSyncCallback(syncPendingPosts);
+  }, [pendingPosts, registerSyncCallback]);
+
+  useEffect(() => {
+    checkCooldown();
+  }, [showModal]);
+
+  const checkCooldown = async () => {
+    try {
+      const lastPostTime = await AsyncStorage.getItem('lastPostTime');
+      if (lastPostTime) {
+        const timeDiff = Date.now() - parseInt(lastPostTime);
+        const cooldownTime = 90000; // 90 seconds
+        
+        if (timeDiff < cooldownTime) {
+          const remainingTime = Math.ceil((cooldownTime - timeDiff) / 1000);
+          setIsOnCooldown(true);
+          setCooldownSeconds(remainingTime);
+          
+          const interval = setInterval(() => {
+            setCooldownSeconds(prev => {
+              if (prev <= 1) {
+                setIsOnCooldown(false);
+                clearInterval(interval);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          
+          return () => clearInterval(interval);
+        }
+      }
+    } catch (error) {
+      console.log('Error checking cooldown:', error);
+    }
+  };
+
+  const formatCooldownTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
@@ -136,30 +213,62 @@ export default function FreedomWallScreen({ navigation }) {
   };
 
   const handlePost = async () => {
+    if (isOnCooldown) {
+      Alert.alert('Cooldown Active', 'Please wait for the cooldown to finish. This was implemented to avoid spam.');
+      return;
+    }
+    
     if (!postContent.trim()) {
       Alert.alert('Error', 'Please write something before posting.');
       return;
     }
 
     setPosting(true);
-    try {
-      const persona = generatePersona();
-      const finalPersona = customNickname.trim() || persona.name;
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+    
+    const persona = generatePersona();
+    const finalPersona = customNickname.trim() || persona.name;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    
+    const postData = {
+      content: postContent.trim(),
+      createdAt: now,
+      expiresAt: expiresAt,
+      persona: finalPersona,
+      personaColor: persona.color,
+      noteColor: selectedColor,
+      likeCount: 0,
+      likedBy: [],
+      viewCount: 0,
+      viewedBy: [],
+    };
+    
+    if (!isConnected) {
+      // Add to pending posts for offline
+      const pendingPost = {
+        ...postData,
+        id: `pending_${Date.now()}`,
+        status: 'pending'
+      };
+      setPendingPosts(prev => [...prev, pendingPost]);
       
-      await addDoc(collection(db, 'freedom-wall-posts'), {
-        content: postContent.trim(),
-        createdAt: now,
-        expiresAt: expiresAt,
-        persona: finalPersona,
-        personaColor: persona.color,
-        noteColor: selectedColor,
-        likeCount: 0,
-        likedBy: [],
-        viewCount: 0,
-        viewedBy: [],
-      });
+      // Save timestamp for cooldown (offline posts)
+      await AsyncStorage.setItem('lastPostTime', Date.now().toString());
+      
+      setPostContent('');
+      setCustomNickname('');
+      setSelectedColor('#FFFACD');
+      setShowModal(false);
+      setPosting(false);
+      return;
+    }
+    
+    try {
+      await addDoc(collection(db, 'freedom-wall-posts'), postData);
+      
+      // Save timestamp for cooldown
+      await AsyncStorage.setItem('lastPostTime', Date.now().toString());
+      
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
@@ -266,7 +375,12 @@ export default function FreedomWallScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {posts.length === 0 && !loading ? (
+        {isInitialLoading ? (
+          <View style={styles.loadingContainer}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
+          </View>
+        ) : combinedPosts.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="message-circle" size={64} color="#8E8E93" />
             <Text style={styles.emptyStateText}>
@@ -275,7 +389,7 @@ export default function FreedomWallScreen({ navigation }) {
           </View>
         ) : (
           <FlatList
-            data={posts}
+            data={combinedPosts}
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
               <PostCard 
@@ -390,12 +504,18 @@ export default function FreedomWallScreen({ navigation }) {
             </View>
             
             <TouchableOpacity 
-              style={[styles.postButton, posting && styles.postButtonDisabled]}
+              style={[
+                styles.postButton, 
+                (posting || isOnCooldown) && styles.postButtonDisabled
+              ]}
               onPress={handlePost}
-              disabled={posting}
+              disabled={posting || isOnCooldown}
             >
-              <Text style={styles.postButtonText}>
-                {posting ? 'Posting...' : 'Post It'}
+              <Text style={[
+                styles.postButtonText,
+                isOnCooldown && styles.cooldownText
+              ]}>
+                {posting ? 'Posting...' : isOnCooldown ? formatCooldownTime(cooldownSeconds) : 'Post It'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -508,10 +628,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 40,
   },
   loadingText: {
-    color: '#FFFFFF',
+    color: '#D3D3D3',
     fontSize: 18,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 20,
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -779,5 +903,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+  },
+  postButtonTextDisabled: {
+    color: '#666666',
+  },
+  cooldownText: {
+    color: '#FF3B30',
   },
 });

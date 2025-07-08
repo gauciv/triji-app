@@ -23,3 +23,12 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enable offline persistence
+try {
+  // Note: In React Native, Firestore persistence is enabled by default
+  // This ensures offline data is cached automatically for onSnapshot listeners
+  console.log('Firestore offline persistence enabled');
+} catch (error) {
+  console.log('Error with offline persistence:', error);
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
+import { Feather } from '@expo/vector-icons';
 
 export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
   const [countdown, setCountdown] = useState('');
@@ -49,7 +50,8 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
         styles.card, 
         { 
           transform: [{ rotate: rotation }],
-          backgroundColor: post.noteColor || '#FFFACD'
+          backgroundColor: post.noteColor || '#FFFACD',
+          opacity: post.status === 'pending' ? 0.7 : 1
         }
       ]}
       onPress={onPress}
@@ -80,11 +82,16 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
           </TouchableOpacity>
           
           <View style={styles.seenCounter}>
-            <Text style={styles.eyeIcon}>👁</Text>
+            <Feather name="eye" size={8} color="#666666" />
             <Text style={styles.seenCount}>{post.viewCount || 0}</Text>
           </View>
           
-          {countdown && (
+          {post.status === 'pending' ? (
+            <View style={styles.pendingIndicator}>
+              <Feather name="clock" size={6} color="#FF9500" />
+              <Text style={styles.pendingText}>Syncing...</Text>
+            </View>
+          ) : countdown && (
             <Text style={styles.countdown}>{countdown}</Text>
           )}
         </View>
@@ -197,7 +204,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyeIcon: {
-    fontSize: 10,
     marginRight: 2,
   },
   seenCount: {
@@ -205,4 +211,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#666666',
   },
+  pendingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clockIcon: {
+    marginRight: 2,
+  },
+  pendingText: {
+    fontSize: 7,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF9500',
+    fontStyle: 'italic',
+  },
+
 });
