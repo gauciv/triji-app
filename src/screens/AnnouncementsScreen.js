@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
@@ -12,6 +12,9 @@ export default function AnnouncementsScreen({ navigation }) {
   const [userRole, setUserRole] = useState('');
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
+
+  const windowWidth = Dimensions.get('window').width;
+  const isSmallScreen = windowWidth < 400;
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -121,34 +124,28 @@ export default function AnnouncementsScreen({ navigation }) {
   const renderAnnouncement = ({ item }) => {
     return (
       <TouchableOpacity 
-        style={styles.announcementCard}
+        style={styles.announcementCardModern}
+        activeOpacity={0.88}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
-        <View style={styles.cardMain}>
-          <View style={styles.cardLeft}>
-            <View style={styles.authorPicture}>
-              <Text style={styles.authorInitial}>
+        <View style={styles.cardMainModern}>
+          <View style={styles.cardLeftModern}>
+            <View style={styles.authorPictureModern}>
+              <Text style={styles.authorInitialModern}>
                 {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
               </Text>
             </View>
+            <Text style={styles.authorNameModern}>{item.authorName || 'Anonymous'}</Text>
           </View>
-          
-          <View style={styles.cardRight}>
-            <View style={styles.cardHeader}>
-              <View style={styles.authorContainer}>
-                <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
+          <View style={styles.cardRightModern}>
+            <Text style={styles.titleModern}>{item.title}</Text>
+            <View style={styles.cardMetaModern}>
+              <View style={[styles.typeChipModern, { backgroundColor: getTypeColor(item.type) + '22' }]}> 
+                <Text style={[styles.typeChipTextModern, { color: getTypeColor(item.type) }]}>{item.type || 'General'}</Text>
               </View>
-              <View style={styles.cardMeta}>
-                <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
-                <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
-                  <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
-                </View>
-              </View>
+              <Text style={styles.timestampModern}>{formatTimestamp(item.createdAt)}</Text>
+              <Text style={styles.expiryTextModern}>{getTimeRemaining(item.expiresAt)}</Text>
             </View>
-            
-            <Text style={styles.title}>{item.title}</Text>
-            
-            <Text style={styles.expiryText}>{getTimeRemaining(item.expiresAt)}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -183,7 +180,6 @@ export default function AnnouncementsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.backgroundGradient} />
-      
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity 
@@ -194,30 +190,27 @@ export default function AnnouncementsScreen({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Announcements</Text>
         </View>
-        
         <View style={styles.headerBottom}>
           <TouchableOpacity 
-            style={styles.archiveButton}
+            style={styles.archiveButtonGhost}
             onPress={() => navigation.navigate('ArchivedAnnouncements')}
           >
-            <Feather name="archive" size={20} color="#FFFFFF" />
-            <Text style={styles.archiveButtonText}>Archive</Text>
+            <Feather name="archive" size={20} color="#007AFF" />
+            <Text style={styles.archiveButtonTextGhost}>Archive</Text>
           </TouchableOpacity>
-          
           {userRole === 'officer' && (
             <TouchableOpacity 
-              style={styles.addButton}
+              style={styles.addButtonModern}
               onPress={() => navigation.navigate('CreateAnnouncement')}
             >
-              <Feather name="plus" size={20} color="#FFFFFF" />
-              <Text style={styles.addButtonText}>New</Text>
+              <Feather name="plus" size={18} color="#FFFFFF" />
+              <Text style={styles.addButtonTextModern}>New</Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
-      
       {initialLoad ? (
-        <View style={styles.listContainer}>
+        <View style={styles.listContainerModern}>
           <AnnouncementCardSkeleton />
           <AnnouncementCardSkeleton />
           <AnnouncementCardSkeleton />
@@ -234,7 +227,7 @@ export default function AnnouncementsScreen({ navigation }) {
           data={announcements}
           renderItem={renderAnnouncement}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={styles.listContainerModern}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -266,106 +259,179 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
   headerBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-
-  listContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  announcementCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  cardMain: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cardLeft: {
-    alignItems: 'center',
-  },
-  cardRight: {
-    flex: 1,
-  },
-  cardHeader: {
+  archiveButtonGhost: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  cardMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#007AFF',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     gap: 8,
   },
-  authorPicture: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  archiveButtonTextGhost: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  addButtonModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    gap: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addButtonTextModern: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  listContainerModern: {
+    paddingHorizontal: 16,
+    paddingTop: 24, // more margin from header
+    paddingBottom: 48,
+    alignItems: 'stretch',
+    gap: 24,
+  },
+  announcementCardModern: {
+    backgroundColor: 'rgba(30, 32, 40, 0.55)',
+    borderRadius: 16,
+    padding: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderLeftWidth: 5,
+    marginBottom: 0,
+    marginTop: 0,
+    shadowColor: '#007AFF', // blue highlight
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
+    minWidth: 0,
+    backdropFilter: 'blur(16px)', // web only
+    boxShadow: Platform.OS === 'web' ? '0px 4px 24px 0px #007AFF33' : undefined,
+  },
+  cardMainModern: {
+    flexDirection: 'row',
+    gap: 18,
+    alignItems: 'flex-start',
+  },
+  cardLeftModern: {
+    alignItems: 'center',
+    marginRight: 18,
+    minWidth: 70,
+  },
+  authorPictureModern: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginBottom: 6,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  authorInitial: {
-    fontSize: 16,
+  authorInitialModern: {
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    zIndex: 1,
   },
-  authorContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  authorName: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  timestamp: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    lineHeight: 24,
-    marginBottom: 8,
-  },
-  content: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-    lineHeight: 20,
-  },
-  typeChip: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  typeChipText: {
-    fontSize: 10,
+  authorNameModern: {
+    fontSize: 15,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    marginTop: 2,
+    marginBottom: 2,
+    textAlign: 'center',
+    opacity: 0.85,
   },
-  expiryText: {
-    fontSize: 11,
+  cardRightModern: {
+    flex: 1,
+    minWidth: 0,
+  },
+  titleModern: {
+    fontSize: 22,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    marginBottom: 10,
+    lineHeight: 30,
+    textShadowColor: 'rgba(0,0,0,0.12)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  cardMetaModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 2,
+  },
+  typeChipModern: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
+    marginTop: 2,
+    marginBottom: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 2,
+    boxShadow: Platform.OS === 'web' ? '0px 2px 6px rgba(0,0,0,0.18)' : undefined,
+  },
+  typeChipTextModern: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  timestampModern: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    opacity: 0.8,
+    marginLeft: 2,
+  },
+  expiryTextModern: {
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: '#FF9500',
+    opacity: 0.9,
+    marginLeft: 2,
   },
   errorContainer: {
     flex: 1,
@@ -419,50 +485,5 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#FFFFFF',
     fontSize: 18,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  archiveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 8,
-  },
-  archiveButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    gap: 8,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
   },
 });
