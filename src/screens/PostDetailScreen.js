@@ -70,8 +70,41 @@ export default function PostDetailScreen({ route, navigation }) {
     
     animate();
     
+    // Track view count
+    const trackView = async () => {
+      const user = auth.currentUser;
+      if (!user || !post.id) return;
+      
+      const viewedBy = post.viewedBy || [];
+      const hasViewed = viewedBy.includes(user.uid);
+      
+      if (!hasViewed) {
+        try {
+          const postRef = doc(db, 'freedom-wall-posts', post.id);
+          
+          await runTransaction(db, async (transaction) => {
+            const postDoc = await transaction.get(postRef);
+            if (!postDoc.exists()) return;
+            
+            const data = postDoc.data();
+            const currentViewCount = data.viewCount || 0;
+            const currentViewedBy = data.viewedBy || [];
+            
+            transaction.update(postRef, {
+              viewCount: currentViewCount + 1,
+              viewedBy: [...currentViewedBy, user.uid]
+            });
+          });
+        } catch (error) {
+          console.log('Error tracking view:', error);
+        }
+      }
+    };
+    
+    trackView();
+    
     return () => clearInterval(interval);
-  }, [post.expiresAt]);
+  }, [post.expiresAt, post.id]);
 
   const handleLike = async () => {
     const user = auth.currentUser;

@@ -157,6 +157,8 @@ export default function FreedomWallScreen({ navigation }) {
         noteColor: selectedColor,
         likeCount: 0,
         likedBy: [],
+        viewCount: 0,
+        viewedBy: [],
       });
       setPostContent('');
       setCustomNickname('');
