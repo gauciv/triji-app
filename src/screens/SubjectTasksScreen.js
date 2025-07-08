@@ -9,6 +9,7 @@ import { auth } from '../config/firebaseConfig';
 export default function SubjectTasksScreen({ route, navigation }) {
   const { subjectId, subjectName, subjectCode } = route.params;
   const [tasks, setTasks] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState('');
@@ -22,7 +23,7 @@ export default function SubjectTasksScreen({ route, navigation }) {
   useEffect(() => {
     fetchUserRole();
     fetchTasks();
-  }, []);
+  }, [selectedStatus]);
 
   const fetchUserRole = async () => {
     try {
@@ -46,11 +47,21 @@ export default function SubjectTasksScreen({ route, navigation }) {
     setError(null);
 
     try {
-      const q = query(
-        collection(db, 'tasks'),
-        where('subjectId', '==', subjectId),
-        orderBy('createdAt', 'desc')
-      );
+      let q;
+      if (selectedStatus === 'All') {
+        q = query(
+          collection(db, 'tasks'),
+          where('subjectId', '==', subjectId),
+          orderBy('createdAt', 'desc')
+        );
+      } else {
+        q = query(
+          collection(db, 'tasks'),
+          where('subjectId', '==', subjectId),
+          where('status', '==', selectedStatus),
+          orderBy('createdAt', 'desc')
+        );
+      }
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const tasksList = [];
@@ -98,6 +109,7 @@ export default function SubjectTasksScreen({ route, navigation }) {
   const handleStatusUpdate = async (taskId, currentStatus) => {
     const nextStatus = getNextStatus(currentStatus);
     
+    // Optimistic UI update
     setTasks(prevTasks => 
       prevTasks.map(task => 
         task.id === taskId ? { ...task, status: nextStatus } : task
@@ -110,6 +122,7 @@ export default function SubjectTasksScreen({ route, navigation }) {
       });
     } catch (error) {
       console.log('Error updating status:', error);
+      // Revert optimistic update on error
       setTasks(prevTasks => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, status: currentStatus } : task
@@ -174,6 +187,26 @@ export default function SubjectTasksScreen({ route, navigation }) {
           <Text style={styles.headerTitle}>{subjectCode}</Text>
           <Text style={styles.headerSubtitle}>{subjectName}</Text>
         </View>
+      </View>
+
+      <View style={styles.statusFilter}>
+        {['All', 'To Do', 'In Progress', 'Completed'].map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.filterButton,
+              selectedStatus === status && styles.filterButtonActive
+            ]}
+            onPress={() => setSelectedStatus(status)}
+          >
+            <Text style={[
+              styles.filterButtonText,
+              selectedStatus === status && styles.filterButtonTextActive
+            ]}>
+              {status}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {error ? (
@@ -375,5 +408,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginTop: 100,
+  },
+  statusFilter: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  filterButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterButtonText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#8E8E93',
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
   },
 });
