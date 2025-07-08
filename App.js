@@ -19,6 +19,7 @@ import {
   FreedomWallScreen,
   PostDetailScreen,
   TaskboardScreen,
+  SubjectTasksScreen,
   CreateTaskScreen,
   CatchUpScreen
 } from './src/screens';
@@ -104,6 +105,7 @@ export default function App() {
           <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="Taskboard" component={TaskboardScreen} />
+          <Stack.Screen name="SubjectTasks" component={SubjectTasksScreen} />
           <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
         </Stack.Navigator>
         <StatusBar style="light" />

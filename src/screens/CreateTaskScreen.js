@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { db } from '../config/firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 
 export default function CreateTaskScreen({ route, navigation }) {
-  const { semester } = route.params;
+  const { subjectId, subjectName, subjectCode } = route.params;
   const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
   const [details, setDetails] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [deadline, setDeadline] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
   let [fontsLoaded] = useFonts({
@@ -20,9 +21,23 @@ export default function CreateTaskScreen({ route, navigation }) {
     Inter_600SemiBold,
   });
 
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || deadline;
+    setShowDatePicker(Platform.OS === 'ios');
+    setDeadline(currentDate);
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   const handleSave = async () => {
-    if (!title.trim() || !subject.trim()) {
-      Alert.alert('Error', 'Please fill in title and subject.');
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please fill in the task title.');
       return;
     }
 
@@ -36,10 +51,11 @@ export default function CreateTaskScreen({ route, navigation }) {
 
       await addDoc(collection(db, 'tasks'), {
         title: title.trim(),
-        subject: subject.trim(),
         details: details.trim(),
-        deadline: deadline.trim(),
-        semester: semester,
+        deadline: formatDate(deadline),
+        subjectId: subjectId,
+        subjectName: subjectName,
+        subjectCode: subjectCode,
         status: 'To Do',
         userId: user.uid,
         createdAt: serverTimestamp()
@@ -107,15 +123,10 @@ export default function CreateTaskScreen({ route, navigation }) {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Subject *</Text>
-          <TextInput
-            style={styles.input}
-            value={subject}
-            onChangeText={setSubject}
-            placeholder="Enter subject"
-            placeholderTextColor="#8E8E93"
-            maxLength={50}
-          />
+          <Text style={styles.inputLabel}>Subject</Text>
+          <View style={[styles.input, styles.disabledInput]}>
+            <Text style={styles.disabledText}>{subjectCode} - {subjectName}</Text>
+          </View>
         </View>
 
         <View style={styles.inputGroup}>
@@ -134,19 +145,30 @@ export default function CreateTaskScreen({ route, navigation }) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Deadline</Text>
-          <TextInput
-            style={styles.input}
-            value={deadline}
-            onChangeText={setDeadline}
-            placeholder="e.g., Dec 15, 2024"
-            placeholderTextColor="#8E8E93"
-            maxLength={50}
-          />
+          <TouchableOpacity
+            style={[styles.input, styles.dateInput]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.dateText}>{formatDate(deadline)}</Text>
+            <Feather name="calendar" size={20} color="#8E8E93" />
+          </TouchableOpacity>
         </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={deadline}
+            mode="date"
+            is24Hour={true}
+            display="default"
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+          />
+        )}
 
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>
-            This task will be added to {semester === 1 ? '1st' : '2nd'} Semester
+            This task will be added to {subjectCode}
           </Text>
         </View>
       </ScrollView>
@@ -240,6 +262,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#007AFF',
     textAlign: 'center',
+  },
+  disabledInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  disabledText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dateText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
   },
   loadingText: {
     color: '#FFFFFF',
