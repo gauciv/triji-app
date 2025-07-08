@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from '
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 
 export default function TaskboardScreen({ navigation }) {
@@ -54,31 +54,23 @@ export default function TaskboardScreen({ navigation }) {
   };
 
   const fetchDueSoonTasks = () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
     try {
-      const threeDaysFromNow = new Date();
-      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-      
       const q = query(
         collection(db, 'tasks'),
         where('status', 'in', ['To Do', 'In Progress']),
-        orderBy('deadline', 'asc')
+        orderBy('deadline', 'asc'),
+        limit(4)
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const tasksList = [];
         querySnapshot.forEach((doc) => {
-          const task = { id: doc.id, ...doc.data() };
-          if (task.deadline) {
-            const taskDate = new Date(task.deadline);
-            if (taskDate <= threeDaysFromNow) {
-              tasksList.push(task);
-            }
-          }
+          tasksList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
-        setDueSoonTasks(tasksList.slice(0, 5)); // Limit to 5 tasks
+        setDueSoonTasks(tasksList);
       });
 
       return unsubscribe;
@@ -98,13 +90,37 @@ export default function TaskboardScreen({ navigation }) {
     };
   }, []);
 
+  const getTimeRemaining = (deadline) => {
+    if (!deadline) return 'No deadline';
+    
+    const now = new Date();
+    const dueDate = new Date(deadline);
+    const diffMs = dueDate - now;
+    
+    if (diffMs < 0) return 'Overdue';
+    
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (diffDays > 0) return `${diffDays}d left`;
+    if (diffHours > 0) return `${diffHours}h left`;
+    return 'Due soon';
+  };
+
   const renderDueSoonTask = ({ item }) => (
-    <TouchableOpacity style={styles.dueSoonCard}>
+    <TouchableOpacity 
+      style={styles.dueSoonCard}
+      onPress={() => navigation.navigate('SubjectTasks', {
+        subjectId: item.subjectId,
+        subjectName: item.subjectName,
+        subjectCode: item.subjectCode
+      })}
+    >
       <View style={styles.dueSoonHeader}>
         <Text style={styles.dueSoonSubject}>{item.subjectCode}</Text>
-        <Text style={styles.dueSoonDate}>{item.deadline}</Text>
+        <Text style={styles.dueSoonTime}>{getTimeRemaining(item.deadline)}</Text>
       </View>
-      <Text style={styles.dueSoonTitle}>{item.title}</Text>
+      <Text style={styles.dueSoonTitle} numberOfLines={2}>{item.title}</Text>
       <View style={[styles.dueSoonStatus, { backgroundColor: getStatusColor(item.status) }]}>
         <Text style={styles.dueSoonStatusText}>{item.status}</Text>
       </View>
@@ -274,9 +290,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     color: '#007AFF',
   },
-  dueSoonDate: {
+  dueSoonTime: {
     fontSize: 12,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Inter_500Medium',
     color: '#FF9500',
   },
   dueSoonTitle: {
