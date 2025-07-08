@@ -219,17 +219,22 @@ export default function PostDetailScreen({ route, navigation }) {
 
       <View style={styles.content}>
         <View style={styles.noteContainer}>
-          <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
-            <View style={styles.personaContainer}>
-              <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
-              <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
-                {post.persona || 'Anonymous'}
-              </Text>
+          <View style={styles.noteWrapper}>
+            <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
+              <View style={styles.personaContainer}>
+                <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+                <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+                  {post.persona || 'Anonymous'}
+                </Text>
+              </View>
+              
+              <Text style={styles.postText}>{post.content}</Text>
             </View>
             
-            <Text style={styles.postText}>{post.content}</Text>
-            
-
+            <View style={styles.seenCounter}>
+              <Text style={styles.eyeIcon}>👁</Text>
+              <Text style={styles.seenCount}>{currentPost.viewCount || 0}</Text>
+            </View>
           </View>
         </View>
         
@@ -311,6 +316,10 @@ const styles = StyleSheet.create({
   noteContainer: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  noteWrapper: {
+    position: 'relative',
+    width: '100%',
   },
   postCard: {
     width: '100%',
@@ -432,5 +441,25 @@ const styles = StyleSheet.create({
   },
   copiedText: {
     color: '#34C759',
+  },
+  seenCounter: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  eyeIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  seenCount: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#666666',
   },
 });
