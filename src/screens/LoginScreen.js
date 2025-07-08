@@ -42,6 +42,11 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCredential.user.emailVerified) {
+        setError('Please verify your email before logging in. Check your inbox for the verification link.');
+        // Optionally, you could offer to resend the verification email here.
+        return;
+      }
       await AsyncStorage.setItem('user_session', JSON.stringify(userCredential.user));
       console.log('Login successful:', userCredential.user.email);
       navigation.navigate('Dashboard');
