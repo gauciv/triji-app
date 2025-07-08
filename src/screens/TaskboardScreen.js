@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
@@ -8,8 +8,7 @@ import { auth } from '../config/firebaseConfig';
 
 export default function TaskboardScreen({ navigation }) {
   const [subjects, setSubjects] = useState([]);
-  const [taskCounts, setTaskCounts] = useState({});
-  const [selectedSemester, setSelectedSemester] = useState(1);
+  const [dueSoonTasks, setDueSoonTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,7 +25,6 @@ export default function TaskboardScreen({ navigation }) {
     try {
       const q = query(
         collection(db, 'subjects'),
-        where('semester', '==', selectedSemester),
         orderBy('subjectCode', 'asc')
       );
 
@@ -40,7 +38,6 @@ export default function TaskboardScreen({ navigation }) {
         });
         setSubjects(subjectsList);
         setLoading(false);
-        fetchTaskCounts(subjectsList);
       }, (error) => {
         console.log('Error fetching subjects:', error);
         setError('Could not load subjects. Please check your connection.');
@@ -56,61 +53,88 @@ export default function TaskboardScreen({ navigation }) {
     }
   };
 
-  const fetchTaskCounts = async (subjectsList) => {
+  const fetchDueSoonTasks = () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const counts = {};
-    
-    for (const subject of subjectsList) {
-      try {
-        const q = query(
-          collection(db, 'tasks'),
-          where('userId', '==', user.uid),
-          where('subjectId', '==', subject.id),
-          where('status', 'in', ['To Do', 'In Progress'])
-        );
-        
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          counts[subject.id] = querySnapshot.size;
-          setTaskCounts({...counts});
+    try {
+      const threeDaysFromNow = new Date();
+      threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+      
+      const q = query(
+        collection(db, 'tasks'),
+        where('status', 'in', ['To Do', 'In Progress']),
+        orderBy('deadline', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const tasksList = [];
+        querySnapshot.forEach((doc) => {
+          const task = { id: doc.id, ...doc.data() };
+          if (task.deadline) {
+            const taskDate = new Date(task.deadline);
+            if (taskDate <= threeDaysFromNow) {
+              tasksList.push(task);
+            }
+          }
         });
-      } catch (error) {
-        console.log('Error fetching task count for subject:', subject.subjectCode, error);
-        counts[subject.id] = 0;
-      }
+        setDueSoonTasks(tasksList.slice(0, 5)); // Limit to 5 tasks
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error fetching due soon tasks:', error);
+      return null;
     }
   };
 
   useEffect(() => {
-    const unsubscribe = fetchSubjects();
-    return () => unsubscribe && unsubscribe();
-  }, [selectedSemester]);
-
-  const renderSubject = ({ item }) => {
-    const taskCount = taskCounts[item.id] || 0;
+    const unsubscribeSubjects = fetchSubjects();
+    const unsubscribeTasks = fetchDueSoonTasks();
     
-    return (
-      <TouchableOpacity 
-        style={styles.subjectCard}
-        onPress={() => navigation.navigate('SubjectTasks', { 
-          subjectId: item.id,
-          subjectName: item.subjectName,
-          subjectCode: item.subjectCode
-        })}
-      >
-        <View style={styles.subjectHeader}>
-          <Text style={styles.subjectCode}>{item.subjectCode}</Text>
-          {taskCount > 0 && (
-            <View style={styles.taskBadge}>
-              <Text style={styles.taskBadgeText}>{taskCount}</Text>
-            </View>
-          )}
-        </View>
+    return () => {
+      unsubscribeSubjects && unsubscribeSubjects();
+      unsubscribeTasks && unsubscribeTasks();
+    };
+  }, []);
+
+  const renderDueSoonTask = ({ item }) => (
+    <TouchableOpacity style={styles.dueSoonCard}>
+      <View style={styles.dueSoonHeader}>
+        <Text style={styles.dueSoonSubject}>{item.subjectCode}</Text>
+        <Text style={styles.dueSoonDate}>{item.deadline}</Text>
+      </View>
+      <Text style={styles.dueSoonTitle}>{item.title}</Text>
+      <View style={[styles.dueSoonStatus, { backgroundColor: getStatusColor(item.status) }]}>
+        <Text style={styles.dueSoonStatusText}>{item.status}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderSubject = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.subjectRow}
+      onPress={() => navigation.navigate('SubjectTasks', { 
+        subjectId: item.id,
+        subjectName: item.subjectName,
+        subjectCode: item.subjectCode
+      })}
+    >
+      <View style={styles.subjectInfo}>
+        <Text style={styles.subjectCode}>{item.subjectCode}</Text>
         <Text style={styles.subjectName}>{item.subjectName}</Text>
-        <Text style={styles.subjectUnits}>{item.units} units</Text>
-      </TouchableOpacity>
-    );
+      </View>
+      <Feather name="chevron-right" size={20} color="#8E8E93" />
+    </TouchableOpacity>
+  );
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'To Do': return '#FF9500';
+      case 'In Progress': return '#007AFF';
+      case 'Completed': return '#34C759';
+      default: return '#8E8E93';
+    }
   };
 
   if (!fontsLoaded) {
@@ -133,67 +157,55 @@ export default function TaskboardScreen({ navigation }) {
         <Text style={styles.headerTitle}>Taskboard</Text>
       </View>
 
-      <View style={styles.semesterSelector}>
-        <TouchableOpacity
-          style={[
-            styles.semesterButton,
-            selectedSemester === 1 && styles.semesterButtonActive
-          ]}
-          onPress={() => setSelectedSemester(1)}
-        >
-          <Text style={[
-            styles.semesterButtonText,
-            selectedSemester === 1 && styles.semesterButtonTextActive
-          ]}>
-            1st Sem
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.semesterButton,
-            selectedSemester === 2 && styles.semesterButtonActive
-          ]}
-          onPress={() => setSelectedSemester(2)}
-        >
-          <Text style={[
-            styles.semesterButtonText,
-            selectedSemester === 2 && styles.semesterButtonTextActive
-          ]}>
-            2nd Sem
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Due Soon Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Due Soon</Text>
+          {dueSoonTasks.length > 0 ? (
+            <FlatList
+              data={dueSoonTasks}
+              keyExtractor={(item) => item.id}
+              renderItem={renderDueSoonTask}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dueSoonList}
+            />
+          ) : (
+            <View style={styles.emptyDueSoon}>
+              <Text style={styles.emptyDueSoonText}>No upcoming deadlines</Text>
+            </View>
+          )}
+        </View>
 
-      {error ? (
-        <View style={styles.errorState}>
-          <Feather name="wifi-off" size={64} color="#FF3B30" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => fetchSubjects()}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+        {/* All Subjects Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>All Subjects</Text>
+          {error ? (
+            <View style={styles.errorState}>
+              <Feather name="wifi-off" size={48} color="#FF3B30" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => fetchSubjects()}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : subjects.length === 0 && !loading ? (
+            <View style={styles.emptyState}>
+              <Feather name="book" size={48} color="#8E8E93" />
+              <Text style={styles.emptyStateText}>No subjects found</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={subjects}
+              keyExtractor={(item) => item.id}
+              renderItem={renderSubject}
+              scrollEnabled={false}
+            />
+          )}
         </View>
-      ) : subjects.length === 0 && !loading ? (
-        <View style={styles.emptyState}>
-          <Feather name="book" size={64} color="#8E8E93" />
-          <Text style={styles.emptyStateText}>
-            No subjects found for {selectedSemester === 1 ? '1st' : '2nd'} semester
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={subjects}
-          keyExtractor={(item) => item.id}
-          renderItem={renderSubject}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-        />
-      )}
+      </ScrollView>
     </View>
   );
 }
@@ -226,88 +238,99 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
-  semesterSelector: {
-    flexDirection: 'row',
-    margin: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-    padding: 4,
-  },
-  semesterButton: {
+  content: {
     flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 6,
   },
-  semesterButtonActive: {
-    backgroundColor: '#007AFF',
+  section: {
+    marginBottom: 32,
   },
-  semesterButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#8E8E93',
-  },
-  semesterButtonTextActive: {
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 16,
   },
-  listContainer: {
-    padding: 20,
+  dueSoonList: {
+    paddingHorizontal: 20,
   },
-  subjectCard: {
+  dueSoonCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 20,
-    margin: 8,
-    flex: 1,
-    minHeight: 120,
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 12,
+    width: 200,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  subjectHeader: {
+  dueSoonHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  dueSoonSubject: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#007AFF',
+  },
+  dueSoonDate: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF9500',
+  },
+  dueSoonTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  dueSoonStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  dueSoonStatusText: {
+    fontSize: 10,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  emptyDueSoon: {
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyDueSoonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+  },
+  subjectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  subjectInfo: {
+    flex: 1,
   },
   subjectCode: {
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#007AFF',
-    flex: 1,
-  },
-  taskBadge: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  taskBadgeText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    marginBottom: 2,
   },
   subjectName: {
     fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    lineHeight: 18,
-  },
-  subjectUnits: {
-    fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-  },
-  row: {
-    justifyContent: 'space-between',
+    color: '#FFFFFF',
+    lineHeight: 18,
   },
   emptyState: {
     flex: 1,
