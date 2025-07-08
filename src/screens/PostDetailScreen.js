@@ -185,6 +185,7 @@ export default function PostDetailScreen({ route, navigation }) {
 
     setSubmitting(true);
     try {
+      // Add report to reports collection
       await addDoc(collection(db, 'reports'), {
         postId: post.id,
         postContent: post.content,
@@ -192,6 +193,13 @@ export default function PostDetailScreen({ route, navigation }) {
         description: description.trim(),
         reporterId: user.uid,
         reportedAt: serverTimestamp()
+      });
+
+      // Update post with reportedBy array
+      const postRef = doc(db, 'freedom-wall-posts', post.id);
+      const reportedBy = post.reportedBy || [];
+      await updateDoc(postRef, {
+        reportedBy: [...reportedBy, user.uid]
       });
 
       setShowReportModal(false);
@@ -253,7 +261,16 @@ export default function PostDetailScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>Note Details</Text>
         <TouchableOpacity 
           style={styles.moreButton}
-          onPress={() => setShowReportModal(true)}
+          onPress={() => {
+            const user = auth.currentUser;
+            const reportedBy = post.reportedBy || [];
+            
+            if (user && reportedBy.includes(user.uid)) {
+              Alert.alert('Already Reported', 'You have already reported this post.');
+            } else {
+              setShowReportModal(true);
+            }
+          }}
         >
           <Feather name="alert-triangle" size={20} color="#FF3B30" />
         </TouchableOpacity>
