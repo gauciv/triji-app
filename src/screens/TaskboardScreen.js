@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SectionList, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 
 export default function TaskboardScreen({ navigation }) {
-  const [subjects, setSubjects] = useState([]);
-  const [dueSoonTasks, setDueSoonTasks] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,48 +17,16 @@ export default function TaskboardScreen({ navigation }) {
     Inter_600SemiBold,
   });
 
-  const fetchSubjects = () => {
+  const fetchTasks = () => {
     setLoading(true);
     setError(null);
 
     try {
       const q = query(
-        collection(db, 'subjects'),
-        orderBy('subjectCode', 'asc')
-      );
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const subjectsList = [];
-        querySnapshot.forEach((doc) => {
-          subjectsList.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        });
-        setSubjects(subjectsList);
-        setLoading(false);
-      }, (error) => {
-        console.log('Error fetching subjects:', error);
-        setError('Could not load subjects. Please check your connection.');
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.log('Error setting up listener:', error);
-      setError('Could not load subjects. Please check your connection.');
-      setLoading(false);
-      return null;
-    }
-  };
-
-  const fetchDueSoonTasks = () => {
-    try {
-      const q = query(
         collection(db, 'tasks'),
-        where('status', 'in', ['To Do', 'In Progress']),
-        orderBy('deadline', 'asc'),
-        limit(4)
+        where('status', '!=', 'Completed'),
+        orderBy('status'),
+        orderBy('deadline', 'asc')
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -70,88 +37,122 @@ export default function TaskboardScreen({ navigation }) {
             ...doc.data(),
           });
         });
-        setDueSoonTasks(tasksList);
+        
+        const groupedTasks = processTasksForAgenda(tasksList);
+        setSections(groupedTasks);
+        setLoading(false);
+      }, (error) => {
+        console.log('Error fetching tasks:', error);
+        setError('Could not load tasks. Please check your connection.');
+        setLoading(false);
       });
 
       return unsubscribe;
     } catch (error) {
-      console.log('Error fetching due soon tasks:', error);
+      console.log('Error setting up listener:', error);
+      setError('Could not load tasks. Please check your connection.');
+      setLoading(false);
       return null;
     }
   };
 
-  useEffect(() => {
-    const unsubscribeSubjects = fetchSubjects();
-    const unsubscribeTasks = fetchDueSoonTasks();
-    
-    return () => {
-      unsubscribeSubjects && unsubscribeSubjects();
-      unsubscribeTasks && unsubscribeTasks();
-    };
-  }, []);
-
-  const getTimeRemaining = (deadline) => {
-    if (!deadline) return 'No deadline';
-    
+  const processTasksForAgenda = (tasks) => {
     const now = new Date();
-    const dueDate = new Date(deadline);
-    const diffMs = dueDate - now;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const thisWeek = new Date(today);
+    thisWeek.setDate(thisWeek.getDate() + 7);
+
+    // Initialize arrays for each category
+    const overdueTasks = [];
+    const dueTodayTasks = [];
+    const dueTomorrowTasks = [];
+    const dueThisWeekTasks = [];
+    const dueLaterTasks = [];
+
+    // Process each task and categorize by deadline
+    tasks.forEach(task => {
+      if (!task.deadline) {
+        dueLaterTasks.push(task);
+        return;
+      }
+
+      const taskDate = new Date(task.deadline);
+      const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+
+      if (taskDay < today) {
+        overdueTasks.push(task);
+      } else if (taskDay.getTime() === today.getTime()) {
+        dueTodayTasks.push(task);
+      } else if (taskDay.getTime() === tomorrow.getTime()) {
+        dueTomorrowTasks.push(task);
+      } else if (taskDay <= thisWeek) {
+        dueThisWeekTasks.push(task);
+      } else {
+        dueLaterTasks.push(task);
+      }
+    });
+
+    // Format for SectionList - only include sections with data
+    const sections = [];
     
-    if (diffMs < 0) return 'Overdue';
-    
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (diffDays > 0) return `${diffDays}d left`;
-    if (diffHours > 0) return `${diffHours}h left`;
-    return 'Due soon';
+    if (overdueTasks.length > 0) {
+      sections.push({ title: 'Overdue', data: overdueTasks });
+    }
+    if (dueTodayTasks.length > 0) {
+      sections.push({ title: 'Due Today', data: dueTodayTasks });
+    }
+    if (dueTomorrowTasks.length > 0) {
+      sections.push({ title: 'Due Tomorrow', data: dueTomorrowTasks });
+    }
+    if (dueThisWeekTasks.length > 0) {
+      sections.push({ title: 'Due This Week', data: dueThisWeekTasks });
+    }
+    if (dueLaterTasks.length > 0) {
+      sections.push({ title: 'Due Later', data: dueLaterTasks });
+    }
+
+    return sections;
   };
 
-  const renderDueSoonTask = ({ item }) => (
+  useEffect(() => {
+    const unsubscribe = fetchTasks();
+    return () => unsubscribe && unsubscribe();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No deadline';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const renderTaskCard = ({ item }) => (
     <TouchableOpacity 
-      style={styles.dueSoonCard}
+      style={styles.taskCard}
       onPress={() => navigation.navigate('SubjectTasks', {
         subjectId: item.subjectId,
         subjectName: item.subjectName,
         subjectCode: item.subjectCode
       })}
     >
-      <View style={styles.dueSoonHeader}>
-        <Text style={styles.dueSoonSubject}>{item.subjectCode}</Text>
-        <Text style={styles.dueSoonTime}>{getTimeRemaining(item.deadline)}</Text>
+      <View style={styles.taskHeader}>
+        <Text style={styles.taskTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.taskSubject}>{item.subjectCode}</Text>
       </View>
-      <Text style={styles.dueSoonTitle} numberOfLines={2}>{item.title}</Text>
-      <View style={[styles.dueSoonStatus, { backgroundColor: getStatusColor(item.status) }]}>
-        <Text style={styles.dueSoonStatusText}>{item.status}</Text>
-      </View>
+      <Text style={styles.taskDate}>{formatDate(item.deadline)}</Text>
     </TouchableOpacity>
   );
 
-  const renderSubject = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.subjectRow}
-      onPress={() => navigation.navigate('SubjectTasks', { 
-        subjectId: item.id,
-        subjectName: item.subjectName,
-        subjectCode: item.subjectCode
-      })}
-    >
-      <View style={styles.subjectInfo}>
-        <Text style={styles.subjectCode}>{item.subjectCode}</Text>
-        <Text style={styles.subjectName}>{item.subjectName}</Text>
-      </View>
-      <Feather name="chevron-right" size={20} color="#8E8E93" />
-    </TouchableOpacity>
+  const renderSectionHeader = ({ section: { title } }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+    </View>
   );
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'To Do': return '#FF9500';
-      case 'In Progress': return '#007AFF';
-      case 'Completed': return '#34C759';
-      default: return '#8E8E93';
-    }
-  };
 
   if (!fontsLoaded) {
     return (
@@ -170,58 +171,36 @@ export default function TaskboardScreen({ navigation }) {
         >
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Taskboard</Text>
+        <Text style={styles.headerTitle}>Agenda</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Due Soon Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Due Soon</Text>
-          {dueSoonTasks.length > 0 ? (
-            <FlatList
-              data={dueSoonTasks}
-              keyExtractor={(item) => item.id}
-              renderItem={renderDueSoonTask}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.dueSoonList}
-            />
-          ) : (
-            <View style={styles.emptyDueSoon}>
-              <Text style={styles.emptyDueSoonText}>No upcoming deadlines</Text>
-            </View>
-          )}
+      {error ? (
+        <View style={styles.errorState}>
+          <Feather name="wifi-off" size={64} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchTasks()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* All Subjects Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>All Subjects</Text>
-          {error ? (
-            <View style={styles.errorState}>
-              <Feather name="wifi-off" size={48} color="#FF3B30" />
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={() => fetchSubjects()}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : subjects.length === 0 && !loading ? (
-            <View style={styles.emptyState}>
-              <Feather name="book" size={48} color="#8E8E93" />
-              <Text style={styles.emptyStateText}>No subjects found</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={subjects}
-              keyExtractor={(item) => item.id}
-              renderItem={renderSubject}
-              scrollEnabled={false}
-            />
-          )}
+      ) : sections.length === 0 && !loading ? (
+        <View style={styles.emptyState}>
+          <Feather name="calendar" size={64} color="#8E8E93" />
+          <Text style={styles.emptyStateText}>No upcoming tasks</Text>
         </View>
-      </ScrollView>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTaskCard}
+          renderSectionHeader={renderSectionHeader}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+        />
+      )}
     </View>
   );
 }
@@ -254,99 +233,57 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
-  content: {
-    flex: 1,
+  listContainer: {
+    padding: 20,
   },
-  section: {
-    marginBottom: 32,
+  sectionHeader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    marginTop: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    marginHorizontal: 20,
-    marginBottom: 16,
   },
-  dueSoonList: {
-    paddingHorizontal: 20,
-  },
-  dueSoonCard: {
+  taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
-    marginRight: 12,
-    width: 200,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  dueSoonHeader: {
+  taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  dueSoonSubject: {
+  taskTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    flex: 1,
+    marginRight: 12,
+    lineHeight: 20,
+  },
+  taskSubject: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
     color: '#007AFF',
-  },
-  dueSoonTime: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-    color: '#FF9500',
-  },
-  dueSoonTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  dueSoonStatus: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
+    borderRadius: 8,
   },
-  dueSoonStatusText: {
-    fontSize: 10,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-  },
-  emptyDueSoon: {
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-    alignItems: 'center',
-  },
-  emptyDueSoonText: {
+  taskDate: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
-  },
-  subjectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  subjectInfo: {
-    flex: 1,
-  },
-  subjectCode: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#007AFF',
-    marginBottom: 2,
-  },
-  subjectName: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
-    lineHeight: 18,
   },
   emptyState: {
     flex: 1,
