@@ -261,13 +261,13 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 48, // more space from top
     paddingBottom: 20,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 0,
   },
   headerTitle: {
     fontSize: 28,
@@ -280,11 +280,13 @@ const styles = StyleSheet.create({
     marginRight: 16,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginLeft: 0, // ensure not flush to border
   },
   headerBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 18, // move buttons down for visual appeal
   },
   archiveButtonGhost: {
     flexDirection: 'row',
