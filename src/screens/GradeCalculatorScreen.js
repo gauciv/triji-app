@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
+const { width, height } = Dimensions.get('window');
 const initialSubject = { name: '', units: '', grade: '' };
 
 export default function GradeCalculatorScreen({ navigation }) {
-  const [subjects, setSubjects] = useState([{ ...initialSubject }]);
+  const [subjects, setSubjects] = useState([{ units: '', grade: '' }]);
   const [gwa, setGwa] = useState(null);
 
   const handleInputChange = (index, field, value) => {
@@ -17,7 +18,7 @@ export default function GradeCalculatorScreen({ navigation }) {
   };
 
   const addSubject = () => {
-    setSubjects(prev => [...prev, { ...initialSubject }]);
+    setSubjects(prev => [...prev, { units: '', grade: '' }]);
   };
 
   const calculateGWA = () => {
@@ -42,13 +43,31 @@ export default function GradeCalculatorScreen({ navigation }) {
       style={styles.mainContainer}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Base dark gradient */}
       <LinearGradient
-        colors={['#0f1729', '#162037', '#1c2844']}
+        colors={['#0A0F1C', '#0A0F1C', '#0A0F1C']}
         style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
       />
-      
+
+      {/* Radial effect overlay */}
+      <View style={styles.radialOverlay}>
+        <LinearGradient
+          colors={['rgba(78, 67, 118, 0.4)', 'rgba(47, 53, 103, 0.2)', 'transparent']}
+          style={styles.centerGlow}
+          start={{ x: 0.5, y: 0.5 }}
+          end={{ x: 1, y: 1 }}
+        />
+      </View>
+
+      {/* Top edge glow */}
+      <LinearGradient
+        colors={['rgba(86, 95, 170, 0.15)', 'transparent']}
+        style={styles.topGlow}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      />
+
+      {/* Content */}
       <View style={styles.container}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -69,34 +88,21 @@ export default function GradeCalculatorScreen({ navigation }) {
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
               {subjects.map((subject, idx) => (
                 <View key={idx} style={styles.subjectContainer}>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Subject Name</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter subject name"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
-                      value={subject.name}
-                      onChangeText={text => handleInputChange(idx, 'name', text)}
-                    />
-                  </View>
-                  
-                  <View style={styles.unitsGradeRow}>
-                    <View style={[styles.inputGroup, styles.halfWidth]}>
-                      <Text style={styles.inputLabel}>Units</Text>
+                  <View style={styles.subjectRow}>
+                    <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
+                    
+                    <View style={styles.inputsContainer}>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, styles.unitsInput]}
                         placeholder="Units"
                         placeholderTextColor="rgba(255,255,255,0.3)"
                         keyboardType="numeric"
                         value={subject.units}
                         onChangeText={text => handleInputChange(idx, 'units', text)}
                       />
-                    </View>
-                    
-                    <View style={[styles.inputGroup, styles.halfWidth]}>
-                      <Text style={styles.inputLabel}>Grade</Text>
+                      
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, styles.gradeInput]}
                         placeholder="Grade"
                         placeholderTextColor="rgba(255,255,255,0.3)"
                         keyboardType="numeric"
@@ -129,6 +135,7 @@ export default function GradeCalculatorScreen({ navigation }) {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
+    backgroundColor: '#0A0F1C',
   },
   gradientBackground: {
     position: 'absolute',
@@ -136,6 +143,32 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
+  },
+  radialOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerGlow: {
+    position: 'absolute',
+    width: Math.max(width, height) * 1.5,
+    height: Math.max(width, height) * 1.5,
+    borderRadius: Math.max(width, height) * 0.75,
+    transform: [
+      { translateX: -Math.max(width, height) * 0.75 },
+      { translateY: -Math.max(width, height) * 0.75 }
+    ],
+  },
+  topGlow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: height * 0.4,
   },
   container: {
     flex: 1,
@@ -169,6 +202,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.03)',
   },
   iconContainer: {
     width: 60,
@@ -211,38 +246,47 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subjectContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  subjectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: 'rgba(30, 34, 58, 0.5)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  inputLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    marginBottom: 8,
+  subjectNumber: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
     fontWeight: '500',
+    flex: 1,
+  },
+  inputsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   input: {
     backgroundColor: 'rgba(15, 18, 31, 0.8)',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 8,
+    padding: 8,
     color: '#FFFFFF',
     fontSize: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
+    height: 36,
+    textAlign: 'center',
   },
-  unitsGradeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+  unitsInput: {
+    width: 70,
   },
-  halfWidth: {
-    flex: 1,
+  gradeInput: {
+    width: 70,
   },
   buttonContainer: {
     gap: 12,
