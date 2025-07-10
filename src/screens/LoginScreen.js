@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width, height } = Dimensions.get('window');
+
+const CARD_RADIUS = 28;
+const LOGIN_CARD_WIDTH = width * 0.9;
+const LOGIN_CARD_HEIGHT = height * 0.75; // Increased height
+const LOGIN_CARD_MARGIN_TOP = -CARD_RADIUS * 0.7;
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -18,6 +26,7 @@ export default function LoginScreen({ navigation }) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   
   const handleForgotPassword = async () => {
     setResetLoading(true);
@@ -89,364 +98,306 @@ export default function LoginScreen({ navigation }) {
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   if (!fontsLoaded) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.backgroundGradient} />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </View>
-    );
+    return null;
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
-      
-      <BlurView intensity={80} tint="dark" style={styles.glassCard}>
-        <Text style={styles.headline}>Welcome Back!</Text>
-        
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>T</Text>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <LinearGradient
+        colors={['#1e2756', '#253164', '#2d407e']}
+        style={styles.container}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        locations={[0, 0.5, 1]}
+      >
+        {/* Background Card with Header */}
+        <View style={styles.bgCard}>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Your dashboard is waiting.</Text>
         </View>
-        
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#8E8E93"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          
-          <View style={styles.passwordContainer}>
+
+        {/* Login Card Overlay */}
+        <View style={[styles.loginCard, { backgroundColor: 'rgba(27, 33, 64, 0.95)' }]}>
+          <Text style={styles.loginLabel}>LOGIN</Text>
+          {/* Username Input */}
+          <View style={styles.inputWrapper}>
             <TextInput
-              style={styles.passwordInput}
-              placeholder="Password"
-              placeholderTextColor="#8E8E93"
+              style={styles.input}
+              placeholder="username"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+            <Feather name="user" size={20} color="rgba(255,255,255,0.5)" style={styles.inputIcon} />
+          </View>
+          {/* Password Input */}
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="password"
+              placeholderTextColor="rgba(255,255,255,0.5)"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
+              autoCapitalize="none"
             />
-            <TouchableOpacity 
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="rgba(255,255,255,0.5)" style={styles.inputIcon} />
+            </TouchableOpacity>
+          </View>
+          {/* Options Row */}
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => setRememberMe(!rememberMe)}
+              activeOpacity={0.7}
             >
-              <Feather 
-                name={showPassword ? 'eye-off' : 'eye'} 
-                size={20} 
-                color="#8E8E93" 
-              />
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe ? <View style={styles.checkboxInner} /> : null}
+              </View>
+              <Text style={styles.rememberMe}>Remember Me</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Alert.alert('Help', 'Please contact support or use the password reset option.')}> 
+              <Text style={styles.needHelp}>Need Help?</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Sign In Button */}
+          <TouchableOpacity style={styles.signInButton} onPress={handleLogin} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <View style={styles.divider} />
+          {/* Footer inside card for spacing */}
+          <View style={styles.footerCardSpacer} />
+          {/* Footer inside login card */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </View>
-        
-        <TouchableOpacity 
-          style={[styles.loginButton, loading && styles.loginButtonDisabled]} 
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text style={styles.loginButtonText}>Log In</Text>
-          )}
-        </TouchableOpacity>
-        
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
-        
-        <TouchableOpacity 
-          style={styles.linkContainer}
-          onPress={() => setShowForgotModal(true)}
-        >
-          <Text style={styles.link}>Forgot Password?</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.signUpContainer}>
-          <Text style={styles.linkText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </BlurView>
-      
-      <Modal
-        visible={showForgotModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowForgotModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <BlurView intensity={80} tint="dark" style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reset Password</Text>
-            
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Enter your email"
-              placeholderTextColor="#8E8E93"
-              keyboardType="email-address"
-              value={resetEmail}
-              onChangeText={setResetEmail}
-            />
-            
-            {resetMessage ? (
-              <Text style={styles.resetMessage}>{resetMessage}</Text>
-            ) : null}
-            
-            <TouchableOpacity 
-              style={[styles.modalButton, resetLoading && styles.modalButtonDisabled]}
-              onPress={handleForgotPassword}
-              disabled={resetLoading || !resetEmail.trim()}
-            >
-              {resetLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.modalButtonText}>Send Reset Link</Text>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalCloseButton}
-              onPress={() => setShowForgotModal(false)}
-            >
-              <Text style={styles.modalCloseText}>Cancel</Text>
-            </TouchableOpacity>
-          </BlurView>
-        </View>
-      </Modal>
-    </View>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#1e2756', // Updated fallback color
   },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
+  bgCard: {
+    width: '100%',
+    backgroundColor: 'rgba(27, 33, 64, 0.85)',
+    borderRadius: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    alignItems: 'flex-start',
+    paddingTop: 56,
+    paddingBottom: 120,
+    paddingLeft: 28,
+    paddingRight: 28,
+    marginBottom: LOGIN_CARD_MARGIN_TOP,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    elevation: 15,
   },
-  glassCard: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  headline: {
-    fontSize: 28,
-    fontFamily: 'Inter_600SemiBold',
+  title: {
     color: '#FFFFFF',
-    marginBottom: 32,
-    textAlign: 'center',
+    fontSize: 40,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_700Bold',
+    marginTop: 40,
+    marginBottom: 8,
+    letterSpacing: 0.2,
+    textAlign: 'left',
+    alignSelf: 'flex-start',
   },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#007AFF',
+  subtitle: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    fontStyle: 'italic',
+    textAlign: 'left',
+    alignSelf: 'flex-start',
+  },
+  loginCard: {
+    height: LOGIN_CARD_HEIGHT,
+    width: '100%',
+    borderRadius: CARD_RADIUS,
+    paddingTop: 48,
+    paddingBottom: 48,
+    paddingLeft: 28,
+    paddingRight: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: LOGIN_CARD_MARGIN_TOP - 20,
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 15 },
+    shadowOpacity: 0.35,
+    shadowRadius: 35,
+    elevation: 20,
+    justifyContent: 'flex-start',
+  },
+  loginLabel: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_700Bold',
+    alignSelf: 'flex-start',
     marginBottom: 40,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    marginLeft: 2,
+    letterSpacing: 1.5,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(27, 33, 64, 0.92)',
+    borderRadius: 25,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 2,
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
     elevation: 8,
   },
-  logoText: {
-    fontSize: 28,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 24,
-  },
   input: {
-    width: '100%',
-    height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    flex: 1,
+    color: '#fff',
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 12,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    outlineStyle: 'none',
+    outlineWidth: 0,
+    outlineColor: 'transparent',
   },
-  loginButton: {
+  inputIcon: {
+    marginLeft: 10,
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
-    height: 56,
-    backgroundColor: '#007AFF',
-    borderRadius: 16,
+    marginVertical: 20,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'transparent',
+    marginRight: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
-  loginButtonText: {
-    fontSize: 17,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
+  checkboxChecked: {
+    borderColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  linkContainer: {
-    marginVertical: 8,
+  checkboxInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: '#fff',
   },
-  link: {
-    color: '#007AFF',
-    fontSize: 16,
+  rememberMe: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
   },
-  loginButtonDisabled: {
-    opacity: 0.7,
+  needHelp: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_600SemiBold',
+  },
+  signInButton: {
+    width: '100%',
+    backgroundColor: '#3b4d94',
+    borderRadius: 25,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  signInButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.5,
+  },
+  divider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 2,
+    marginBottom: 40,
+  },
+  footerCardSpacer: {
+    flex: 1,  // This will push the footer to the bottom
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  footerText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+  },
+  footerLink: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_600SemiBold',
+    marginLeft: 2,
+    textDecorationLine: 'underline',
   },
   errorText: {
-    color: '#FF3B30',
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-    marginTop: 16,
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    padding: 12,
-    borderRadius: 8,
-    width: '100%',
-  },
-  signUpContainer: {
-    flexDirection: 'row',
-    marginVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  linkText: {
-    color: '#8E8E93',
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-  },
-  passwordContainer: {
-    position: 'relative',
-    width: '100%',
-    marginBottom: 16,
-  },
-  passwordInput: {
-    width: '100%',
-    height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingRight: 50,
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 16,
-    top: 18,
-    padding: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCard: {
-    width: '85%',
-    maxWidth: 350,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalInput: {
-    width: '100%',
-    height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    color: '#ff6b6b',
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  modalButton: {
-    width: '100%',
-    height: 48,
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  modalButtonDisabled: {
-    backgroundColor: '#4A4A4A',
-    opacity: 0.6,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-  },
-  modalCloseButton: {
-    paddingVertical: 8,
-  },
-  modalCloseText: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-  },
-  resetMessage: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#34C759',
+    marginBottom: 10,
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
   },
 });
