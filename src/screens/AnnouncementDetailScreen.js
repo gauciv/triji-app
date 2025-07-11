@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
@@ -124,15 +125,19 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Shining gradient and bell will be added in a later step */}
-      <View style={styles.backgroundGradient} />
-      <View style={styles.headerModern}>
-        <TouchableOpacity style={styles.backButtonModern} onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={26} color="#fff" />
+      <LinearGradient
+        colors={["#0f1c2e", "#162447", "#121212"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shiningGradient}
+      />
+      {/* Header: Only back button, styled as floating glassy button */}
+      <View style={styles.headerModernPolished}>
+        <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
+          <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitleModern}>Announcement</Text>
       </View>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainer}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainerPolished}>
         <View style={[
           styles.cardModernPolished,
           { borderLeftColor: getTypeColor(announcement.type), boxShadow: Platform.OS === 'web' ? `0px 8px 32px 0px ${getTypeColor(announcement.type)}22` : undefined },
@@ -152,9 +157,10 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
                 </TouchableOpacity>
               )}
             </View>
+            {/* Title styled like the list */}
             <Text style={styles.titleModernPolished}>{announcement.title}</Text>
             <View style={styles.cardMetaModernPolished}>
-              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(announcement.type) + '22' }]}> 
+              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(announcement.type) + '22', borderColor: getTypeColor(announcement.type) + '55' }]}> 
                 <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(announcement.type) }]}>{announcement.type || 'General'}</Text>
               </View>
               <Text style={styles.timestampModernPolished}>{formatTimestamp(announcement.createdAt)}</Text>
@@ -201,14 +207,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#121212',
   },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
+  shiningGradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   topBar: {
     flexDirection: 'row',
@@ -465,10 +466,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 0,
     backdropFilter: 'blur(18px)', // web only
-    shadowColor: '#22e584',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.13,
-    shadowRadius: 24,
+    // Brighten the colored glow for web and native
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 0px 32px 0px #00ffd055, 0px 8px 32px 0px #007AFF55',
+      },
+      default: {
+        shadowColor: '#00ffd0',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 32,
+      },
+    }),
     overflow: 'hidden',
   },
   cardAccentBar: {
@@ -573,5 +582,39 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 24,
     marginTop: 8,
+  },
+  headerModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 32,
+    paddingBottom: 0,
+    backgroundColor: 'transparent',
+    position: 'relative',
+    zIndex: 2,
+    minHeight: 60,
+    marginLeft: 10,
+  },
+  floatingBackButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(30,32,40,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+    marginLeft: 0,
+    marginTop: 0,
+  },
+  scrollContainerPolished: {
+    padding: 24,
+    paddingBottom: 40,
+    paddingTop: 10,
   },
 });

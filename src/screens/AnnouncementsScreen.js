@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   glowCircle: {
     position: 'absolute',
-    top: 0,
+    top: 60,
     left: '50%',
     marginLeft: -90,
     width: 180,

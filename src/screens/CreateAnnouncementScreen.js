@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
@@ -68,7 +70,12 @@ export default function CreateAnnouncementScreen({ navigation }) {
   if (!fontsLoaded) {
     return (
       <View style={styles.container}>
-        <View style={styles.backgroundGradient} />
+        <LinearGradient
+          colors={["#0f1c2e", "#162447", "#121212"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.shiningGradient}
+        />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
@@ -77,166 +84,203 @@ export default function CreateAnnouncementScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
-      
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => step === 1 ? navigation.goBack() : setStep(1)}
-          >
-            <Feather name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {step === 1 ? 'New Announcement' : 'Write Content'}
-          </Text>
+    <View style={styles.outerContainer}>
+      <LinearGradient
+        colors={["#0f1c2e", "#162447", "#121212"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shiningGradient}
+      />
+      <TouchableOpacity 
+        style={styles.floatingBackButton}
+        onPress={() => step === 1 ? navigation.goBack() : setStep(1)}
+      >
+        <Feather name="arrow-left" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+      {step === 1 ? (
+        <View style={styles.centerCardWrapper}>
+          <View style={[
+            styles.cardModernPolished,
+            { borderLeftColor: getTypeColor(selectedType), boxShadow: Platform.OS === 'web' ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22` : undefined, shadowColor: getTypeColor(selectedType) },
+            styles.cardWithMargin,
+          ]}>
+            <View style={styles.iconTitleWrapperCard}>
+              <View style={[
+                styles.glowIconContainer,
+                {
+                  borderColor: getTypeColor(selectedType),
+                  shadowColor: getTypeColor(selectedType),
+                  boxShadow: Platform.OS === 'web' ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55` : undefined,
+                },
+              ]}>
+                <MaterialCommunityIcons name="bell-ring" size={32} color={getTypeColor(selectedType)} style={styles.bellIcon} />
+                <Feather name="plus-circle" size={16} color="#fff" style={styles.plusIconOverlay} />
+              </View>
+              <Text style={styles.screenTitle}>New Announcement</Text>
+            </View>
+            <ScrollView 
+              style={{ width: '100%' }}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Title</Text>
+                <TextInput
+                  style={styles.input}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="What's this announcement about?"
+                  placeholderTextColor="#8E8E93"
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Type</Text>
+                <View style={styles.typeGrid}>
+                  {announcementTypes.map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.typeCard,
+                        {
+                          backgroundColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.03)',
+                          borderColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.1)',
+                        },
+                        selectedType === type && styles.typeCardSelected
+                      ]}
+                      onPress={() => setSelectedType(type)}
+                    >
+                      <Text style={[
+                        styles.typeCardText,
+                        selectedType === type && styles.typeCardTextSelected
+                      ]}>
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Expires On</Text>
+                {Platform.OS === 'web' ? (
+                  <input
+                    type="date"
+                    value={expiresAt.toISOString().split('T')[0]}
+                    onChange={(e) => setExpiresAt(new Date(e.target.value))}
+                    min={new Date().toISOString().split('T')[0]}
+                    style={{
+                      height: '52px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '14px',
+                      padding: '0 18px',
+                      fontSize: '15px',
+                      color: '#FFFFFF',
+                      fontFamily: 'Inter_400Regular',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                ) : (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.dateButton}
+                      onPress={() => setShowDatePicker(true)}
+                    >
+                      <Feather name="calendar" size={20} color="#8E8E93" />
+                      <Text style={styles.dateButtonText}>
+                        {expiresAt.toLocaleDateString()}
+                      </Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                      <DateTimePicker
+                        value={expiresAt}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                          setShowDatePicker(false);
+                          if (selectedDate) {
+                            setExpiresAt(selectedDate);
+                          }
+                        }}
+                        minimumDate={new Date()}
+                      />
+                    )}
+                  </>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={[
+                  styles.actionButtonGlow,
+                  !title.trim() && styles.actionButtonGlowDisabled
+                ]}
+                onPress={() => setStep(2)}
+                disabled={!title.trim()}
+              >
+                <Feather name="arrow-right" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.actionButtonTextGlow}>Next</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </View>
-        
-        {step === 2 && (
-          <View style={styles.headerBottom}>
+      ) : (
+        <View style={styles.centerCardWrapper}>
+          <View style={[
+            styles.cardModernPolished,
+            styles.cardFinalizeStep,
+            { borderLeftColor: getTypeColor(selectedType), boxShadow: Platform.OS === 'web' ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22` : undefined, shadowColor: getTypeColor(selectedType) },
+            styles.cardWithMargin,
+          ]}>
+            <View style={styles.iconTitleWrapperCard}>
+              <View style={[
+                styles.glowIconContainer,
+                {
+                  borderColor: getTypeColor(selectedType),
+                  shadowColor: getTypeColor(selectedType),
+                  boxShadow: Platform.OS === 'web' ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55` : undefined,
+                },
+              ]}>
+                <MaterialCommunityIcons name="bell-ring" size={32} color={getTypeColor(selectedType)} style={styles.bellIcon} />
+                <Feather name="plus-circle" size={16} color="#fff" style={styles.plusIconOverlay} />
+              </View>
+              <Text style={styles.screenTitle}>New Announcement</Text>
+            </View>
+            <View style={styles.twitterHeader}> 
+              <Text style={styles.twitterTitle}>{title}</Text>
+              <View style={styles.twitterMeta}>
+                <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) + '22' }]}> 
+                  <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>{selectedType}</Text>
+                </View>
+                <Text style={styles.twitterExpiry}>Expires {expiresAt.toLocaleDateString()}</Text>
+              </View>
+            </View>
+            <TextInput
+              style={styles.twitterTextArea}
+              value={content}
+              onChangeText={setContent}
+              placeholder="What do you want to announce?"
+              placeholderTextColor="#8E8E93"
+              multiline
+              textAlignVertical="top"
+              autoFocus
+            />
             <TouchableOpacity 
-              style={[styles.publishButton, (!content.trim() || loading) && styles.publishButtonDisabled]}
+              style={[
+                styles.actionButtonGlow,
+                (!content.trim() || loading) && styles.actionButtonGlowDisabled
+              ]}
               onPress={handleCreateAnnouncement}
               disabled={!content.trim() || loading}
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.publishButtonText}>Publish</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-      
-      {step === 1 ? (
-        <ScrollView 
-          style={styles.content}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.card}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Title</Text>
-              <TextInput
-                style={styles.input}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="What's this announcement about?"
-                placeholderTextColor="#8E8E93"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Type</Text>
-              <View style={styles.typeGrid}>
-                {announcementTypes.map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeCard,
-                      {
-                        backgroundColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.03)',
-                        borderColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.1)',
-                      },
-                      selectedType === type && styles.typeCardSelected
-                    ]}
-                    onPress={() => setSelectedType(type)}
-                  >
-                    <Text style={[
-                      styles.typeCardText,
-                      selectedType === type && styles.typeCardTextSelected
-                    ]}>
-                      {type}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Expires On</Text>
-              {Platform.OS === 'web' ? (
-                <input
-                  type="date"
-                  value={expiresAt.toISOString().split('T')[0]}
-                  onChange={(e) => setExpiresAt(new Date(e.target.value))}
-                  min={new Date().toISOString().split('T')[0]}
-                  style={{
-                    height: '52px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '14px',
-                    padding: '0 18px',
-                    fontSize: '15px',
-                    color: '#FFFFFF',
-                    fontFamily: 'Inter_400Regular',
-                    width: '100%',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              ) : (
                 <>
-                  <TouchableOpacity 
-                    style={styles.dateButton}
-                    onPress={() => setShowDatePicker(true)}
-                  >
-                    <Feather name="calendar" size={20} color="#8E8E93" />
-                    <Text style={styles.dateButtonText}>
-                      {expiresAt.toLocaleDateString()}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  {showDatePicker && (
-                    <DateTimePicker
-                      value={expiresAt}
-                      mode="date"
-                      display="default"
-                      onChange={(event, selectedDate) => {
-                        setShowDatePicker(false);
-                        if (selectedDate) {
-                          setExpiresAt(selectedDate);
-                        }
-                      }}
-                      minimumDate={new Date()}
-                    />
-                  )}
+                  <Feather name="check" size={18} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.actionButtonTextGlow}>Publish</Text>
                 </>
               )}
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.nextButton, !title.trim() && styles.nextButtonDisabled]}
-              onPress={() => setStep(2)}
-              disabled={!title.trim()}
-            >
-              <Text style={styles.nextButtonText}>Next</Text>
-              <Feather name="arrow-right" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      ) : (
-        <View style={styles.twitterContainer}>
-          <View style={styles.twitterHeader}> 
-            <Text style={styles.twitterTitle}>{title}</Text>
-            <View style={styles.twitterMeta}>
-              <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) + '22' }]}> 
-                <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>{selectedType}</Text>
-              </View>
-              <Text style={styles.twitterExpiry}>Expires {expiresAt.toLocaleDateString()}</Text>
-            </View>
-          </View>
-          <TextInput
-            style={styles.twitterTextArea}
-            value={content}
-            onChangeText={setContent}
-            placeholder="What do you want to announce?"
-            placeholderTextColor="#8E8E93"
-            multiline
-            textAlignVertical="top"
-            autoFocus
-          />
         </View>
       )}
     </View>
@@ -244,19 +288,128 @@ export default function CreateAnnouncementScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
     backgroundColor: '#121212',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100%',
   },
-  backgroundGradient: {
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  centerCardWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  shiningGradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  iconTitleWrapper: {
+    alignItems: 'center',
+    marginTop: 38,
+    marginBottom: 8,
+    zIndex: 2,
+  },
+  bellPlusWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  glowIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(18, 18, 18, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    marginBottom: 8,
+    marginTop: 2,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 18,
+    elevation: 8,
+    position: 'relative',
+  },
+  bellPlusIconContainer: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  bellIcon: {
+    zIndex: 3,
+    textShadowColor: 'rgba(0,0,0,0.12)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  plusIconOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
-    zIndex: -1,
+    bottom: -6,
+    right: -8,
+    backgroundColor: 'rgba(30,32,40,0.9)',
+    borderRadius: 12,
+    padding: 1,
+    zIndex: 4,
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    marginTop: 8,
+    marginBottom: 8,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    zIndex: 2,
+  },
+  floatingBackButton: {
+    position: 'absolute',
+    top: 32,
+    left: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(30,32,40,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+    marginLeft: 0,
+    marginTop: 0,
+    zIndex: 10,
+  },
+  cardModernPolished: {
+    backgroundColor: 'rgba(30, 32, 40, 0.65)',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderLeftWidth: 7,
+    marginBottom: 28,
+    marginTop: 4,
+    elevation: 10,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(18px)', // web only
+    overflow: 'hidden',
+    padding: 24,
+    paddingTop: 48,
+    paddingBottom: 32,
+    minHeight: 650,
   },
   header: {
     paddingHorizontal: 0,
@@ -500,25 +653,28 @@ const styles = StyleSheet.create({
   twitterTextArea: {
     flex: 1,
     fontSize: 18,
+    lineHeight: 28,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     textAlignVertical: 'top',
-    padding: 20,
-    borderRadius: 22,
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1.5,
     marginTop: 0, // remove extra top margin
-    marginBottom: 8,
-    minHeight: 180,
-    maxHeight: 320,
+    marginBottom: 12,
+    minHeight: 260,
+    maxHeight: 400,
     backgroundColor: 'rgba(30, 32, 40, 0.55)',
     borderColor: 'rgba(255,255,255,0.13)',
-    marginHorizontal: '4%',
+    marginHorizontal: 0,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.10,
     shadowRadius: 24,
     elevation: 8,
     transition: 'all 0.2s',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   loadingContainer: {
     flex: 1,
@@ -569,5 +725,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
+  },
+  cardWithMargin: {
+    marginHorizontal: 18,
+    marginTop: 0,
+    marginBottom: 0,
+    width: '95%',
+    maxWidth: 420,
+  },
+  iconTitleWrapperCard: {
+    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 18,
+    zIndex: 2,
+  },
+  actionButtonGlow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#22e584',
+    borderRadius: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 13,
+    marginHorizontal: 4,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 2,
+    marginTop: 12,
+    width: '100%',
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  actionButtonGlowDisabled: {
+    backgroundColor: '#2a2a2a',
+    borderColor: '#4A4A4A',
+    opacity: 0.6,
+  },
+  actionButtonTextGlow: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    letterSpacing: 0.2,
+  },
+  cardFinalizeStep: {
+    minHeight: 700,
+    marginTop: 32,
   },
 });
