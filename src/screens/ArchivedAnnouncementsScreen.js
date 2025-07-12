@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ArchivedAnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -19,14 +21,12 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const q = query(
         collection(db, 'announcements'),
         where('expiresAt', '<=', new Date()),
         orderBy('expiresAt', 'desc')
       );
-
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const announcementsList = [];
         querySnapshot.forEach((doc) => {
@@ -38,14 +38,11 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         setAnnouncements(announcementsList);
         setLoading(false);
       }, (error) => {
-        console.log('Error fetching archived announcements:', error);
         setError('Could not load archived announcements. Please check your internet connection.');
         setLoading(false);
       });
-
       return unsubscribe;
     } catch (error) {
-      console.log('Error setting up archived announcements fetch:', error);
       setError('Could not load archived announcements. Please check your internet connection.');
       setLoading(false);
     }
@@ -56,7 +53,6 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
     fetchData().then((unsub) => {
       unsubscribe = unsub;
     });
-    
     return () => {
       if (unsubscribe) unsubscribe();
     };
@@ -79,7 +75,6 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
     if (diffMinutes > 0) return `${diffMinutes}m ago`;
@@ -87,29 +82,37 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
   };
 
   const renderAnnouncement = ({ item }) => {
+    const typeColor = getTypeColor(item.type);
+    const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
     return (
-      <TouchableOpacity 
-        style={[styles.announcementCard, { borderLeftColor: getTypeColor(item.type) }]}
+      <TouchableOpacity
+        style={[
+          styles.announcementCardModernPolished,
+          { borderLeftColor: typeColor, boxShadow },
+        ]}
+        activeOpacity={0.92}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.authorPicture}>
-            <Text style={styles.authorInitial}>
-              {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
-            </Text>
-          </View>
-          <View style={styles.authorInfo}>
-            <Text style={styles.authorName}>{item.authorName || 'Anonymous'}</Text>
-            <Text style={styles.timestamp}>{formatTimestamp(item.createdAt)}</Text>
-            <Text style={styles.expiredText}>Expired</Text>
-            <View style={[styles.typeChip, { backgroundColor: getTypeColor(item.type) }]}>
-              <Text style={styles.typeChipText}>{item.type || 'General'}</Text>
+        <View style={styles.cardMainModernPolished}>
+          <View style={styles.cardAccentBar} />
+          <View style={styles.cardContentModernPolished}>
+            <View style={styles.cardHeaderModernPolished}>
+              <View style={styles.authorPictureModernPolished}>
+                <Text style={styles.authorInitialModernPolished}>
+                  {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
+                </Text>
+              </View>
+              <Text style={styles.authorNameModernPolished}>{item.authorName || 'Anonymous'}</Text>
+            </View>
+            <Text style={styles.titleModernPolished}>{item.title}</Text>
+            <View style={styles.cardMetaModernPolished}>
+              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(item.type) + '22' }]}> 
+                <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}>{item.type || 'General'}</Text>
+              </View>
+              <Text style={styles.timestampModernPolished}>{formatTimestamp(item.createdAt)}</Text>
+              <Text style={styles.expiryTextModernPolished}>Expired</Text>
             </View>
           </View>
-        </View>
-        
-        <View style={styles.cardBody}>
-          <Text style={styles.title}>{item.title}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -142,39 +145,48 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
-      
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Feather name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Archived Announcements</Text>
+      <LinearGradient
+        colors={["#0f1c2e", "#162447", "#121212"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shiningGradient}
+      />
+      <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
+        <Feather name="arrow-left" size={26} color="#fff" />
+      </TouchableOpacity>
+      <View style={styles.mainCardContainer}>
+        <View style={styles.bellCircleWrapper}>
+          <View style={styles.bellCircleGlow} />
+          <View style={styles.bellCircleOutline}>
+            {/* Use archive icon for archived announcements */}
+            <Feather name="archive" size={32} color="#22e584" style={styles.bellIcon} />
+          </View>
+        </View>
+        <Text style={styles.headerTitleModernCard}>Archived Announcements</Text>
+        <Text style={styles.headerSubtextCard}>Expired announcements are kept here for your reference.</Text>
+        <View style={styles.announcementsContent}>
+          {announcements.length === 0 ? (
+            <View style={styles.emptyContainerModern}>
+              <Feather name="archive" size={64} color="#8E8E93" />
+              <Text style={styles.emptyTitleModern}>No archived announcements</Text>
+              <Text style={styles.emptyMessageModern}>Expired announcements will appear here.</Text>
+            </View>
+          ) : (
+            <ScrollView
+              style={styles.announcementsScroll}
+              contentContainerStyle={styles.listContainerModern}
+              showsVerticalScrollIndicator={false}
+            >
+              {announcements.map((item) => renderAnnouncement({ item }))}
+            </ScrollView>
+          )}
         </View>
       </View>
-      
-      {announcements.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Feather name="archive" size={64} color="#8E8E93" />
-          <Text style={styles.emptyTitle}>No archived announcements</Text>
-          <Text style={styles.emptyMessage}>Expired announcements will appear here</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={announcements}
-          renderItem={renderAnnouncement}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
     </View>
   );
 }
 
+// Modern polished styles reused from AnnouncementsScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -189,103 +201,276 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     opacity: 0.05,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
+  floatingBackButton: {
+    position: 'absolute',
+    top: 24,
+    left: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(30,32,40,0.7)',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+    zIndex: 10,
   },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+  mainCardContainer: {
+    marginTop: 104,
+    marginBottom: 32,
+    marginHorizontal: 12,
+    backgroundColor: 'rgba(18, 22, 34, 0.92)',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.10)',
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 20,
+    paddingHorizontal: 0,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.10,
+    shadowRadius: 32,
+    elevation: 12,
+    maxWidth: 420,
+    alignSelf: 'center',
+    width: '92%',
+    position: 'relative',
+    zIndex: 2,
+    flexDirection: 'column',
+    display: 'flex',
     flex: 1,
   },
-  listContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+  bellCircleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    marginTop: 0,
+    width: '100%',
+    zIndex: 3,
+    position: 'relative',
   },
-  announcementCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderLeftWidth: 4,
-    height: 140,
+  bellCircleGlow: {
+    position: 'absolute',
+    top: 2,
+    left: '50%',
+    marginLeft: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#22e58444',
     opacity: 0.7,
+    zIndex: 2,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  cardHeader: {
+  bellCircleOutline: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 4,
+    borderWidth: 2.5,
+    borderColor: '#22e584',
+    backgroundColor: 'transparent',
+    shadowColor: 'transparent',
+  },
+  bellIcon: {
+    zIndex: 4,
+    textShadowColor: '#22e58499',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
+  },
+  headerTitleModernCard: {
+    fontSize: 26,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: 2,
+    marginTop: 0,
+    letterSpacing: 0.2,
+    zIndex: 3,
+  },
+  headerSubtextCard: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#b6c2d1',
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: 12,
+    marginTop: 0,
+    opacity: 0.85,
+    zIndex: 3,
+  },
+  announcementsContent: {
+    width: '100%',
+    flex: 1,
+    minHeight: 0,
+    maxHeight: 500,
+    height: 500,
+    marginTop: 12,
+    marginBottom: 12,
+    paddingHorizontal: 18,
+    display: 'flex',
+  },
+  announcementsScroll: {
+    width: '100%',
+    flexGrow: 1,
+    minHeight: 0,
+    maxHeight: 500,
+    height: 500,
+  },
+  listContainerModern: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 48,
+    alignItems: 'stretch',
+    gap: 24,
+  },
+  emptyContainerModern: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitleModern: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyMessageModern: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  announcementCardModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: 'rgba(30, 32, 40, 0.65)',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderLeftWidth: 7,
+    marginBottom: 0,
+    marginTop: 0,
+    elevation: 10,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
+    minWidth: 0,
+    backdropFilter: 'blur(18px)',
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 24,
+    overflow: 'hidden',
+  },
+  cardMainModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    flex: 1,
+  },
+  cardAccentBar: {
+    width: 7,
+    backgroundColor: 'transparent',
+    borderTopLeftRadius: 22,
+    borderBottomLeftRadius: 22,
+  },
+  cardContentModernPolished: {
+    flex: 1,
+    padding: 18,
+    justifyContent: 'center',
+  },
+  cardHeaderModernPolished: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    gap: 10,
   },
-  authorPicture: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  authorPictureModernPolished: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.13,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  authorInitial: {
-    fontSize: 16,
+  authorInitialModernPolished: {
+    fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    color: '#fff',
   },
-  authorInfo: {
-    flex: 1,
+  authorNameModernPolished: {
+    fontSize: 15,
+    fontFamily: 'Inter_500Medium',
+    color: '#fff',
+    opacity: 0.85,
+    flexWrap: 'wrap',
+    maxWidth: 120,
   },
-  authorName: {
-    fontSize: 16,
+  titleModernPolished: {
+    fontSize: 20,
     fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
+    color: '#fff',
+    marginBottom: 8,
+    lineHeight: 28,
+    flexWrap: 'wrap',
+  },
+  cardMetaModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 2,
+  },
+  typeChipModernPolished: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 2,
     marginBottom: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.13)',
   },
-  timestamp: {
+  typeChipTextModernPolished: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  timestampModernPolished: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
+    opacity: 0.8,
+    marginLeft: 2,
   },
-  expiredText: {
-    fontSize: 11,
+  expiryTextModernPolished: {
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#FF3B30',
-    marginTop: 2,
-  },
-  typeChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 6,
-  },
-  typeChipText: {
-    fontSize: 10,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  cardBody: {
-    paddingLeft: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: '#FF3B30', // Red for expired
+    opacity: 0.9,
+    marginLeft: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -321,23 +506,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyMessage: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-    textAlign: 'center',
+  shiningGradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
 });
