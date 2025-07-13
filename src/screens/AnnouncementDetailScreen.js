@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
@@ -124,39 +125,52 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
-      
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#FFFFFF" />
+      <LinearGradient
+        colors={["#0f1c2e", "#162447", "#121212"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.shiningGradient}
+      />
+      {/* Header: Only back button, styled as floating glassy button */}
+      <View style={styles.headerModernPolished}>
+        <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
+          <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.card, { borderLeftColor: getTypeColor(announcement.type) }]}>
-          <View style={styles.header}>
-            <View style={styles.authorPicture}>
-              <Text style={styles.authorInitial}>
-                {announcement.authorName ? announcement.authorName.charAt(0).toUpperCase() : 'A'}
-              </Text>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainerPolished}>
+        <View style={[
+          styles.cardModernPolished,
+          { borderLeftColor: getTypeColor(announcement.type), boxShadow: Platform.OS === 'web' ? `0px 8px 32px 0px ${getTypeColor(announcement.type)}22` : undefined },
+        ]}>
+          <View style={styles.cardAccentBar} />
+          <View style={styles.cardContentModernPolished}>
+            <View style={styles.cardHeaderModernPolished}>
+              <View style={styles.authorPictureModernPolished}>
+                <Text style={styles.authorInitialModernPolished}>
+                  {announcement.authorName ? announcement.authorName.charAt(0).toUpperCase() : 'A'}
+                </Text>
+              </View>
+              <Text style={styles.authorNameModernPolished}>{announcement.authorName || 'Anonymous'}</Text>
+              {userRole === 'officer' && (
+                <TouchableOpacity style={styles.deleteButtonModern} onPress={handleDelete}>
+                  <Feather name="trash-2" size={20} color="#FF3B30" />
+                </TouchableOpacity>
+              )}
             </View>
-            <View style={styles.authorInfo}>
-              <Text style={styles.authorName}>{announcement.authorName || 'Anonymous'}</Text>
-              <Text style={styles.timestamp}>{formatTimestamp(announcement.createdAt)}</Text>
-              <Text style={styles.typeLabel}>{announcement.type || 'General'}</Text>
+            {/* Title styled like the list */}
+            <Text style={styles.titleModernPolished}>{announcement.title}</Text>
+            <View style={styles.cardMetaModernPolished}>
+              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(announcement.type) + '22', borderColor: getTypeColor(announcement.type) + '55' }]}> 
+                <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(announcement.type) }]}>{announcement.type || 'General'}</Text>
+              </View>
+              <Text style={styles.timestampModernPolished}>{formatTimestamp(announcement.createdAt)}</Text>
+              <Text style={styles.expiryTextModernPolished}>Expires {announcement.expiresAt && (announcement.expiresAt.toDate ? announcement.expiresAt.toDate().toLocaleDateString() : new Date(announcement.expiresAt).toLocaleDateString())}</Text>
             </View>
-            {userRole === 'officer' && (
-              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                <Feather name="trash-2" size={20} color="#FF3B30" />
-              </TouchableOpacity>
-            )}
+            <Text style={styles.contentModernPolished}>{announcement.content}</Text>
           </View>
-          
-          <Text style={styles.title}>{announcement.title}</Text>
-          <Text style={styles.content}>{announcement.content}</Text>
         </View>
       </ScrollView>
-      
+      {/* Modal remains unchanged */}
       <Modal
         visible={showDeleteModal}
         transparent={true}
@@ -167,7 +181,6 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Delete Announcement</Text>
             <Text style={styles.modalMessage}>Are you sure you want to delete this announcement?</Text>
-            
             <View style={styles.modalButtons}>
               <TouchableOpacity 
                 style={styles.cancelButton}
@@ -175,7 +188,6 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
               <TouchableOpacity 
                 style={styles.deleteConfirmButton}
                 onPress={confirmDelete}
@@ -195,14 +207,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#121212',
   },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
+  shiningGradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   topBar: {
     flexDirection: 'row',
@@ -224,12 +231,25 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderLeftWidth: 4,
+    backgroundColor: 'rgba(30, 32, 40, 0.55)',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderLeftWidth: 5,
+    marginBottom: 28,
+    marginTop: 4,
+    shadowColor: '#007AFF', // blue highlight
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
+    minWidth: 0,
+    backdropFilter: 'blur(16px)', // web only
+    boxShadow: Platform.OS === 'web' ? '0px 4px 24px 0px #007AFF33' : undefined,
   },
   header: {
     flexDirection: 'row',
@@ -237,13 +257,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   authorPicture: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 2,
   },
   authorInitial: {
     fontSize: 20,
@@ -385,5 +410,211 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
+  },
+  headerModern: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 32,
+    paddingBottom: 18,
+    backgroundColor: 'transparent',
+    position: 'relative',
+    zIndex: 2,
+    minHeight: 80,
+  },
+  backButtonModern: {
+    position: 'absolute',
+    left: 18,
+    top: 32,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(30,32,40,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  headerTitleModern: {
+    fontSize: 32, // Larger for prominence
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    textAlign: 'center',
+    flex: 1,
+    letterSpacing: 0.2,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  cardModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: 'rgba(30, 32, 40, 0.65)',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderLeftWidth: 7,
+    marginBottom: 28,
+    marginTop: 4,
+    elevation: 10,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
+    minWidth: 0,
+    backdropFilter: 'blur(18px)', // web only
+    // Brighten the colored glow for web and native
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 0px 32px 0px #00ffd055, 0px 8px 32px 0px #007AFF55',
+      },
+      default: {
+        shadowColor: '#00ffd0',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 32,
+      },
+    }),
+    overflow: 'hidden',
+  },
+  cardAccentBar: {
+    width: 7,
+    backgroundColor: 'transparent', // color set by borderLeftColor
+    borderTopLeftRadius: 22,
+    borderBottomLeftRadius: 22,
+  },
+  cardContentModernPolished: {
+    flex: 1,
+    padding: 18,
+    justifyContent: 'center',
+  },
+  cardHeaderModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 10,
+  },
+  authorPictureModernPolished: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.13,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  authorInitialModernPolished: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+  },
+  authorNameModernPolished: {
+    fontSize: 15,
+    fontFamily: 'Inter_500Medium',
+    color: '#fff',
+    opacity: 0.85,
+    flexWrap: 'wrap',
+    maxWidth: 120,
+  },
+  deleteButtonModern: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    marginLeft: 'auto',
+  },
+  titleModernPolished: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+    marginBottom: 8,
+    lineHeight: 28,
+    flexWrap: 'wrap',
+  },
+  cardMetaModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  typeChipModernPolished: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 2,
+    marginBottom: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.13)',
+  },
+  typeChipTextModernPolished: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  timestampModernPolished: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#8E8E93',
+    opacity: 0.8,
+    marginLeft: 2,
+  },
+  expiryTextModernPolished: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF9500',
+    opacity: 0.9,
+    marginLeft: 2,
+  },
+  contentModernPolished: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#fff',
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  headerModernPolished: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 32,
+    paddingBottom: 0,
+    backgroundColor: 'transparent',
+    position: 'relative',
+    zIndex: 2,
+    minHeight: 60,
+    marginLeft: 10,
+  },
+  floatingBackButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(30,32,40,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.13)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+    marginLeft: 0,
+    marginTop: 0,
+  },
+  scrollContainerPolished: {
+    padding: 24,
+    paddingBottom: 40,
+    paddingTop: 10,
   },
 });
