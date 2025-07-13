@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SectionList, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
-import TaskCardSkeleton from '../components/TaskCardSkeleton';
 
 export default function TaskboardScreen({ navigation }) {
-  const [tasks, setTasks] = useState([]);
-  const [selectedSemester, setSelectedSemester] = useState(1);
-  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userRole, setUserRole] = useState('');
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -21,30 +19,16 @@ export default function TaskboardScreen({ navigation }) {
   });
 
   const fetchTasks = () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      let q;
-      if (selectedStatus === 'All') {
-        q = query(
-          collection(db, 'tasks'),
-          where('userId', '==', user.uid),
-          where('semester', '==', selectedSemester),
-          orderBy('createdAt', 'desc')
-        );
-      } else {
-        q = query(
-          collection(db, 'tasks'),
-          where('userId', '==', user.uid),
-          where('semester', '==', selectedSemester),
-          where('status', '==', selectedStatus),
-          orderBy('createdAt', 'desc')
-        );
-      }
+      const q = query(
+        collection(db, 'tasks'),
+        where('status', '!=', 'Completed'),
+        orderBy('status'),
+        orderBy('deadline', 'asc')
+      );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const tasksList = [];
@@ -54,7 +38,9 @@ export default function TaskboardScreen({ navigation }) {
             ...doc.data(),
           });
         });
-        setTasks(tasksList);
+        
+        const groupedTasks = processTasksForAgenda(tasksList);
+        setSections(groupedTasks);
         setLoading(false);
       }, (error) => {
         console.log('Error fetching tasks:', error);
@@ -71,88 +57,116 @@ export default function TaskboardScreen({ navigation }) {
     }
   };
 
+  const processTasksForAgenda = (tasks) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const thisWeek = new Date(today);
+    thisWeek.setDate(thisWeek.getDate() + 7);
+
+    // Initialize arrays for each category
+    const overdueTasks = [];
+    const dueTodayTasks = [];
+    const dueTomorrowTasks = [];
+    const dueThisWeekTasks = [];
+    const dueLaterTasks = [];
+
+    // Process each task and categorize by deadline
+    tasks.forEach(task => {
+      if (!task.deadline) {
+        dueLaterTasks.push(task);
+        return;
+      }
+
+      const taskDate = new Date(task.deadline);
+      const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+
+      if (taskDay < today) {
+        overdueTasks.push(task);
+      } else if (taskDay.getTime() === today.getTime()) {
+        dueTodayTasks.push(task);
+      } else if (taskDay.getTime() === tomorrow.getTime()) {
+        dueTomorrowTasks.push(task);
+      } else if (taskDay <= thisWeek) {
+        dueThisWeekTasks.push(task);
+      } else {
+        dueLaterTasks.push(task);
+      }
+    });
+
+    // Format for SectionList - only include sections with data
+    const sections = [];
+    
+    if (overdueTasks.length > 0) {
+      sections.push({ title: 'Overdue', data: overdueTasks });
+    }
+    if (dueTodayTasks.length > 0) {
+      sections.push({ title: 'Due Today', data: dueTodayTasks });
+    }
+    if (dueTomorrowTasks.length > 0) {
+      sections.push({ title: 'Due Tomorrow', data: dueTomorrowTasks });
+    }
+    if (dueThisWeekTasks.length > 0) {
+      sections.push({ title: 'Due This Week', data: dueThisWeekTasks });
+    }
+    if (dueLaterTasks.length > 0) {
+      sections.push({ title: 'Due Later', data: dueLaterTasks });
+    }
+
+    return sections;
+  };
+
+  const fetchUserRole = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || '');
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching user role:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchUserRole();
     const unsubscribe = fetchTasks();
     return () => unsubscribe && unsubscribe();
-  }, [selectedSemester, selectedStatus]);
+  }, []);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'To Do': return '#FF9500';
-      case 'In Progress': return '#007AFF';
-      case 'Completed': return '#34C759';
-      default: return '#8E8E93';
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No deadline';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
-  const getNextStatus = (currentStatus) => {
-    switch (currentStatus) {
-      case 'To Do': return 'In Progress';
-      case 'In Progress': return 'Completed';
-      case 'Completed': return 'To Do';
-      default: return 'To Do';
-    }
-  };
-
-  const handleStatusUpdate = async (taskId, currentStatus) => {
-    const nextStatus = getNextStatus(currentStatus);
-    
-    // Optimistic UI update - instant response
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === taskId ? { ...task, status: nextStatus } : task
-      )
-    );
-    
-    // Background database update
-    try {
-      await updateDoc(doc(db, 'tasks', taskId), {
-        status: nextStatus
-      });
-    } catch (error) {
-      console.log('Error updating status:', error);
-      
-      // Revert optimistic update on error
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId ? { ...task, status: currentStatus } : task
-        )
-      );
-      
-      // Show brief error message
-      Alert.alert('Update Failed', 'Could not update task. Please try again.', [
-        { text: 'OK' }
-      ]);
-    }
-  };
-
-  const renderTask = ({ item }) => (
-    <View style={[
-      styles.taskCard,
-      item.status === 'Completed' && styles.taskCardCompleted
-    ]}>
+  const renderTaskCard = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.taskCard}
+      onPress={() => navigation.navigate('SubjectTasks', {
+        subjectId: item.subjectId,
+        subjectName: item.subjectName,
+        subjectCode: item.subjectCode
+      })}
+    >
       <View style={styles.taskHeader}>
-        <View style={styles.taskInfo}>
-          <Text style={[
-            styles.taskTitle,
-            item.status === 'Completed' && styles.taskTitleCompleted
-          ]}>
-            {item.title}
-          </Text>
-          <Text style={[
-            styles.taskSubject,
-            item.status === 'Completed' && styles.taskSubjectCompleted
-          ]}>
-            {item.subject}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.statusButton, { backgroundColor: getStatusColor(item.status) }]}
-          onPress={() => handleStatusUpdate(item.id, item.status)}
-        >
-          <Text style={styles.statusText}>{item.status}</Text>
-        </TouchableOpacity>
+        <Text style={styles.taskTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.taskSubject}>{item.subjectCode}</Text>
       </View>
+      <Text style={styles.taskDate}>{formatDate(item.deadline)}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderSectionHeader = ({ section: { title } }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
     </View>
   );
 
@@ -173,103 +187,45 @@ export default function TaskboardScreen({ navigation }) {
         >
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Taskboard</Text>
+        <Text style={styles.headerTitle}>Agenda</Text>
       </View>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.semesterSelector}>
+      {error ? (
+        <View style={styles.errorState}>
+          <Feather name="wifi-off" size={64} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
-            style={[
-              styles.semesterButton,
-              selectedSemester === 1 && styles.semesterButtonActive
-            ]}
-            onPress={() => setSelectedSemester(1)}
+            style={styles.retryButton}
+            onPress={() => fetchTasks()}
           >
-            <Text style={[
-              styles.semesterButtonText,
-              selectedSemester === 1 && styles.semesterButtonTextActive
-            ]}>
-              1st Sem
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.semesterButton,
-              selectedSemester === 2 && styles.semesterButtonActive
-            ]}
-            onPress={() => setSelectedSemester(2)}
-          >
-            <Text style={[
-              styles.semesterButtonText,
-              selectedSemester === 2 && styles.semesterButtonTextActive
-            ]}>
-              2nd Sem
-            </Text>
+            <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.statusFilter}>
-          {['All', 'To Do', 'In Progress', 'Completed'].map((status) => (
-            <TouchableOpacity
-              key={status}
-              style={[
-                styles.filterButton,
-                selectedStatus === status && styles.filterButtonActive
-              ]}
-              onPress={() => setSelectedStatus(status)}
-            >
-              <Text style={[
-                styles.filterButtonText,
-                selectedStatus === status && styles.filterButtonTextActive
-              ]}>
-                {status}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      ) : sections.length === 0 && !loading ? (
+        <View style={styles.emptyState}>
+          <Feather name="calendar" size={64} color="#8E8E93" />
+          <Text style={styles.emptyStateText}>No upcoming tasks</Text>
         </View>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTaskCard}
+          renderSectionHeader={renderSectionHeader}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+        />
+      )}
 
-        {loading ? (
-          <View style={styles.listContainer}>
-            {Array.from({ length: 6 }, (_, i) => (
-              <TaskCardSkeleton key={i} />
-            ))}
-          </View>
-        ) : error ? (
-          <View style={styles.errorState}>
-            <Feather name="wifi-off" size={64} color="#FF3B30" />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => fetchTasks()}
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : tasks.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Feather name="clipboard" size={64} color="#8E8E93" />
-            <Text style={styles.emptyStateText}>
-              No tasks for {selectedSemester === 1 ? '1st' : '2nd'} semester yet
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.listContainer}>
-            {tasks.map((item, index) => (
-              <View key={item.id}>
-                {renderTask({ item, index })}
-              </View>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-      
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreateTask', { semester: selectedSemester })}
-      >
-        <Feather name="plus" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
+      {(userRole === 'officer' || userRole === 'admin') && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('CreateTask')}
+        >
+          <Feather name="plus" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -278,9 +234,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#2A2A2A',
-  },
-  scrollContainer: {
-    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -305,71 +258,57 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
-  semesterSelector: {
-    flexDirection: 'row',
-    margin: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-    padding: 4,
-  },
-  semesterButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  semesterButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  semesterButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#8E8E93',
-  },
-  semesterButtonTextActive: {
-    color: '#FFFFFF',
-  },
   listContainer: {
     padding: 20,
-    paddingBottom: 100,
+  },
+  sectionHeader: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
   taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  taskInfo: {
-    flex: 1,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   taskTitle: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 12,
+    lineHeight: 20,
   },
   taskSubject: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#007AFF',
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  taskDate: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
-  },
-  statusButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginLeft: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
   },
   fab: {
     position: 'absolute',
@@ -387,39 +326,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  statusFilter: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 10,
-    gap: 8,
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
   },
-  filterButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  filterButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  filterButtonText: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
+  emptyStateText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
     color: '#8E8E93',
-  },
-  filterButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  taskCardCompleted: {
-    opacity: 0.6,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-  },
-  taskTitleCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#8E8E93',
-  },
-  taskSubjectCompleted: {
-    color: '#666666',
+    textAlign: 'center',
+    marginTop: 16,
   },
   errorState: {
     flex: 1,
@@ -445,19 +363,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 16,
   },
   loadingText: {
     color: '#FFFFFF',

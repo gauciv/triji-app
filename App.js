@@ -19,7 +19,9 @@ import {
   FreedomWallScreen,
   PostDetailScreen,
   TaskboardScreen,
-  CreateTaskScreen
+  SubjectTasksScreen,
+  CreateTaskScreen,
+  CatchUpScreen
 } from './src/screens';
 import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -91,6 +93,7 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="CatchUp" component={CatchUpScreen} />
           <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
@@ -102,6 +105,7 @@ export default function App() {
           <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="Taskboard" component={TaskboardScreen} />
+          <Stack.Screen name="SubjectTasks" component={SubjectTasksScreen} />
           <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
         </Stack.Navigator>
         <StatusBar style="light" />

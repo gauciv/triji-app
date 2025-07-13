@@ -1,19 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Animated, Easing } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
+const { width, height } = Dimensions.get('window');
 const initialSubject = { name: '', units: '', grade: '' };
 
 export default function GradeCalculatorScreen({ navigation }) {
-  const [subjects, setSubjects] = useState([{ ...initialSubject }]);
+  const [subjects, setSubjects] = useState([{ units: '', grade: '' }]);
   const [gwa, setGwa] = useState(null);
-  const resultAnim = useRef(new Animated.Value(0)).current;
-  // Button animations
-  const addBtnAnim = useRef(new Animated.Value(1)).current;
-  const calcBtnAnim = useRef(new Animated.Value(1)).current;
-  // Animation for the last subject card
-  const lastCardAnim = useRef(new Animated.Value(1)).current;
 
   const handleInputChange = (index, field, value) => {
     const updatedSubjects = [...subjects];
@@ -22,35 +18,7 @@ export default function GradeCalculatorScreen({ navigation }) {
   };
 
   const addSubject = () => {
-    setSubjects(prev => {
-      // Animate the new card
-      lastCardAnim.setValue(0);
-      Animated.timing(lastCardAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
-      return [...prev, { ...initialSubject }];
-    });
-    // Animate button
-    Animated.sequence([
-      Animated.timing(addBtnAnim, {
-        toValue: 0.9,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(addBtnAnim, {
-        toValue: 1,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const removeSubject = (index) => {
-    if (subjects.length === 1) return;
-    setSubjects(subjects.filter((_, i) => i !== index));
+    setSubjects(prev => [...prev, { units: '', grade: '' }]);
   };
 
   const calculateGWA = () => {
@@ -68,263 +36,295 @@ export default function GradeCalculatorScreen({ navigation }) {
     } else {
       setGwa((weightedSum / totalUnits).toFixed(2));
     }
-    Animated.timing(resultAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-      easing: Easing.out(Easing.ease),
-    }).start();
-    // Animate button
-    Animated.sequence([
-      Animated.timing(calcBtnAnim, {
-        toValue: 0.95,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(calcBtnAnim, {
-        toValue: 1,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
   };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#121212' }}
+      style={styles.mainContainer}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Base dark gradient */}
+      <LinearGradient
+        colors={['#0A0F1C', '#0A0F1C', '#0A0F1C']}
+        style={styles.gradientBackground}
+      />
+
+      {/* Radial effect overlay */}
+      <View style={styles.radialOverlay}>
+        <LinearGradient
+          colors={['rgba(78, 67, 118, 0.4)', 'rgba(47, 53, 103, 0.2)', 'transparent']}
+          style={styles.centerGlow}
+          start={{ x: 0.5, y: 0.5 }}
+          end={{ x: 1, y: 1 }}
+        />
+      </View>
+
+      {/* Top edge glow */}
+      <LinearGradient
+        colors={['rgba(86, 95, 170, 0.15)', 'transparent']}
+        style={styles.topGlow}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      />
+
+      {/* Content */}
       <View style={styles.container}>
-        <View style={styles.backgroundGradient} />
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => navigation.navigate('Dashboard')}
-            >
-              <Feather name="arrow-left" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Dashboard')}
+        >
+          <Feather name="arrow-left" size={24} color="rgba(255,255,255,0.8)" />
+        </TouchableOpacity>
+
+        <View style={styles.cardContainer}>
+          <BlurView intensity={20} tint="dark" style={styles.mainCard}>
+            <View style={styles.iconContainer}>
+              <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
+            </View>
+
             <Text style={styles.headerTitle}>GWA Calculator</Text>
-          </View>
+            <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
+            
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+              {subjects.map((subject, idx) => (
+                <View key={idx} style={styles.subjectContainer}>
+                  <View style={styles.subjectRow}>
+                    <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
+                    
+                    <View style={styles.inputsContainer}>
+                      <TextInput
+                        style={[styles.input, styles.unitsInput]}
+                        placeholder="Units"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        keyboardType="numeric"
+                        value={subject.units}
+                        onChangeText={text => handleInputChange(idx, 'units', text)}
+                      />
+                      
+                      <TextInput
+                        style={[styles.input, styles.gradeInput]}
+                        placeholder="Grade"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        keyboardType="numeric"
+                        value={subject.grade}
+                        onChangeText={text => handleInputChange(idx, 'grade', text)}
+                      />
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
+                <Feather name="check-circle" size={20} color="#fff" />
+                <Text style={styles.calculateButtonText}>Calculate GWA</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.addButton} onPress={addSubject}>
+                <Text style={styles.addButtonText}>Add Another Subject</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
-          {subjects.map((subject, idx) => {
-            const CardWrapper = idx === subjects.length - 1 && subjects.length > 1 ? Animated.View : View;
-            const cardStyle = idx === subjects.length - 1 && subjects.length > 1
-              ? [styles.subjectRow, { opacity: lastCardAnim, transform: [{ scale: lastCardAnim }] }]
-              : styles.subjectRow;
-            return (
-              <CardWrapper key={idx} style={cardStyle}>
-                <BlurView intensity={40} tint="dark" style={styles.glassCard}>
-                  <TextInput
-                    style={[styles.input, { marginRight: 8 }]}
-                    placeholder="Subject Name"
-                    placeholderTextColor="#aaa"
-                    value={subject.name}
-                    onChangeText={text => handleInputChange(idx, 'name', text)}
-                  />
-                  <TextInput
-                    style={[styles.input, { marginRight: 8 }]}
-                    placeholder="Units"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                    value={subject.units}
-                    onChangeText={text => handleInputChange(idx, 'units', text)}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Grade"
-                    placeholderTextColor="#aaa"
-                    keyboardType="numeric"
-                    value={subject.grade}
-                    onChangeText={text => handleInputChange(idx, 'grade', text)}
-                  />
-                  <TouchableOpacity onPress={() => removeSubject(idx)} style={styles.removeBtn}>
-                    <Feather name="x" size={18} color="#fff" />
-                  </TouchableOpacity>
-                </BlurView>
-              </CardWrapper>
-            );
-          })}
-          <Animated.View style={{ transform: [{ scale: addBtnAnim }] }}>
-            <TouchableOpacity style={styles.addBtn} onPress={addSubject} activeOpacity={0.8}>
-              <Feather name="plus" size={18} color="#fff" />
-              <Text style={styles.addBtnText}>Add Subject</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          <Animated.View style={{ transform: [{ scale: calcBtnAnim }] }}>
-            <TouchableOpacity style={styles.calcBtn} onPress={calculateGWA} activeOpacity={0.8}>
-              <Feather name="check-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.calcBtnText}>Calculate GWA</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          {gwa !== null && (
-            <Animated.View style={[styles.resultBox, { opacity: resultAnim, transform: [{ scale: resultAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] }] }>
-              <Text style={styles.resultLabel}>Your GWA:</Text>
-              <Text style={styles.resultValue}>{gwa}</Text>
-            </Animated.View>
-          )}
-          <View style={{ height: 40 }} />
-        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#0A0F1C',
   },
-  backgroundGradient: {
+  gradientBackground: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
+  radialOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+  },
+  centerGlow: {
+    position: 'absolute',
+    width: Math.max(width, height) * 1.5,
+    height: Math.max(width, height) * 1.5,
+    borderRadius: Math.max(width, height) * 0.75,
+    transform: [
+      { translateX: -Math.max(width, height) * 0.75 },
+      { translateY: -Math.max(width, height) * 0.75 }
+    ],
+  },
+  topGlow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: height * 0.4,
+  },
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 48 : 24,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 8,
-    backgroundColor: '#232323',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginLeft: 16,
+    marginBottom: 8,
+  },
+  cardContainer: {
+    flex: 1,
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  mainCard: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 20, 33, 0.95)',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.03)',
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+    shadowColor: '#4ADE80',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  glowingIcon: {
+    textShadowColor: '#4ADE80',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   headerTitle: {
-    fontSize: 22,
-    fontFamily: 'Inter_600SemiBold',
+    fontSize: 28,
+    fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: 0.2,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#aaa',
-    marginBottom: 24,
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.6)',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  scrollView: {
+    flex: 1,
+    marginBottom: 20,
+  },
+  subjectContainer: {
+    marginBottom: 16,
   },
   subjectRow: {
-    width: '100%',
-    marginBottom: 16,
-    borderRadius: 18,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  glassCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(30, 34, 58, 0.5)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    overflow: 'hidden',
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  subjectNumber: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  inputsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   input: {
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
-    backgroundColor: '#232323',
-    color: '#fff',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  removeBtn: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: 'rgba(15, 18, 31, 0.8)',
     borderRadius: 8,
     padding: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 2,
+    color: '#FFFFFF',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    height: 36,
+    textAlign: 'center',
   },
-  addBtn: {
+  unitsInput: {
+    width: 70,
+  },
+  gradeInput: {
+    width: 70,
+  },
+  buttonContainer: {
+    gap: 12,
+  },
+  calculateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#34C759',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 24,
-    shadowColor: '#34C759',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'center',
+    backgroundColor: '#4ADE80',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#4ADE80',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  addBtnText: {
-    color: '#fff',
+  calculateButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
-  calcBtn: {
-    flexDirection: 'row',
+  addButton: {
     alignItems: 'center',
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    marginBottom: 24,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  calcBtnText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-  resultBox: {
-    backgroundColor: '#232323',
+    justifyContent: 'center',
+    padding: 16,
     borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    width: '100%',
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  resultLabel: {
-    color: '#aaa',
+  addButtonText: {
+    color: 'rgba(255,255,255,0.6)',
     fontSize: 16,
-    marginBottom: 4,
-  },
-  resultValue: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  scrollContent: {
-    padding: 24,
-    alignItems: 'center',
-    minHeight: '100%',
+    fontWeight: '500',
   },
 }); 
