@@ -15,6 +15,9 @@ web-build/
 .env.local
 .env.production
 
+# Firebase service account key
+serviceAccountKey.json
+
 # macOS
 .DS_Store
 

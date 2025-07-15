@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { db } from '../config/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { auth } from '../config/firebaseConfig';
 
-export default function CreateTaskScreen({ route, navigation }) {
-  const { semester } = route.params;
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { db, auth } from '../config/firebaseConfig';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+
+export default function CreateTaskScreen({ navigation }) {
   const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [details, setDetails] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [deadline, setDeadline] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showSubjectPicker, setShowSubjectPicker] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   let [fontsLoaded] = useFonts({
@@ -20,26 +24,76 @@ export default function CreateTaskScreen({ route, navigation }) {
     Inter_600SemiBold,
   });
 
-  const handleSave = async () => {
-    if (!title.trim() || !subject.trim()) {
-      Alert.alert('Error', 'Please fill in title and subject.');
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = () => {
+    try {
+      const q = query(
+        collection(db, 'subjects'),
+        orderBy('subjectCode', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const subjectsList = [];
+        querySnapshot.forEach((doc) => {
+          subjectsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+        setSubjects(subjectsList);
+        if (subjectsList.length > 0 && !selectedSubject) {
+          setSelectedSubject(subjectsList[0].id);
+        }
+        setLoading(false);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error fetching subjects:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || deadline;
+    setShowDatePicker(Platform.OS === 'ios');
+    setDeadline(currentDate);
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const handleSaveTask = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a task title.');
+      return;
+    }
+
+    if (!selectedSubject) {
+      Alert.alert('Error', 'Please select a subject.');
       return;
     }
 
     setSaving(true);
     try {
       const user = auth.currentUser;
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in to create tasks.');
-        return;
-      }
+      const selectedSubjectData = subjects.find(s => s.id === selectedSubject);
 
       await addDoc(collection(db, 'tasks'), {
         title: title.trim(),
-        subject: subject.trim(),
         details: details.trim(),
-        deadline: deadline.trim(),
-        semester: semester,
+        deadline: formatDate(deadline),
+        subjectId: selectedSubject,
+        subjectName: selectedSubjectData?.subjectName || '',
+        subjectCode: selectedSubjectData?.subjectCode || '',
         status: 'To Do',
         userId: user.uid,
         createdAt: serverTimestamp()
@@ -50,24 +104,19 @@ export default function CreateTaskScreen({ route, navigation }) {
       ]);
     } catch (error) {
       console.log('Error creating task:', error);
-      let errorMessage = 'Failed to save task. Please try again later.';
-      
-      if (error.code === 'permission-denied') {
-        errorMessage = 'You do not have permission to create tasks.';
-      } else if (error.code === 'unavailable') {
-        errorMessage = 'Service is currently unavailable. Please check your connection.';
-      }
-      
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Error', 'Failed to create task. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
       </View>
     );
   }
@@ -82,74 +131,119 @@ export default function CreateTaskScreen({ route, navigation }) {
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Task</Text>
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          <Text style={styles.saveButtonText}>
-            {saving ? 'Saving...' : 'Save'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Title *</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter task title"
-            placeholderTextColor="#8E8E93"
-            maxLength={100}
-          />
-        </View>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Title *</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Enter task title"
+              placeholderTextColor="#8E8E93"
+              maxLength={100}
+            />
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Subject *</Text>
-          <TextInput
-            style={styles.input}
-            value={subject}
-            onChangeText={setSubject}
-            placeholder="Enter subject"
-            placeholderTextColor="#8E8E93"
-            maxLength={50}
-          />
-        </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Subject *</Text>
+            <TouchableOpacity
+              style={styles.subjectButton}
+              onPress={() => setShowSubjectPicker(true)}
+            >
+              <Text style={styles.subjectButtonText}>
+                {selectedSubject ? 
+                  subjects.find(s => s.id === selectedSubject)?.subjectCode + ' - ' + 
+                  subjects.find(s => s.id === selectedSubject)?.subjectName 
+                  : 'Select a subject'
+                }
+              </Text>
+              <Feather name="chevron-down" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Details</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={details}
-            onChangeText={setDetails}
-            placeholder="Enter task details"
-            placeholderTextColor="#8E8E93"
-            multiline
-            textAlignVertical="top"
-            maxLength={500}
-          />
-        </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Details</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={details}
+              onChangeText={setDetails}
+              placeholder="Enter task details (optional)"
+              placeholderTextColor="#8E8E93"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Deadline</Text>
-          <TextInput
-            style={styles.input}
-            value={deadline}
-            onChangeText={setDeadline}
-            placeholder="e.g., Dec 15, 2024"
-            placeholderTextColor="#8E8E93"
-            maxLength={50}
-          />
-        </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Deadline</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateButtonText}>{formatDate(deadline)}</Text>
+              <Feather name="calendar" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>
-            This task will be added to {semester === 1 ? '1st' : '2nd'} Semester
-          </Text>
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={deadline}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+            />
+          )}
+
+          <TouchableOpacity
+            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            onPress={handleSaveTask}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save Task</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {showSubjectPicker && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.subjectModal}>
+            <Text style={styles.modalTitle}>Select Subject</Text>
+            <ScrollView style={styles.subjectList}>
+              {subjects.map((subject) => (
+                <TouchableOpacity
+                  key={subject.id}
+                  style={styles.subjectOption}
+                  onPress={() => {
+                    setSelectedSubject(subject.id);
+                    setShowSubjectPicker(false);
+                  }}
+                >
+                  <Text style={styles.subjectOptionText}>
+                    {subject.subjectCode} - {subject.subjectName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowSubjectPicker(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -162,7 +256,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
@@ -176,47 +269,33 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
   },
   headerTitle: {
     fontSize: 20,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: 16,
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#666666',
-  },
-  saveButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
   },
   content: {
     flex: 1,
+  },
+  form: {
     padding: 20,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  inputLabel: {
-    fontSize: 14,
+  label: {
+    fontSize: 16,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
     marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
@@ -225,26 +304,119 @@ const styles = StyleSheet.create({
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    paddingTop: 14,
   },
-  infoCard: {
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    borderRadius: 8,
-    padding: 16,
+  subjectButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: 'rgba(0, 122, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  subjectButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subjectModal: {
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxHeight: '60%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  subjectList: {
+    maxHeight: 200,
+  },
+  subjectOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  subjectOptionText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  modalCloseButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalCloseButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+  },
+  dateButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dateButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 20,
   },
-  infoText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#007AFF',
-    textAlign: 'center',
+  saveButtonDisabled: {
+    backgroundColor: '#4A4A4A',
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    textAlign: 'center',
-    marginTop: 100,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 12,
   },
 });
