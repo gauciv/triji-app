@@ -189,9 +189,9 @@ export default function AnnouncementsScreen({ navigation }) {
     <View style={styles.container}>
       {/* Shining gradient background */}
       <LinearGradient
-        colors={["#0f1c2e", "#162447", "#121212"]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
       />
       <View style={styles.glowCircle} />
