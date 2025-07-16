@@ -10,6 +10,7 @@ const initialSubject = { name: '', units: '', grade: '' };
 export default function GradeCalculatorScreen({ navigation }) {
   const [subjects, setSubjects] = useState([{ units: '', grade: '' }]);
   const [gwa, setGwa] = useState(null);
+  const [selectedSubjectIdx, setSelectedSubjectIdx] = useState(null);
 
   const handleInputChange = (index, field, value) => {
     const updatedSubjects = [...subjects];
@@ -19,6 +20,12 @@ export default function GradeCalculatorScreen({ navigation }) {
 
   const addSubject = () => {
     setSubjects(prev => [...prev, { units: '', grade: '' }]);
+  };
+
+  const deleteSubject = () => {
+    if (selectedSubjectIdx === null || subjects.length === 1) return;
+    setSubjects(prev => prev.filter((_, idx) => idx !== selectedSubjectIdx));
+    setSelectedSubjectIdx(null);
   };
 
   const calculateGWA = () => {
@@ -93,10 +100,17 @@ export default function GradeCalculatorScreen({ navigation }) {
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
               {subjects.map((subject, idx) => (
-                <View key={idx} style={styles.subjectContainer}>
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.subjectContainer,
+                    selectedSubjectIdx === idx && styles.selectedSubjectContainer,
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={() => setSelectedSubjectIdx(idx)}
+                >
                   <View style={styles.subjectRow}>
                     <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
-                    
                     <View style={styles.inputsContainer}>
                       <TextInput
                         style={[styles.input, styles.unitsInput]}
@@ -106,7 +120,6 @@ export default function GradeCalculatorScreen({ navigation }) {
                         value={subject.units}
                         onChangeText={text => handleInputChange(idx, 'units', text)}
                       />
-                      
                       <TextInput
                         style={[styles.input, styles.gradeInput]}
                         placeholder="Grade"
@@ -117,7 +130,7 @@ export default function GradeCalculatorScreen({ navigation }) {
                       />
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))}
             </ScrollView>
 
@@ -129,6 +142,14 @@ export default function GradeCalculatorScreen({ navigation }) {
 
               <TouchableOpacity style={styles.addButton} onPress={addSubject}>
                 <Text style={styles.addButtonText}>Add Another Subject</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
+                onPress={deleteSubject}
+                disabled={subjects.length === 1 || selectedSubjectIdx === null}
+              >
+                <Text style={styles.deleteButtonText}>Delete Subject</Text>
               </TouchableOpacity>
             </View>
           </BlurView>
@@ -254,6 +275,11 @@ const styles = StyleSheet.create({
   subjectContainer: {
     marginBottom: 16,
   },
+  selectedSubjectContainer: {
+    borderColor: '#FF4D4F',
+    borderWidth: 0.5,
+    borderRadius: 12,
+  },
   subjectRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -332,6 +358,24 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     fontSize: 16,
     fontWeight: '500',
+  },
+  deleteButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF4D4F',
+    marginTop: 0,
+  },
+  deleteButtonText: {
+    color: '#FF4D4F',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
   },
   resultContainer: {
     flexDirection: 'column',
