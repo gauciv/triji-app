@@ -84,6 +84,12 @@ export default function GradeCalculatorScreen({ navigation }) {
 
             <Text style={styles.headerTitle}>GWA Calculator</Text>
             <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
+
+            {/* Result Field Container */}
+            <View style={styles.resultContainer}>
+              <Text style={styles.resultLabel}>Result:</Text>
+              <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
+            </View>
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
               {subjects.map((subject, idx) => (
@@ -326,5 +332,28 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     fontSize: 16,
     fontWeight: '500',
+  },
+  resultContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: '#4ADE80',
+    backgroundColor: '#1A223A80',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  resultLabel: {
+    color: '#4ADE80',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  resultValue: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
   },
 }); 
