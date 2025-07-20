@@ -308,7 +308,13 @@ export default function PostDetailScreen({ route, navigation }) {
                 </Text>
               </View>
               
-              <Text style={styles.postText}>{post.content}</Text>
+              <ScrollView 
+                style={styles.postTextContainer}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.postTextContent}
+              >
+                <Text style={styles.postText}>{post.content}</Text>
+              </ScrollView>
             </View>
             
             <View style={styles.seenCounter}>
@@ -488,7 +494,7 @@ const styles = StyleSheet.create({
   },
   postCard: {
     width: '100%',
-    minHeight: 300,
+    height: 300,
     borderRadius: 16,
     padding: 28,
     shadowColor: '#000',
@@ -516,14 +522,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     fontWeight: '600',
   },
+  postTextContainer: {
+    flex: 1,
+    marginVertical: 20,
+  },
+  postTextContent: {
+    flexGrow: 1,
+  },
   postText: {
     fontSize: 20,
     fontFamily: 'Inter_400Regular',
     color: '#2C2C2C',
     lineHeight: 30,
     letterSpacing: 0.4,
-    flex: 1,
-    marginVertical: 20,
   },
   bottomContainer: {
     flexDirection: 'row',

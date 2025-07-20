@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
@@ -128,6 +129,19 @@ export default function FreedomWallScreen({ navigation }) {
     const unsubscribe = fetchPosts();
     return () => unsubscribe && unsubscribe();
   }, [sortBy]);
+
+  // Listen for screen dimension changes
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      // Recalculate layout when screen dimensions change
+      setTimeout(() => {
+        // Force a re-layout by updating a state that triggers handleCardLayout
+        setCardWidth(prev => prev + 0.1);
+      }, 100);
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   const syncPendingPosts = async () => {
     if (pendingPosts.length === 0) return;
@@ -325,9 +339,19 @@ export default function FreedomWallScreen({ navigation }) {
   const handleCardLayout = (event) => {
     const width = event.nativeEvent.layout.width;
     setCardWidth(width);
-    // Minimum card width: 140px + margin, max 5 columns
-    const columns = Math.max(1, Math.min(5, Math.floor(width / 140)));
-    setNumColumns(columns);
+    
+    // Calculate optimal number of columns based on available width
+    const cardWidth = 100; // PostCard width
+    const cardMargin = 4; // PostCard margin
+    const totalCardWidth = cardWidth + (cardMargin * 2);
+    const availableWidth = width - 16; // Account for container padding
+    
+    // Calculate how many cards can fit
+    const maxColumns = Math.floor(availableWidth / totalCardWidth);
+    
+    // Use 3 columns if possible, otherwise use the maximum that fits
+    const optimalColumns = Math.max(2, Math.min(3, maxColumns));
+    setNumColumns(optimalColumns);
   };
 
   if (!fontsLoaded) {
@@ -374,42 +398,55 @@ export default function FreedomWallScreen({ navigation }) {
       </TouchableOpacity>
       {/* Main card container for Freedom Wall */}
       <View style={styles.mainCardContainer} onLayout={handleCardLayout}>
-        <Text style={styles.headerTitleModernCard}>Freedom Wall</Text>
-        <Text style={styles.headerSubtextCard}>Share your thoughts anonymously</Text>
-        <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
-          <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
-          <Feather name="chevron-down" size={16} color="#b6c2d1" />
-        </TouchableOpacity>
-        {/* Posts list or empty state */}
-        {isInitialLoading ? (
-          <View style={styles.loadingContainer}>
-            <Feather name="message-circle" size={64} color="#8E8E93" />
-            <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
+        {/* Center logo with glowing outline circle */}
+        <View style={styles.logoCircleWrapper}>
+          <View style={styles.logoCircleGlow} />
+          <View style={styles.logoCircleOutline}>
+            <MaterialCommunityIcons name="message-text" size={32} color="#22e584" style={styles.logoIcon} />
           </View>
-        ) : combinedPosts.length === 0 ? (
-          <View style={styles.emptyContainerModern}>
-            <Feather name="message-circle" size={64} color="#8E8E93" />
-            <Text style={styles.emptyTitleModern}>There are no sticky notes for today yet.\nBe the first!</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={combinedPosts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => (
-              <PostCard 
-                post={item} 
-                timestamp={formatTimestamp(item.createdAt)}
-                rotation={getRandomRotation(index)}
-                onLike={() => handleLike(item.id)}
-                isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
-              />
-            )}
-            numColumns={numColumns}
-            contentContainerStyle={styles.postsGridContainer}
-            showsVerticalScrollIndicator={false}
-            key={numColumns} // force re-render on column change
-          />
-        )}
+        </View>
+        
+        <View style={styles.cardHeader}>
+          <Text style={styles.headerTitleModernCard}>Freedom Wall</Text>
+          <Text style={styles.headerSubtextCard}>Share your thoughts anonymously</Text>
+          <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
+            <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
+            <Feather name="chevron-down" size={16} color="#b6c2d1" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.cardContent}>
+          {/* Posts list or empty state */}
+          {isInitialLoading ? (
+            <View style={styles.loadingContainer}>
+              <Feather name="message-circle" size={64} color="#8E8E93" />
+              <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
+            </View>
+          ) : combinedPosts.length === 0 ? (
+            <View style={styles.emptyContainerModern}>
+              <Feather name="message-circle" size={64} color="#8E8E93" />
+              <Text style={styles.emptyTitleModern}>There are no sticky notes for today yet.\nBe the first!</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={combinedPosts}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item, index }) => (
+                <PostCard 
+                  post={item} 
+                  timestamp={formatTimestamp(item.createdAt)}
+                  rotation={getRandomRotation(index)}
+                  onLike={() => handleLike(item.id)}
+                  isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
+                />
+              )}
+              numColumns={numColumns}
+              contentContainerStyle={styles.postsGridContainer}
+              showsVerticalScrollIndicator={false}
+              key={numColumns} // force re-render on column change
+            />
+          )}
+        </View>
       </View>
       {/* Show FAB only when modal is not open */}
       {!showModal && (
@@ -885,7 +922,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     flexDirection: 'column',
     display: 'flex',
-    flex: 1,
+    height: 750, // Extended height for better visual balance
   },
   headerTitleModernCard: {
     fontSize: 32,
@@ -900,6 +937,58 @@ const styles = StyleSheet.create({
     color: '#b6c2d1',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  cardHeader: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  cardContent: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  logoCircleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    marginTop: 0,
+    width: '100%',
+    zIndex: 3,
+    position: 'relative',
+  },
+  logoCircleGlow: {
+    position: 'absolute',
+    top: 2,
+    left: '50%',
+    marginLeft: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#22e58444',
+    opacity: 0.7,
+    zIndex: 2,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  logoCircleOutline: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 4,
+    borderWidth: 2.5,
+    borderColor: '#22e584',
+    backgroundColor: 'transparent',
+    shadowColor: 'transparent',
+  },
+  logoIcon: {
+    zIndex: 5,
   },
   floatingBackButton: {
     position: 'absolute',
@@ -939,11 +1028,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   modalCard: {
-    width: '90%',
+    width: '100%',
     maxWidth: 450,
-    height: '70%',
+    height: '85%',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000',
@@ -952,8 +1043,7 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 15,
     backgroundColor: 'rgba(42, 42, 42, 0.95)',
-    alignSelf: 'center', // Ensure horizontal centering
-    justifyContent: 'center', // Ensure vertical centering
+    alignSelf: 'center',
   },
   emptyContainerModern: {
     flex: 1,
@@ -970,8 +1060,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   postsGridContainer: {
-    paddingHorizontal: 8, // Add some horizontal padding to the grid
+    paddingHorizontal: 4, // Reduced padding for better space utilization
     paddingBottom: 20,
     justifyContent: 'flex-start',
+    alignItems: 'center', // Center the grid content
   },
 });
