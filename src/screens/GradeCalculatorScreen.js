@@ -84,21 +84,21 @@ export default function GradeCalculatorScreen({ navigation }) {
         </TouchableOpacity>
 
         <View style={styles.cardContainer}>
-          <BlurView intensity={20} tint="dark" style={styles.mainCard}>
-            <View style={styles.iconContainer}>
-              <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
-            </View>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContentContainer}> 
+            <BlurView intensity={20} tint="dark" style={styles.mainCard}>
+              <View style={styles.iconContainer}>
+                <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
+              </View>
 
-            <Text style={styles.headerTitle}>GWA Calculator</Text>
-            <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
+              <Text style={styles.headerTitle}>GWA Calculator</Text>
+              <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
 
-            {/* Result Field Container */}
-            <View style={styles.resultContainer}>
-              <Text style={styles.resultLabel}>Result:</Text>
-              <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
-            </View>
-            
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+              {/* Result Field Container */}
+              <View style={styles.resultContainer}>
+                <Text style={styles.resultLabel}>Result:</Text>
+                <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
+              </View>
+              
               {subjects.map((subject, idx) => (
                 <TouchableOpacity
                   key={idx}
@@ -132,27 +132,27 @@ export default function GradeCalculatorScreen({ navigation }) {
                   </View>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
-                <Feather name="check-circle" size={20} color="#fff" />
-                <Text style={styles.calculateButtonText}>Calculate GWA</Text>
-              </TouchableOpacity>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
+                  <Feather name="check-circle" size={20} color="#fff" />
+                  <Text style={styles.calculateButtonText}>Calculate GWA</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity style={styles.addButton} onPress={addSubject}>
-                <Text style={styles.addButtonText}>Add Another Subject</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={styles.addButton} onPress={addSubject}>
+                  <Text style={styles.addButtonText}>Add Another Subject</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
-                onPress={deleteSubject}
-                disabled={subjects.length === 1 || selectedSubjectIdx === null}
-              >
-                <Text style={styles.deleteButtonText}>Delete Subject</Text>
-              </TouchableOpacity>
-            </View>
-          </BlurView>
+                <TouchableOpacity
+                  style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
+                  onPress={deleteSubject}
+                  disabled={subjects.length === 1 || selectedSubjectIdx === null}
+                >
+                  <Text style={styles.deleteButtonText}>Delete Subject</Text>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </ScrollView>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -221,6 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(17, 20, 33, 0.95)',
     borderRadius: 24,
     padding: 24,
+    paddingBottom: 16, // Adjusted padding to give more space for content and buttons
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -269,8 +270,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   scrollView: {
-    flex: 1,
-    marginBottom: 20,
+    // flex: 1, // Removed as the outer ScrollView now manages the flex
+    marginBottom: 16, 
+  },
+  scrollContentContainer: {
+    flexGrow: 1, // Allows content to grow and enable scrolling
+    paddingBottom: 20, // Add some padding at the bottom for better scroll experience
   },
   subjectContainer: {
     marginBottom: 16,
