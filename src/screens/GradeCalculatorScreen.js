@@ -84,75 +84,77 @@ export default function GradeCalculatorScreen({ navigation }) {
         </TouchableOpacity>
 
         <View style={styles.cardContainer}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContentContainer}> 
-            <BlurView intensity={20} tint="dark" style={styles.mainCard}>
-              <View style={styles.iconContainer}>
-                <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
-              </View>
+          <BlurView intensity={20} tint="dark" style={styles.mainCard}>
+            <View style={styles.iconContainer}>
+              <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
+            </View>
 
-              <Text style={styles.headerTitle}>GWA Calculator</Text>
-              <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
+            <Text style={styles.headerTitle}>GWA Calculator</Text>
+            <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
 
-              {/* Result Field Container */}
-              <View style={styles.resultContainer}>
-                <Text style={styles.resultLabel}>Result:</Text>
-                <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
-              </View>
-              
-              {subjects.map((subject, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[
-                    styles.subjectContainer,
-                    selectedSubjectIdx === idx && styles.selectedSubjectContainer,
-                  ]}
-                  activeOpacity={0.8}
-                  onPress={() => setSelectedSubjectIdx(idx)}
-                >
-                  <View style={styles.subjectRow}>
-                    <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
-                    <View style={styles.inputsContainer}>
-                      <TextInput
-                        style={[styles.input, styles.unitsInput]}
-                        placeholder="Units"
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        keyboardType="numeric"
-                        value={subject.units}
-                        onChangeText={text => handleInputChange(idx, 'units', text)}
-                      />
-                      <TextInput
-                        style={[styles.input, styles.gradeInput]}
-                        placeholder="Grade"
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        keyboardType="numeric"
-                        value={subject.grade}
-                        onChangeText={text => handleInputChange(idx, 'grade', text)}
-                      />
+            {/* Result Field Container */}
+            <View style={styles.resultContainer}>
+              <Text style={styles.resultLabel}>Result:</Text>
+              <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
+            </View>
+            
+            <View style={styles.subjectsScrollViewContainer}> 
+              <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.scrollContentContainer}> 
+                {subjects.map((subject, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.subjectContainer,
+                      selectedSubjectIdx === idx && styles.selectedSubjectContainer,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedSubjectIdx(idx)}
+                  >
+                    <View style={styles.subjectRow}>
+                      <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
+                      <View style={styles.inputsContainer}>
+                        <TextInput
+                          style={[styles.input, styles.unitsInput]}
+                          placeholder="Units"
+                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          keyboardType="numeric"
+                          value={subject.units}
+                          onChangeText={text => handleInputChange(idx, 'units', text)}
+                        />
+                        <TextInput
+                          style={[styles.input, styles.gradeInput]}
+                          placeholder="Grade"
+                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          keyboardType="numeric"
+                          value={subject.grade}
+                          onChangeText={text => handleInputChange(idx, 'grade', text)}
+                        />
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
-                  <Feather name="check-circle" size={20} color="#fff" />
-                  <Text style={styles.calculateButtonText}>Calculate GWA</Text>
-                </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
+                <Feather name="check-circle" size={20} color="#fff" />
+                <Text style={styles.calculateButtonText}>Calculate GWA</Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity style={styles.addButton} onPress={addSubject}>
-                  <Text style={styles.addButtonText}>Add Another Subject</Text>
-                </TouchableOpacity>
+              <TouchableOpacity style={styles.addButton} onPress={addSubject}>
+                <Text style={styles.addButtonText}>Add Another Subject</Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
-                  onPress={deleteSubject}
-                  disabled={subjects.length === 1 || selectedSubjectIdx === null}
-                >
-                  <Text style={styles.deleteButtonText}>Delete Subject</Text>
-                </TouchableOpacity>
-              </View>
-            </BlurView>
-          </ScrollView>
+              <TouchableOpacity
+                style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
+                onPress={deleteSubject}
+                disabled={subjects.length === 1 || selectedSubjectIdx === null}
+              >
+                <Text style={styles.deleteButtonText}>Delete Subject</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -163,6 +165,10 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#0A0F1C',
+  },
+  scrollContentForMainContainer: {
+    flexGrow: 1,
+    // minHeight: height, // Removed to allow content to dictate height and enable scrolling
   },
   gradientBackground: {
     position: 'absolute',
@@ -217,7 +223,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   mainCard: {
-    flex: 1,
     backgroundColor: 'rgba(17, 20, 33, 0.95)',
     borderRadius: 24,
     padding: 24,
@@ -270,12 +275,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   scrollView: {
-    // flex: 1, // Removed as the outer ScrollView now manages the flex
-    marginBottom: 16, 
+    // flex: 1, // Removed to allow content to dictate its height and enable scrolling
+    marginBottom: 16,
   },
   scrollContentContainer: {
     flexGrow: 1, // Allows content to grow and enable scrolling
     paddingBottom: 20, // Add some padding at the bottom for better scroll experience
+  },
+  subjectsScrollViewContainer: {
+    maxHeight: height * 0.35, // Approximately 35% of screen height
+    marginBottom: 16,
   },
   subjectContainer: {
     marginBottom: 16,
