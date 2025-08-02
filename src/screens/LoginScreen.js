@@ -1,97 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, Dimensions, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut, sendEmailVerification } from 'firebase/auth';
+import { signOut, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
-const CARD_RADIUS = 28;
-const LOGIN_CARD_WIDTH = width * 0.9;
-const LOGIN_CARD_HEIGHT = height * 0.75; // Increased height
-const LOGIN_CARD_MARGIN_TOP = -CARD_RADIUS * 0.7;
-
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showForgotModal, setShowForgotModal] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetMessage, setResetMessage] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   
-  const handleForgotPassword = async () => {
-    setResetLoading(true);
-    setResetMessage('');
-    try {
-      await sendPasswordResetEmail(auth, resetEmail);
-      setResetMessage('If an account exists for that email, a reset link has been sent.');
-      setTimeout(() => {
-        setShowForgotModal(false);
-        setResetEmail('');
-        setResetMessage('');
-      }, 2000);
-    } catch (error) {
-      console.log('Password reset error:', error.message);
-      setResetMessage('Please enter a valid email address.');
-    } finally {
-      setResetLoading(false);
-    }
+  const handleGoogleSignIn = () => {
+    // TODO: Implement Google Sign-In
+    Alert.alert('Coming Soon', 'Google Sign-In will be available soon!');
   };
 
-  const handleLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Check if user document exists in Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (!userDoc.exists()) {
-        // User document doesn't exist, log them out and show error
-        await signOut(auth);
-        setError('Your account data could not be found. Please contact support.');
-        return;
-      }
-      
-      // Check if email is verified
-      if (!user.emailVerified) {
-        // Email not verified, send new verification and log out
-        try {
-          await sendEmailVerification(user);
-        } catch (verificationError) {
-          console.log('Error sending verification email:', verificationError);
-        }
-        await signOut(auth);
-        setError('Please verify your email address before logging in. A new verification link has been sent.');
-        return;
-      }
-      
-      // User document exists and email verified, proceed with login
-      if (!userCredential.user.emailVerified) {
-        setError('Please verify your email before logging in. Check your inbox for the verification link.');
-        // Optionally, you could offer to resend the verification email here.
-        return;
-      }
-      await AsyncStorage.setItem('user_session', JSON.stringify(user));
-      console.log('Login successful:', user.email);
-      navigation.navigate('CatchUp');
-    } catch (error) {
-      console.log('Login error:', error.message);
-      setError('Invalid email or password. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleFacebookSignIn = () => {
+    // TODO: Implement Facebook Sign-In
+    Alert.alert('Coming Soon', 'Facebook Sign-In will be available soon!');
   };
   
   let [fontsLoaded] = useFonts({
@@ -107,86 +39,75 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <LinearGradient
-        colors={['#1e2756', '#253164', '#2d407e']}
-        style={styles.container}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        locations={[0, 0.5, 1]}
-      >
-        {/* Background Card with Header */}
-        <View style={styles.bgCard}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Your dashboard is waiting.</Text>
-        </View>
-
-        {/* Login Card Overlay */}
-        <View style={[styles.loginCard, { backgroundColor: 'rgba(27, 33, 64, 0.95)' }]}>
-          <Text style={styles.loginLabel}>LOGIN</Text>
-          {/* Username Input */}
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="username"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-            />
-            <Feather name="user" size={20} color="rgba(255,255,255,0.5)" style={styles.inputIcon} />
-          </View>
-          {/* Password Input */}
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              placeholder="password"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="rgba(255,255,255,0.5)" style={styles.inputIcon} />
-            </TouchableOpacity>
-          </View>
-          {/* Options Row */}
-          <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={styles.checkboxRow}
-              onPress={() => setRememberMe(!rememberMe)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                {rememberMe ? <View style={styles.checkboxInner} /> : null}
+      <View style={styles.container}>
+        {/* Enhanced gradient background with better color distribution */}
+        <LinearGradient
+          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a", "#1B2845"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.shiningGradient}
+        />
+        
+        {/* Refined glow circles with better positioning and opacity */}
+        <View style={styles.glowCircle1} />
+        <View style={styles.glowCircle2} />
+        <View style={styles.glowCircle3} />
+        
+        {/* Subtle floating elements for visual interest */}
+        <View style={styles.floatingElement2} />
+        <View style={styles.floatingElement3} />
+        <View style={styles.floatingElement4} />
+        
+        {/* Main card container with refined styling */}
+        <View style={styles.mainCardContainer}>
+          {/* Enhanced login icon with better layering */}
+          <View style={styles.loginCircleWrapper}>
+            <View style={styles.loginCircleGlow} />
+            <View style={styles.loginCircleOutline}>
+              <View style={styles.loginIconContainer}>
+                <MaterialIcons name="login" size={38} color="#22e584" style={styles.loginIcon} />
               </View>
-              <Text style={styles.rememberMe}>Remember Me</Text>
+            </View>
+          </View>
+          
+          {/* Refined title and subtext with better typography */}
+          <Text style={styles.headerTitleModernCard}>Welcome Back</Text>
+          <Text style={styles.headerSubtextCard}>Sign in to access your dashboard</Text>
+          
+          {/* Enhanced decorative separator */}
+          <View style={styles.separatorLine} />
+          
+          {/* Refined Social Login Buttons */}
+          <View style={styles.socialButtonsContainer}>
+            {/* Google Sign-In Button - Enhanced */}
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+              <View style={styles.socialButtonContent}>
+                <View style={styles.googleIconContainer}>
+                  <Text style={styles.googleGLogo}>G</Text>
+                </View>
+                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              </View>
+              <View style={styles.buttonGlow} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => Alert.alert('Help', 'Please contact support or use the password reset option.')}> 
-              <Text style={styles.needHelp}>Need Help?</Text>
+            
+            {/* Facebook Sign-In Button - Enhanced */}
+            <TouchableOpacity style={styles.facebookButton} onPress={handleFacebookSignIn}>
+              <View style={styles.socialButtonContent}>
+                <View style={styles.facebookIconContainer}>
+                  <MaterialIcons name="facebook" size={26} color="#FFFFFF" />
+                </View>
+                <Text style={styles.facebookButtonText}>Sign in with Facebook</Text>
+              </View>
+              <View style={styles.buttonGlow} />
             </TouchableOpacity>
           </View>
-          {/* Sign In Button */}
-          <TouchableOpacity style={styles.signInButton} onPress={handleLogin} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
+          
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          <View style={styles.divider} />
-          {/* Footer inside card for spacing */}
-          <View style={styles.footerCardSpacer} />
-          {/* Footer inside login card */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.footerLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
+          
+          {/* Enhanced bottom decoration */}
+          <View style={styles.bottomDecoration} />
         </View>
-      </LinearGradient>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -194,204 +115,320 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1e2756', // Updated fallback color
+    backgroundColor: '#121212',
   },
-  bgCard: {
-    width: '100%',
-    backgroundColor: 'rgba(27, 33, 64, 0.85)',
-    borderRadius: 0,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    alignItems: 'flex-start',
-    paddingTop: 56,
-    paddingBottom: 120,
-    paddingLeft: 28,
-    paddingRight: 28,
-    marginBottom: LOGIN_CARD_MARGIN_TOP,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 30,
-    elevation: 15,
+  shiningGradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    fontWeight: 'bold',
-    fontFamily: 'Inter_700Bold',
-    marginTop: 40,
-    marginBottom: 8,
-    letterSpacing: 0.2,
-    textAlign: 'left',
-    alignSelf: 'flex-start',
+  glowCircle1: {
+    position: 'absolute',
+    top: 100,
+    left: '50%',
+    marginLeft: -110,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#22e58415',
+    opacity: 0.7,
+    zIndex: 1,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 90,
+    elevation: 18,
   },
-  subtitle: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    fontStyle: 'italic',
-    textAlign: 'left',
-    alignSelf: 'flex-start',
+  glowCircle2: {
+    position: 'absolute',
+    top: 220,
+    right: -60,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: '#3a5a8c18',
+    opacity: 0.5,
+    zIndex: 1,
+    shadowColor: '#3a5a8c',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 70,
+    elevation: 12,
   },
-  loginCard: {
-    height: LOGIN_CARD_HEIGHT,
-    width: '100%',
-    borderRadius: CARD_RADIUS,
-    paddingTop: 48,
-    paddingBottom: 48,
-    paddingLeft: 28,
-    paddingRight: 28,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    marginTop: LOGIN_CARD_MARGIN_TOP - 20,
-    zIndex: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 15 },
-    shadowOpacity: 0.35,
-    shadowRadius: 35,
-    elevation: 20,
-    justifyContent: 'flex-start',
-  },
-  loginLabel: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-    fontFamily: 'Inter_700Bold',
-    alignSelf: 'flex-start',
-    marginBottom: 40,
-    marginLeft: 2,
-    letterSpacing: 1.5,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(27, 33, 64, 0.92)',
-    borderRadius: 25,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 2,
-    width: '100%',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.12)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  input: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    paddingVertical: 12,
-    borderWidth: 0,
-    borderColor: 'transparent',
-    outlineStyle: 'none',
-    outlineWidth: 0,
-    outlineColor: 'transparent',
-  },
-  inputIcon: {
-    marginLeft: 10,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 20,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.5)',
-    backgroundColor: 'transparent',
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    borderColor: '#fff',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  checkboxInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    backgroundColor: '#fff',
-  },
-  rememberMe: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-  },
-  needHelp: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 15,
-    fontWeight: 'bold',
-    fontFamily: 'Inter_600SemiBold',
-  },
-  signInButton: {
-    width: '100%',
-    backgroundColor: '#3b4d94',
-    borderRadius: 25,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.12)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
+  glowCircle3: {
+    position: 'absolute',
+    bottom: 180,
+    left: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#22305a20',
+    opacity: 0.6,
+    zIndex: 1,
+    shadowColor: '#22305a',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 50,
     elevation: 10,
   },
-  signInButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 0.5,
+  floatingElement1: {
+    position: 'absolute',
+    top: 140,
+    left: 40,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22e584',
+    opacity: 0.8,
+    zIndex: 1,
   },
-  divider: {
+  floatingElement2: {
+    position: 'absolute',
+    top: 200,
+    right: 50,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3a5a8c',
+    opacity: 0.7,
+    zIndex: 1,
+  },
+  floatingElement3: {
+    position: 'absolute',
+    bottom: 220,
+    left: '50%',
+    marginLeft: -3,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22e584',
+    opacity: 0.9,
+    zIndex: 1,
+  },
+  floatingElement4: {
+    position: 'absolute',
+    top: 280,
+    left: 80,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#22305a',
+    opacity: 0.6,
+    zIndex: 1,
+  },
+  mainCardContainer: {
+    marginTop: 140,
+    marginBottom: 50,
+    marginHorizontal: 18,
+    backgroundColor: 'rgba(18, 22, 34, 0.96)',
+    borderRadius: 36,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    paddingTop: 48,
+    paddingBottom: 40,
+    paddingHorizontal: 0,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 48,
+    elevation: 24,
+    maxWidth: 460,
+    alignSelf: 'center',
+    width: '88%',
+    position: 'relative',
+    zIndex: 2,
+    flexDirection: 'column',
+    display: 'flex',
+    flex: 1,
+  },
+  loginCircleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    marginTop: 0,
     width: '100%',
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginVertical: 2,
-    marginBottom: 40,
+    zIndex: 3,
+    position: 'relative',
   },
-  footerCardSpacer: {
-    flex: 1,  // This will push the footer to the bottom
+  loginCircleGlow: {
+    position: 'absolute',
+    top: -4,
+    left: '50%',
+    marginLeft: -38,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#22e58440',
+    opacity: 0.9,
+    zIndex: 2,
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 36,
+    elevation: 16,
   },
-  footer: {
+  loginCircleOutline: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 4,
+    borderWidth: 3.5,
+    borderColor: '#22e584',
+    backgroundColor: 'rgba(34, 229, 132, 0.12)',
+    shadowColor: 'transparent',
+  },
+  loginIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(34, 229, 132, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginIcon: {
+    zIndex: 4,
+    textShadowColor: '#22e58499',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 24,
+  },
+  headerTitleModernCard: {
+    fontSize: 34,
+    fontFamily: 'Inter_700Bold',
+    color: '#fff',
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: 10,
+    marginTop: 0,
+    letterSpacing: 0.4,
+    zIndex: 3,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 6,
+  },
+  headerSubtextCard: {
+    fontSize: 17,
+    fontFamily: 'Inter_400Regular',
+    color: '#b6c2d1',
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: 36,
+    marginTop: 0,
+    opacity: 0.92,
+    zIndex: 3,
+    lineHeight: 26,
+    letterSpacing: 0.2,
+  },
+  separatorLine: {
+    width: '65%',
+    height: 3,
+    backgroundColor: 'rgba(34, 229, 132, 0.35)',
+    borderRadius: 2,
+    marginBottom: 44,
+    zIndex: 3,
+  },
+  socialButtonsContainer: {
+    width: '82%',
+    gap: 24,
+    marginBottom: 44,
+    zIndex: 3,
+  },
+  googleButton: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    paddingVertical: 22,
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.25)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  facebookButton: {
+    width: '100%',
+    backgroundColor: '#1877F2',
+    borderRadius: 22,
+    paddingVertical: 22,
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: 'rgba(24, 119, 242, 0.5)',
+    shadowColor: '#1877F2',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  socialButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 0,
-    marginBottom: 0,
+    zIndex: 2,
   },
-  footerText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+  googleIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(234, 67, 53, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  footerLink: {
-    color: '#fff',
-    fontSize: 15,
+  facebookIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  googleButtonText: {
+    color: '#333333',
+    fontSize: 19,
     fontWeight: 'bold',
     fontFamily: 'Inter_600SemiBold',
-    marginLeft: 2,
-    textDecorationLine: 'underline',
+    letterSpacing: 0.3,
+  },
+  facebookButtonText: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.3,
+  },
+  googleGLogo: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    fontFamily: 'Inter_700Bold',
+    color: '#EA4335',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  buttonGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 22,
+    zIndex: 1,
+  },
+  bottomDecoration: {
+    width: '45%',
+    height: 5,
+    backgroundColor: 'rgba(34, 229, 132, 0.25)',
+    borderRadius: 3,
+    marginTop: 'auto',
+    zIndex: 3,
   },
   errorText: {
     color: '#ff6b6b',
@@ -399,5 +436,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     marginBottom: 10,
     textAlign: 'center',
+    zIndex: 3,
   },
 });
