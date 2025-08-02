@@ -98,41 +98,43 @@ export default function GradeCalculatorScreen({ navigation }) {
               <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
             </View>
             
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-              {subjects.map((subject, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[
-                    styles.subjectContainer,
-                    selectedSubjectIdx === idx && styles.selectedSubjectContainer,
-                  ]}
-                  activeOpacity={0.8}
-                  onPress={() => setSelectedSubjectIdx(idx)}
-                >
-                  <View style={styles.subjectRow}>
-                    <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
-                    <View style={styles.inputsContainer}>
-                      <TextInput
-                        style={[styles.input, styles.unitsInput]}
-                        placeholder="Units"
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        keyboardType="numeric"
-                        value={subject.units}
-                        onChangeText={text => handleInputChange(idx, 'units', text)}
-                      />
-                      <TextInput
-                        style={[styles.input, styles.gradeInput]}
-                        placeholder="Grade"
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        keyboardType="numeric"
-                        value={subject.grade}
-                        onChangeText={text => handleInputChange(idx, 'grade', text)}
-                      />
+            <View style={styles.subjectsScrollViewContainer}> 
+              <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.scrollContentContainer}> 
+                {subjects.map((subject, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.subjectContainer,
+                      selectedSubjectIdx === idx && styles.selectedSubjectContainer,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedSubjectIdx(idx)}
+                  >
+                    <View style={styles.subjectRow}>
+                      <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
+                      <View style={styles.inputsContainer}>
+                        <TextInput
+                          style={[styles.input, styles.unitsInput]}
+                          placeholder="Units"
+                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          keyboardType="numeric"
+                          value={subject.units}
+                          onChangeText={text => handleInputChange(idx, 'units', text)}
+                        />
+                        <TextInput
+                          style={[styles.input, styles.gradeInput]}
+                          placeholder="Grade"
+                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          keyboardType="numeric"
+                          value={subject.grade}
+                          onChangeText={text => handleInputChange(idx, 'grade', text)}
+                        />
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
@@ -163,6 +165,10 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#0A0F1C',
+  },
+  scrollContentForMainContainer: {
+    flexGrow: 1,
+    // minHeight: height, // Removed to allow content to dictate height and enable scrolling
   },
   gradientBackground: {
     position: 'absolute',
@@ -217,10 +223,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   mainCard: {
-    flex: 1,
     backgroundColor: 'rgba(17, 20, 33, 0.95)',
     borderRadius: 24,
     padding: 24,
+    paddingBottom: 16, // Adjusted padding to give more space for content and buttons
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -269,8 +275,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   scrollView: {
-    flex: 1,
-    marginBottom: 20,
+    // flex: 1, // Removed to allow content to dictate its height and enable scrolling
+    marginBottom: 16,
+  },
+  scrollContentContainer: {
+    flexGrow: 1, // Allows content to grow and enable scrolling
+    paddingBottom: 20, // Add some padding at the bottom for better scroll experience
+  },
+  subjectsScrollViewContainer: {
+    maxHeight: height * 0.35, // Approximately 35% of screen height
+    marginBottom: 16,
   },
   subjectContainer: {
     marginBottom: 16,
