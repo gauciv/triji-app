@@ -56,7 +56,8 @@ export default function RegisterScreen({ navigation }) {
       await AsyncStorage.setItem('user_session', JSON.stringify(user));
       navigation.navigate('Verification');
     } catch (error) {
-      setError('Registration failed. Please try again.');
+      console.log('Registration error:', error);
+      setError(error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

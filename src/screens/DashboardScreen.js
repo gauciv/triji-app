@@ -93,6 +93,7 @@ export default function DashboardScreen({ navigation }) {
           else if (item.title === 'Announcements') navigation.navigate('Announcements');
           else if (item.title === 'Freedom Wall') navigation.navigate('FreedomWall');
           else if (item.title === 'Grade Calculator') navigation.navigate('GradeCalculator');
+          else if (item.title === 'Student Profile') navigation.navigate('Profile');
         }}
         activeOpacity={0.9}
         style={[
