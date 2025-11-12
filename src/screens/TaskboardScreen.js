@@ -4,8 +4,9 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { db } from '../config/firebaseConfig';
+import { db, auth } from '../config/firebaseConfig';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import TaskCardSkeleton from '../components/TaskCardSkeleton';
 
 export default function TaskboardScreen({ navigation }) {
@@ -13,6 +14,7 @@ export default function TaskboardScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const windowWidth = Dimensions.get('window').width;
 
@@ -23,6 +25,14 @@ export default function TaskboardScreen({ navigation }) {
   });
 
   const fetchTasks = () => {
+    // Only fetch if user is authenticated
+    if (!auth.currentUser) {
+      console.log('No authenticated user, skipping tasks fetch');
+      setLoading(false);
+      setError('Please log in to view tasks');
+      return null;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -45,7 +55,7 @@ export default function TaskboardScreen({ navigation }) {
         setLoading(false);
         setInitialLoad(false);
       }, (error) => {
-        console.log('Error fetching tasks:', error);
+        console.error('Error fetching tasks:', error);
         setError('Could not load tasks. Please check your connection.');
         setLoading(false);
         setInitialLoad(false);
@@ -62,8 +72,20 @@ export default function TaskboardScreen({ navigation }) {
   };
 
   useEffect(() => {
-    const unsubscribe = fetchTasks();
-    return () => unsubscribe && unsubscribe();
+    // Wait for auth state before fetching
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        const unsubscribeTasks = fetchTasks();
+        return () => unsubscribeTasks && unsubscribeTasks();
+      } else {
+        setIsAuthenticated(false);
+        setLoading(false);
+        setError('Please log in to view tasks');
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
   const formatDate = (dateString) => {

@@ -5,6 +5,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
 import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,6 +15,7 @@ export default function DashboardScreen({ navigation }) {
   const [freedomWallPosts, setFreedomWallPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -21,10 +23,30 @@ export default function DashboardScreen({ navigation }) {
   });
 
   useEffect(() => {
-    fetchRecentData();
+    // Wait for auth state before fetching data
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setUserName(user.displayName || user.email || 'User');
+        fetchRecentData();
+      } else {
+        setIsAuthenticated(false);
+        setLoading(false);
+        navigation.replace('Login');
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
   const fetchRecentData = () => {
+    // Only fetch if user is authenticated
+    if (!auth.currentUser) {
+      console.log('No authenticated user, skipping data fetch');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Fetch latest tasks (max 5)
       const tasksQuery = query(
@@ -39,6 +61,9 @@ export default function DashboardScreen({ navigation }) {
           tasksList.push({ id: doc.id, ...doc.data(), source: 'tasks' });
         });
         setTasks(tasksList);
+      }, (error) => {
+        console.error('Error fetching tasks:', error);
+        setLoading(false);
       });
 
       // Fetch latest announcements (max 5)
@@ -59,6 +84,9 @@ export default function DashboardScreen({ navigation }) {
           }
         });
         setAnnouncements(announcementsList);
+      }, (error) => {
+        console.error('Error fetching announcements:', error);
+        setLoading(false);
       });
 
       // Fetch latest freedom wall posts (max 5)
@@ -84,6 +112,9 @@ export default function DashboardScreen({ navigation }) {
           }
         });
         setFreedomWallPosts(postsList);
+        setLoading(false);
+      }, (error) => {
+        console.error('Error fetching freedom wall posts:', error);
         setLoading(false);
       });
 

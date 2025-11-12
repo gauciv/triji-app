@@ -4,6 +4,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import AnnouncementCardSkeleton from '../components/AnnouncementCardSkeleton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ export default function AnnouncementsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const windowWidth = Dimensions.get('window').width;
   const isSmallScreen = windowWidth < 400;
@@ -24,6 +26,14 @@ export default function AnnouncementsScreen({ navigation }) {
   });
 
   const fetchData = async () => {
+    // Only fetch if user is authenticated
+    if (!auth.currentUser) {
+      console.log('No authenticated user, skipping announcements fetch');
+      setLoading(false);
+      setError('Please log in to view announcements');
+      return null;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -68,11 +78,23 @@ export default function AnnouncementsScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribe;
-    fetchData().then((unsub) => {
-      unsubscribe = unsub;
+    
+    // Wait for auth state before fetching
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        fetchData().then((unsub) => {
+          unsubscribe = unsub;
+        });
+      } else {
+        setIsAuthenticated(false);
+        setLoading(false);
+        setError('Please log in to view announcements');
+      }
     });
     
     return () => {
+      unsubscribeAuth();
       if (unsubscribe) unsubscribe();
     };
   }, []);

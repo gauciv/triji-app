@@ -15,8 +15,7 @@ import {
   GradeCalculatorScreen,
   PostDetailScreen,
   SubjectTasksScreen,
-  CreateTaskScreen,
-  CatchUpScreen
+  CreateTaskScreen
 } from './src/screens';
 import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,7 +72,6 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="MainApp" component={TabNavigator} />
-          <Stack.Screen name="CatchUp" component={CatchUpScreen} />
           <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
           <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
           <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />

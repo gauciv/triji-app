@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction, deleteDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import PostCard from '../components/PostCard';
 import { useNetwork } from '../context/NetworkContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,7 @@ export default function FreedomWallScreen({ navigation }) {
   const [pendingPosts, setPendingPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [customNickname, setCustomNickname] = useState('');
@@ -60,6 +62,14 @@ export default function FreedomWallScreen({ navigation }) {
   });
 
   const fetchPosts = () => {
+    // Only fetch if user is authenticated
+    if (!auth.currentUser) {
+      console.log('No authenticated user, skipping posts fetch');
+      setLoading(false);
+      setError('Please log in to view posts');
+      return null;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -139,8 +149,24 @@ export default function FreedomWallScreen({ navigation }) {
   };
 
   useEffect(() => {
-    const unsubscribe = fetchPosts();
-    return () => unsubscribe && unsubscribe();
+    let unsubscribePosts;
+    
+    // Wait for auth state before fetching
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        unsubscribePosts = fetchPosts();
+      } else {
+        setIsAuthenticated(false);
+        setLoading(false);
+        setError('Please log in to view posts');
+      }
+    });
+    
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribePosts) unsubscribePosts();
+    };
   }, [sortBy]);
 
   // Listen for screen dimension changes

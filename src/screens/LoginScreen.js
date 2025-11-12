@@ -85,7 +85,7 @@ export default function LoginScreen({ navigation }) {
       }
       await AsyncStorage.setItem('user_session', JSON.stringify(user));
       console.log('Login successful:', user.email);
-      navigation.navigate('CatchUp');
+      navigation.navigate('MainApp');
     } catch (error) {
       console.log('Login error:', error.message);
       setError('Invalid email or password. Please try again.');

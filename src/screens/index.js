@@ -17,4 +17,3 @@ export { default as PostDetailScreen } from './PostDetailScreen';
 export { default as TaskboardScreen } from './TaskboardScreen';
 export { default as SubjectTasksScreen } from './SubjectTasksScreen';
 export { default as CreateTaskScreen } from './CreateTaskScreen';
-export { default as CatchUpScreen } from './CatchUpScreen';
