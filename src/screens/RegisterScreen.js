@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, CheckBox, Linking, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform } from 'react-native';
+import Checkbox from 'expo-checkbox';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather, FontAwesome } from '@expo/vector-icons';
@@ -169,10 +170,10 @@ export default function RegisterScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.termsRow}>
-          <CheckBox
+          <Checkbox
             value={agree}
             onValueChange={setAgree}
-            tintColors={{ true: '#007AFF', false: '#8E8E93' }}
+            color={agree ? '#007AFF' : undefined}
             style={styles.checkbox}
           />
           <Text style={styles.termsText}>
