@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Dimensions, RefreshControl } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +14,7 @@ export default function DashboardScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [freedomWallPosts, setFreedomWallPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   let [fontsLoaded] = useFonts({
@@ -142,6 +143,31 @@ export default function DashboardScreen({ navigation }) {
       console.log('Error fetching data:', error);
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    
+    // Fetch user data again
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const firstName = userData.firstName || userData.displayName?.split(' ')[0] || 'User';
+          setUserName(firstName);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+    
+    // Data will refresh automatically through onSnapshot listeners
+    // Just wait a moment for the UI to feel responsive
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
   };
 
   const getGreeting = () => {
@@ -351,6 +377,15 @@ export default function DashboardScreen({ navigation }) {
         style={styles.feedContainer}
         contentContainerStyle={styles.feedContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#22e584"
+            colors={['#22e584']}
+            progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+          />
+        }
       >
         {renderSection(
           'Upcoming Tasks',
