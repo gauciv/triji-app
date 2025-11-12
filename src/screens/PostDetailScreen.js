@@ -9,9 +9,22 @@ import { auth } from '../config/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
 
 export default function PostDetailScreen({ route, navigation }) {
-  const { post } = route.params;
+  const { post } = route.params || {};
+  
+  // Safety check - if no post, go back
+  useEffect(() => {
+    if (!post) {
+      Alert.alert('Error', 'Post not found');
+      navigation.goBack();
+    }
+  }, [post, navigation]);
+  
   const [countdown, setCountdown] = useState('');
-  const [currentPost, setCurrentPost] = useState(post);
+  const [currentPost, setCurrentPost] = useState({
+    ...post,
+    likedBy: Array.isArray(post?.likedBy) ? post.likedBy : [],
+    reportedBy: Array.isArray(post?.reportedBy) ? post.reportedBy : [],
+  });
   const [showCopied, setShowCopied] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReason, setSelectedReason] = useState('');
@@ -19,7 +32,7 @@ export default function PostDetailScreen({ route, navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const animatedValue = new Animated.Value(0);
 
-  const isLiked = currentPost.likedBy?.includes(auth.currentUser?.uid) || false;
+  const isLiked = Array.isArray(currentPost.likedBy) && auth.currentUser?.uid && currentPost.likedBy.includes(auth.currentUser.uid);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -237,7 +250,7 @@ export default function PostDetailScreen({ route, navigation }) {
         {(() => {
           const user = auth.currentUser;
           const reportedBy = currentPost.reportedBy || [];
-          const hasReported = user && reportedBy.includes(user.uid);
+          const hasReported = user && Array.isArray(reportedBy) && reportedBy.includes(user.uid);
           
           return (
             <TouchableOpacity 

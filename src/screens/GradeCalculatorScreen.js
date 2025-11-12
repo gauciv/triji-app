@@ -78,7 +78,7 @@ export default function GradeCalculatorScreen({ navigation }) {
       <View style={styles.container}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.navigate('Dashboard')}
+          onPress={() => navigation.goBack()}
         >
           <Feather name="arrow-left" size={24} color="rgba(255,255,255,0.8)" />
         </TouchableOpacity>

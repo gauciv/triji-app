@@ -109,6 +109,8 @@ export default function FreedomWallScreen({ navigation }) {
             postsList.push({
               id: docSnapshot.id,
               ...data,
+              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+              reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
             });
           } else {
             // Delete expired post from Firebase
@@ -393,7 +395,7 @@ export default function FreedomWallScreen({ navigation }) {
       <BlurView intensity={50} tint="light" style={[styles.floatingShape, styles.shape2]} />
       <BlurView intensity={40} tint="dark" style={[styles.floatingShape, styles.shape3]} />
       {/* Floating back button */}
-      <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.navigate('Dashboard')}>
+      <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
         <Feather name="arrow-left" size={26} color="#fff" />
       </TouchableOpacity>
       {/* Main card container for Freedom Wall */}
@@ -439,7 +441,7 @@ export default function FreedomWallScreen({ navigation }) {
                   timestamp={formatTimestamp(item.createdAt)}
                   rotation={getRandomRotation(index)}
                   onLike={() => handleLike(item.id)}
-                  isLiked={item.likedBy?.includes(auth.currentUser?.uid)}
+                  isLiked={Array.isArray(item.likedBy) && auth.currentUser?.uid && item.likedBy.includes(auth.currentUser.uid)}
                 />
               )}
               numColumns={numColumns}

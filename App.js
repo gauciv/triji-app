@@ -7,22 +7,18 @@ import {
   LoginScreen,
   RegisterScreen,
   VerificationScreen,
-  DashboardScreen,
-  AnnouncementsScreen,
-  ProfileScreen,
   CreateAnnouncementScreen,
   AnnouncementDetailScreen,
   ArchivedAnnouncementsScreen,
   AccountSettingsScreen,
   EditProfileScreen,
   GradeCalculatorScreen,
-  FreedomWallScreen,
   PostDetailScreen,
-  TaskboardScreen,
   SubjectTasksScreen,
   CreateTaskScreen,
   CatchUpScreen
 } from './src/screens';
+import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkProvider } from './src/context/NetworkContext';
 import OfflineBanner from './src/components/OfflineBanner';
@@ -41,7 +37,7 @@ export default function App() {
         // Check for existing user session
         const savedSession = await AsyncStorage.getItem('user_session');
         if (savedSession) {
-          setInitialRouteName('Dashboard');
+          setInitialRouteName('MainApp');
         } else {
           setInitialRouteName('Login');
         }
@@ -76,19 +72,15 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="MainApp" component={TabNavigator} />
           <Stack.Screen name="CatchUp" component={CatchUpScreen} />
-          <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
           <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
           <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
           <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-          <Stack.Screen name="FreedomWall" component={FreedomWallScreen} />
           <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-          <Stack.Screen name="Taskboard" component={TaskboardScreen} />
           <Stack.Screen name="SubjectTasks" component={SubjectTasksScreen} />
           <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
         </Stack.Navigator>

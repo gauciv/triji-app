@@ -7,11 +7,19 @@ import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
 export default function AnnouncementDetailScreen({ route, navigation }) {
-  const { announcementId } = route.params;
+  const { announcementId } = route.params || {};
   const [announcement, setAnnouncement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Safety check
+  useEffect(() => {
+    if (!announcementId) {
+      setError('Announcement not found');
+      setLoading(false);
+    }
+  }, [announcementId]);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,

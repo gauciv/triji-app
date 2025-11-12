@@ -7,12 +7,18 @@ import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, getDoc }
 import { auth } from '../config/firebaseConfig';
 
 export default function SubjectTasksScreen({ route, navigation }) {
-  const { subjectId, subjectName, subjectCode } = route.params;
+  const { subjectId, subjectName, subjectCode } = route.params || {};
   const [tasks, setTasks] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState('');
+  
+  // Safety check
+  if (!subjectId) {
+    navigation.goBack();
+    return null;
+  }
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,

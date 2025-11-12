@@ -206,7 +206,7 @@ export default function CatchUpScreen({ navigation }) {
           style={StyleSheet.absoluteFill}
         />
         <Text style={styles.heading}>No updates available</Text>
-        <TouchableOpacity style={[styles.proceedBtn, { width: '92%', borderRadius: 22, height: 54 }]} onPress={() => navigation.replace('Dashboard')} activeOpacity={0.92}>
+        <TouchableOpacity style={[styles.proceedBtn, { width: '92%', borderRadius: 22, height: 54 }]} onPress={() => navigation.replace('MainApp')} activeOpacity={0.92}>
           <View style={[styles.buttonShadowWrap, { borderRadius: 22 }] }>
             <BlurView intensity={110} tint="dark" style={[styles.buttonBlur, { borderRadius: 22 }] }>
               <LinearGradient
@@ -246,7 +246,7 @@ export default function CatchUpScreen({ navigation }) {
       {/* Go to Dashboard button at top right */}
       <TouchableOpacity
         style={styles.dashboardBtn}
-        onPress={() => navigation.replace('Dashboard')}
+        onPress={() => navigation.replace('MainApp')}
         activeOpacity={0.88}
       >
         <Feather name="grid" size={20} color="#fff" style={{ marginRight: 6 }} />
