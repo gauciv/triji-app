@@ -28,6 +28,26 @@ export default function LoginScreen({ navigation }) {
   const [resetMessage, setResetMessage] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   
+  // Load saved credentials on mount
+  React.useEffect(() => {
+    loadSavedCredentials();
+  }, []);
+  
+  const loadSavedCredentials = async () => {
+    try {
+      const savedRememberMe = await AsyncStorage.getItem('remember_me');
+      if (savedRememberMe === 'true') {
+        const savedEmail = await AsyncStorage.getItem('saved_email');
+        const savedPassword = await AsyncStorage.getItem('saved_password');
+        if (savedEmail) setEmail(savedEmail);
+        if (savedPassword) setPassword(savedPassword);
+        setRememberMe(true);
+      }
+    } catch (error) {
+      console.log('Error loading saved credentials:', error);
+    }
+  };
+  
   const handleForgotPassword = async () => {
     setResetLoading(true);
     setResetMessage('');
@@ -77,12 +97,18 @@ export default function LoginScreen({ navigation }) {
         return;
       }
       
-      // User document exists and email verified, proceed with login
-      if (!userCredential.user.emailVerified) {
-        setError('Please verify your email before logging in. Check your inbox for the verification link.');
-        // Optionally, you could offer to resend the verification email here.
-        return;
+      // Save credentials if Remember Me is checked
+      if (rememberMe) {
+        await AsyncStorage.setItem('saved_email', email);
+        await AsyncStorage.setItem('saved_password', password);
+        await AsyncStorage.setItem('remember_me', 'true');
+      } else {
+        // Clear saved credentials if Remember Me is unchecked
+        await AsyncStorage.removeItem('saved_email');
+        await AsyncStorage.removeItem('saved_password');
+        await AsyncStorage.removeItem('remember_me');
       }
+      
       await AsyncStorage.setItem('user_session', JSON.stringify(user));
       console.log('Login successful:', user.email);
       navigation.navigate('MainApp');

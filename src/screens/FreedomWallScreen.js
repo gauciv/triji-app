@@ -463,7 +463,7 @@ export default function FreedomWallScreen({ navigation }) {
               key={numColumns} // force re-render on column change
             />
           )}
-        </View>
+      </View>
       
       {/* Show FAB only when modal is not open */}
       {!showModal && (

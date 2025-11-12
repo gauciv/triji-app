@@ -161,23 +161,27 @@ export default function DashboardScreen({ navigation }) {
     if (!task) return null;
     
     return (
-      <TouchableOpacity 
+      <View 
         key={task.id}
         style={styles.feedItem}
-        activeOpacity={0.7}
       >
-        <View style={styles.feedItemHeader}>
-          <View style={[styles.sourceBadge, { backgroundColor: 'rgba(0, 122, 255, 0.2)' }]}>
-            <Feather name="clipboard" size={12} color="#007AFF" />
-            <Text style={[styles.sourceText, { color: '#007AFF' }]}>Task</Text>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardBadge}>
+              <Text style={styles.cardBadgeText}>{task.subjectCode || 'N/A'}</Text>
+            </View>
+            <Text style={styles.cardDate}>{formatDate(task.deadline)}</Text>
           </View>
-          <Text style={styles.feedItemTime}>{formatDate(task.deadline)}</Text>
+          <Text style={styles.cardTitle} numberOfLines={2}>{task.title || 'Untitled Task'}</Text>
+          {task.description && (
+            <Text style={styles.cardDescription} numberOfLines={2}>{task.description}</Text>
+          )}
         </View>
-        <Text style={styles.feedItemTitle} numberOfLines={2}>{task.title || 'Untitled Task'}</Text>
-        {task.subjectCode && (
-          <Text style={styles.feedItemMeta}>{task.subjectCode}</Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.viewDetailsButton} activeOpacity={0.7}>
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Feather name="chevron-right" size={16} color="#22e584" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -185,24 +189,31 @@ export default function DashboardScreen({ navigation }) {
     if (!announcement) return null;
     
     return (
-      <TouchableOpacity 
+      <View 
         key={announcement.id}
         style={styles.feedItem}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
       >
-        <View style={styles.feedItemHeader}>
-          <View style={[styles.sourceBadge, { backgroundColor: 'rgba(255, 107, 53, 0.2)' }]}>
-            <Feather name="bell" size={12} color="#FF6B35" />
-            <Text style={[styles.sourceText, { color: '#FF6B35' }]}>Announcement</Text>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.cardBadge, { backgroundColor: 'rgba(255, 107, 53, 0.2)' }]}>
+              <Text style={[styles.cardBadgeText, { color: '#FF6B35' }]}>{announcement.type || 'Info'}</Text>
+            </View>
+            <Text style={styles.cardDate}>{formatTimestamp(announcement.createdAt)}</Text>
           </View>
-          <Text style={styles.feedItemTime}>{formatTimestamp(announcement.createdAt)}</Text>
+          <Text style={styles.cardTitle} numberOfLines={2}>{announcement.title || 'Untitled'}</Text>
+          {announcement.content && (
+            <Text style={styles.cardDescription} numberOfLines={2}>{announcement.content}</Text>
+          )}
         </View>
-        <Text style={styles.feedItemTitle} numberOfLines={2}>{announcement.title || 'Untitled'}</Text>
-        {announcement.authorName && (
-          <Text style={styles.feedItemMeta}>By {announcement.authorName}</Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.viewDetailsButton} 
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
+        >
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Feather name="chevron-right" size={16} color="#22e584" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -210,28 +221,39 @@ export default function DashboardScreen({ navigation }) {
     if (!post) return null;
     
     return (
-      <TouchableOpacity 
+      <View 
         key={post.id}
         style={styles.feedItem}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate('PostDetail', { post: post })}
       >
-        <View style={styles.feedItemHeader}>
-          <View style={[styles.sourceBadge, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
-            <Feather name="message-square" size={12} color="#3498DB" />
-            <Text style={[styles.sourceText, { color: '#3498DB' }]}>Freedom Wall</Text>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.cardBadge, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
+              <Text style={[styles.cardBadgeText, { color: '#3498DB' }]}>
+                {post.nickname || post.displayName || 'Anonymous'}
+              </Text>
+            </View>
+            <Text style={styles.cardDate}>{formatTimestamp(post.createdAt)}</Text>
           </View>
-          <Text style={styles.feedItemTime}>{formatTimestamp(post.createdAt)}</Text>
+          <Text style={styles.cardTitle} numberOfLines={3}>{post.content || 'No content'}</Text>
+          <View style={styles.postFooter}>
+            {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
+              <Text style={styles.firstTag}>#{post.tags[0]}</Text>
+            )}
+            <View style={styles.likeCount}>
+              <Feather name="heart" size={14} color="rgba(255, 255, 255, 0.5)" />
+              <Text style={styles.likeCountText}>{post.likeCount || 0}</Text>
+            </View>
+          </View>
         </View>
-        <Text style={styles.feedItemContent} numberOfLines={3}>{post.content || 'No content'}</Text>
-        {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <Text key={index} style={styles.tag}>#{tag}</Text>
-            ))}
-          </View>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.viewDetailsButton} 
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('PostDetail', { post: post })}
+        >
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Feather name="chevron-right" size={16} color="#22e584" />
+        </TouchableOpacity>
+      </View>
     );
   };  const renderSection = (title, items, renderItem, emptyMessage, viewAllAction) => {
     if (items.length === 0) return null;
@@ -384,117 +406,148 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 12,
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 16,
   },
   statCard: {
     flex: 1,
     backgroundColor: 'rgba(34, 229, 132, 0.1)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 12,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(34, 229, 132, 0.2)',
+    minWidth: 0,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#22e584',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter_500Medium',
     color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
   },
   feedContainer: {
     flex: 1,
   },
   feedContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 100,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
   viewAllText: {
     fontSize: 14,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_600SemiBold',
     color: '#22e584',
   },
   feedList: {
-    gap: 12,
+    gap: 0,
   },
   feedItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginBottom: 12,
   },
-  feedItemHeader: {
+  cardContent: {
+    marginBottom: 12,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  sourceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
+  cardBadge: {
+    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    gap: 4,
   },
-  sourceText: {
+  cardBadgeText: {
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
+    color: '#007AFF',
+    textTransform: 'uppercase',
   },
-  feedItemTime: {
+  cardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  firstTag: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: '#3498DB',
+  },
+  cardDate: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.5)',
   },
-  feedItemTitle: {
-    fontSize: 16,
+  cardTitle: {
+    fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    marginBottom: 4,
-    lineHeight: 22,
+    lineHeight: 21,
+    marginBottom: 6,
   },
-  feedItemMeta: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  feedItemContent: {
+  cardDescription: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: '#FFFFFF',
+    color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 20,
   },
-  tagsContainer: {
+  postFooter: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 8,
   },
-  tag: {
-    fontSize: 11,
+  likeCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 'auto',
+  },
+  likeCountText: {
+    fontSize: 13,
     fontFamily: 'Inter_500Medium',
-    color: 'rgba(52, 152, 219, 0.8)',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  viewDetailsText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
   },
   emptyState: {
     alignItems: 'center',
