@@ -416,34 +416,21 @@ export default function FreedomWallScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Floating blurred shapes for depth, similar to VerificationScreen */}
-      <BlurView intensity={70} tint="dark" style={[styles.floatingShape, styles.shape1]} />
-      <BlurView intensity={50} tint="light" style={[styles.floatingShape, styles.shape2]} />
-      <BlurView intensity={40} tint="dark" style={[styles.floatingShape, styles.shape3]} />
-      {/* Floating back button */}
-      <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
-        <Feather name="arrow-left" size={26} color="#fff" />
-      </TouchableOpacity>
-      {/* Main card container for Freedom Wall */}
-      <View style={styles.mainCardContainer} onLayout={handleCardLayout}>
-        {/* Center logo with glowing outline circle */}
-        <View style={styles.logoCircleWrapper}>
-          <View style={styles.logoCircleGlow} />
-          <View style={styles.logoCircleOutline}>
-            <MaterialCommunityIcons name="message-text" size={32} color="#22e584" style={styles.logoIcon} />
-          </View>
+      
+      <View style={styles.header}>
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons name="message-text" size={28} color="#22e584" />
         </View>
-        
-        <View style={styles.cardHeader}>
-          <Text style={styles.headerTitleModernCard}>Freedom Wall</Text>
-          <Text style={styles.headerSubtextCard}>Share your thoughts anonymously</Text>
-          <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
-            <Text style={styles.sortButtonText}>Sort By: {sortBy}</Text>
-            <Feather name="chevron-down" size={16} color="#b6c2d1" />
-          </TouchableOpacity>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>Freedom Wall</Text>
+          <Text style={styles.headerSubtext}>Share your thoughts anonymously</Text>
         </View>
+        <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
+          <Feather name="filter" size={20} color="#22e584" />
+        </TouchableOpacity>
+      </View>
         
-        <View style={styles.cardContent}>
+      <View style={styles.cardContent}>
           {/* Posts list or empty state */}
           {isInitialLoading ? (
             <View style={styles.loadingContainer}>
@@ -477,7 +464,7 @@ export default function FreedomWallScreen({ navigation }) {
             />
           )}
         </View>
-      </View>
+      
       {/* Show FAB only when modal is not open */}
       {!showModal && (
         <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
@@ -599,38 +586,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  backgroundTexture: {
-    flex: 1,
-  },
-  headerBar: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  backButtonContainer: {
-    width: 50,
-    alignItems: 'flex-start',
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 245, 220, 0.1)',
-  },
-  spacer: {
-    width: 50,
-  },
-  subHeader: {
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 20,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
-    flex: 1,
-    fontSize: 28,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
-    color: '#F5F5DC',
-    textAlign: 'center',
-    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  headerSubtext: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  sortButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
   },
   headerSubtitle: {
     fontSize: 14,
@@ -953,8 +948,9 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    width: '100%',
     paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 100,
   },
   logoCircleWrapper: {
     alignItems: 'center',

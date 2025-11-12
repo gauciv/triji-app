@@ -169,25 +169,17 @@ export default function TaskboardScreen({ navigation }) {
         style={styles.backgroundGradient}
       />
       
-      <TouchableOpacity 
-        style={styles.floatingBackButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Feather name="arrow-left" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-
-      <View style={styles.mainCardContainer}>
-        <View style={styles.iconCircleWrapper}>
-          <View style={styles.iconCircleGlow} />
-          <View style={styles.iconCircleOutline}>
-            <MaterialCommunityIcons name="clipboard-list-outline" size={32} color="#22e584" />
-          </View>
+      <View style={styles.header}>
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons name="clipboard-list-outline" size={28} color="#22e584" />
         </View>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>Task Board</Text>
+          <Text style={styles.headerSubtext}>View all tasks and upcoming deadlines</Text>
+        </View>
+      </View>
         
-        <Text style={styles.headerTitle}>Task Board</Text>
-        <Text style={styles.headerSubtext}>View all tasks and upcoming deadlines</Text>
-        
-        <View style={styles.tasksContent}>
+      <View style={styles.tasksContent}>
           {initialLoad ? (
             <View style={styles.listContainer}>
               <TaskCardSkeleton />
@@ -222,7 +214,6 @@ export default function TaskboardScreen({ navigation }) {
             </ScrollView>
           )}
         </View>
-      </View>
     </View>
   );
 }
@@ -239,79 +230,45 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
   },
-  floatingBackButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  mainCardContainer: {
-    flex: 1,
-    marginTop: 110,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: 'rgba(28, 34, 47, 0.85)',
+  iconCircle: {
+    width: 48,
+    height: 48,
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 229, 132, 0.2)',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 15,
-  },
-  iconCircleWrapper: {
-    alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 16,
-  },
-  iconCircleGlow: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#22e584',
-    opacity: 0.15,
-  },
-  iconCircleOutline: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2,
-    borderColor: '#22e584',
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-    paddingHorizontal: 20,
+    marginBottom: 2,
   },
   headerSubtext: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-    marginBottom: 24,
-    paddingHorizontal: 20,
   },
   tasksContent: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 100,
   },
   tasksScroll: {
     flex: 1,
@@ -321,9 +278,9 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },

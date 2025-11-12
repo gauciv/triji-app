@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   feedItem: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -478,6 +478,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.6)',
+  },
+  feedItemContent: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  tag: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(52, 152, 219, 0.8)',
   },
   emptyState: {
     alignItems: 'center',

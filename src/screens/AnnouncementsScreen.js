@@ -210,25 +210,18 @@ export default function AnnouncementsScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
       />
-      <View style={styles.glowCircle} />
-      {/* Floating back button, outside and above the card */}
-      <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
-        <Feather name="arrow-left" size={26} color="#fff" />
-      </TouchableOpacity>
-      {/* Main card container, with bell and title inside */}
-      <View style={styles.mainCardContainer}>
-        {/* Bell icon at top center, inside the card, now in a glowing outline circle like the GWA Calculator logo */}
-        <View style={styles.bellCircleWrapper}>
-          <View style={styles.bellCircleGlow} />
-          <View style={styles.bellCircleOutline}>
-            <MaterialCommunityIcons name="bell-ring" size={32} color="#22e584" style={styles.bellIcon} />
-          </View>
+      
+      <View style={styles.header}>
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons name="bell-ring" size={28} color="#22e584" />
         </View>
-        {/* Title and subtext inside the card */}
-        <Text style={styles.headerTitleModernCard}>Announcements</Text>
-        <Text style={styles.headerSubtextCard}>All important announcements in one place.</Text>
-        {/* List or empty state, only this area scrolls if needed */}
-        <View style={styles.announcementsContent}>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>Announcements</Text>
+          <Text style={styles.headerSubtext}>All important announcements in one place</Text>
+        </View>
+      </View>
+        
+      <View style={styles.announcementsContent}>
           {initialLoad ? (
             <View style={styles.listContainerModern}>
               <AnnouncementCardSkeleton />
@@ -256,23 +249,22 @@ export default function AnnouncementsScreen({ navigation }) {
             </ScrollView>
           )}
         </View>
-        {/* Action bar at the bottom of the card, always visible */}
-        <View style={styles.actionBarCardRow}>
-          <TouchableOpacity 
-            style={styles.actionButtonGhost}
-            onPress={() => navigation.navigate('ArchivedAnnouncements')}
-          >
-            <Feather name="archive" size={18} color="#22e584" />
-            <Text style={styles.actionButtonTextGhost}>Archive</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButtonGlow}
-            onPress={() => navigation.navigate('CreateAnnouncement')}
-          >
-            <Feather name="plus" size={18} color="#fff" />
-            <Text style={styles.actionButtonTextGlow}>New</Text>
-          </TouchableOpacity>
-        </View>
+        
+      <View style={styles.actionBar}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('ArchivedAnnouncements')}
+        >
+          <Feather name="archive" size={20} color="#22e584" />
+          <Text style={styles.actionButtonText}>Archive</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.actionButtonPrimary]}
+          onPress={() => navigation.navigate('CreateAnnouncement')}
+        >
+          <Feather name="plus" size={20} color="#fff" />
+          <Text style={[styles.actionButtonText, styles.actionButtonTextPrimary]}>New</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -282,6 +274,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212',
+  },
+  shiningGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  headerSubtext: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   backgroundGradient: {
     position: 'absolute',
@@ -364,20 +397,13 @@ const styles = StyleSheet.create({
   },
   announcementCardModern: {
     backgroundColor: 'rgba(30, 32, 40, 0.55)',
-    borderRadius: 16,
-    padding: 28,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.13)',
-    borderLeftWidth: 5,
-    marginBottom: 0,
-    marginTop: 0,
-    // shadowColor and boxShadow will be set dynamically
-    elevation: 8,
-    width: '100%',
-    maxWidth: 700,
-    alignSelf: 'center',
-    minWidth: 0,
-    backdropFilter: 'blur(16px)', // web only
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    borderLeftWidth: 3,
+    marginBottom: 12,
+    elevation: 3,
   },
   cardMainModern: {
     flexDirection: 'row',
@@ -856,22 +882,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   announcementsContent: {
-    width: '100%',
     flex: 1,
-    minHeight: 0,
-    maxHeight: 500, // Just enough for 2 full cards
-    height: 500,
-    marginTop: 12,
-    marginBottom: 12,
-    paddingHorizontal: 18,
-    display: 'flex',
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   announcementsScroll: {
-    width: '100%',
-    flexGrow: 1,
-    minHeight: 0,
-    maxHeight: 500,
-    height: 500,
+    flex: 1,
+  },
+  actionBar: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingBottom: Platform.OS === 'ios' ? 90 : 80,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  actionButtonPrimary: {
+    backgroundColor: 'rgba(34, 229, 132, 0.2)',
+  },
+  actionButtonText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
+  },
+  actionButtonTextPrimary: {
+    color: '#FFFFFF',
   },
   fixedActionBarCard: {
     flexDirection: 'row',
