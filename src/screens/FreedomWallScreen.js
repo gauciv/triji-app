@@ -100,11 +100,17 @@ export default function FreedomWallScreen({ navigation }) {
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const postsList = [];
+        const now = new Date();
         querySnapshot.forEach((doc) => {
-          postsList.push({
-            id: doc.id,
-            ...doc.data(),
-          });
+          const data = doc.data();
+          // Filter out expired notes
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now) {
+            postsList.push({
+              id: doc.id,
+              ...data,
+            });
+          }
         });
         setPosts(postsList);
         setLoading(false);
@@ -364,22 +370,6 @@ export default function FreedomWallScreen({ navigation }) {
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => fetchPosts()}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -425,7 +415,9 @@ export default function FreedomWallScreen({ navigation }) {
           ) : combinedPosts.length === 0 ? (
             <View style={styles.emptyContainerModern}>
               <Feather name="message-circle" size={64} color="#8E8E93" />
-              <Text style={styles.emptyTitleModern}>There are no sticky notes for today yet.\nBe the first!</Text>
+              <Text style={styles.emptyTitleModern}>
+                There are no sticky notes for today yet.{'\n'}Be the first!
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -664,57 +656,24 @@ const styles = StyleSheet.create({
     elevation: 20,
     zIndex: 20,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(42, 42, 42, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  stickyNoteModal: {
-    width: '100%',
-    maxWidth: 400,
-    height: '70%',
-    borderRadius: 8,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-    transform: [{ rotate: '1deg' }],
-  },
-  modalHeader: {
-    alignItems: 'flex-end',
-    marginBottom: 20,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  modalTextInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-    textAlignVertical: 'top',
-    letterSpacing: 0.3,
-    outline: 'none',
-  },
+
   characterCounter: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
-    color: '#8E8E93',
+    color: '#B0B3B8',
     textAlign: 'right',
-    marginTop: 8,
+    marginTop: 4,
   },
   colorPalette: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 6,
+    flexWrap: 'wrap',
   },
   colorCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: 'transparent',
   },
@@ -727,18 +686,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A2A',
   },
   previewArea: {
-    flex: 1,
     paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingVertical: 12,
+    minHeight: 140,
+    maxHeight: 180,
   },
   previewLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter_500Medium',
     color: '#F5F5DC',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   previewContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -746,36 +705,36 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
+    padding: 20,
+    paddingBottom: 32,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_500Medium',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   formInput: {
-    height: 48,
+    height: 44,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   messageInput: {
-    height: 100,
+    height: 90,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
@@ -878,16 +837,17 @@ const styles = StyleSheet.create({
   },
   postButton: {
     backgroundColor: '#34C759',
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   postButtonDisabled: {
-    backgroundColor: '#A0A0A0',
+    backgroundColor: '#666666',
+    opacity: 0.7,
   },
   postButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
@@ -1034,9 +994,9 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 450,
-    height: '85%',
+    maxHeight: '90%',
     borderRadius: 24,
-    padding: 24,
+    padding: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.4,
@@ -1044,6 +1004,22 @@ const styles = StyleSheet.create({
     elevation: 15,
     backgroundColor: 'rgba(42, 42, 42, 0.95)',
     alignSelf: 'center',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainerModern: {
     flex: 1,
