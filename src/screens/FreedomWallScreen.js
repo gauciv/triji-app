@@ -4,7 +4,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction, deleteDoc } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import PostCard from '../components/PostCard';
 import { useNetwork } from '../context/NetworkContext';
@@ -101,14 +101,19 @@ export default function FreedomWallScreen({ navigation }) {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const postsList = [];
         const now = new Date();
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Filter out expired notes
+        querySnapshot.forEach((docSnapshot) => {
+          const data = docSnapshot.data();
+          // Filter out expired notes and delete them from Firebase
           const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
           if (expiresAt > now) {
             postsList.push({
-              id: doc.id,
+              id: docSnapshot.id,
               ...data,
+            });
+          } else {
+            // Delete expired post from Firebase
+            deleteDoc(doc(db, 'freedom-wall-posts', docSnapshot.id)).catch((error) => {
+              console.log('Error deleting expired post:', error);
             });
           }
         });
@@ -247,6 +252,12 @@ export default function FreedomWallScreen({ navigation }) {
       return;
     }
 
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Authentication Required', 'You must be logged in to post. Please sign in first.');
+      return;
+    }
+
     setPosting(true);
     
     const persona = generatePersona();
@@ -261,10 +272,9 @@ export default function FreedomWallScreen({ navigation }) {
       persona: finalPersona,
       personaColor: persona.color,
       noteColor: selectedColor,
+      userId: user.uid,
       likeCount: 0,
       likedBy: [],
-      viewCount: 0,
-      viewedBy: [],
     };
     
     if (!isConnected) {
