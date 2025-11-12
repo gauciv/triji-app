@@ -10,19 +10,18 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.triji.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.triji.app"
     },
     "web": {},
     "plugins": [
       "expo-font"
-    ],
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    }
+    ]
   }
 }

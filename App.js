@@ -23,30 +23,22 @@ import {
   CreateTaskScreen,
   CatchUpScreen
 } from './src/screens';
-import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkProvider } from './src/context/NetworkContext';
 import OfflineBanner from './src/components/OfflineBanner';
+// Import Firebase to ensure it's initialized before the app starts
+import './src/config/firebaseConfig';
 
 const Stack = createStackNavigator();
 
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
-
 export default function App() {
-  const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [initialRouteName, setInitialRouteName] = useState('Login');
 
   useEffect(() => {
-    const checkUserSession = async () => {
+    const initializeApp = async () => {
       try {
+        // Check for existing user session
         const savedSession = await AsyncStorage.getItem('user_session');
         if (savedSession) {
           setInitialRouteName('Dashboard');
@@ -56,23 +48,15 @@ export default function App() {
       } catch (error) {
         console.log('Error checking session:', error);
         setInitialRouteName('Login');
+      } finally {
+        setIsReady(true);
       }
     };
 
-    const initializeFirebase = async () => {
-      try {
-        initializeApp(firebaseConfig);
-        await checkUserSession();
-        setIsFirebaseReady(true);
-      } catch (error) {
-        console.log('Firebase initialization error:', error);
-      }
-    };
-
-    initializeFirebase();
+    initializeApp();
   }, []);
 
-  if (!isFirebaseReady) {
+  if (!isReady) {
     return (
       <>
         <SplashScreen />
