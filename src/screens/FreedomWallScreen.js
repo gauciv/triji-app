@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -448,16 +448,24 @@ export default function FreedomWallScreen({ navigation }) {
       )}
       {/* Modal for creating a new post, glassmorphic style */}
       <Modal visible={showModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <BlurView intensity={110} tint="dark" style={styles.modalCard}>
-            {/* Modal Header with Close Button */}
-            <View style={styles.modalHeader}>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
-                <Feather name="x" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            {/* Preview Area */}
-            <View style={styles.previewArea}>
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Modal Header with Close Button */}
+              <View style={styles.modalHeader}>
+                <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
+                  <Feather name="x" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              {/* Preview Area */}
+              <View style={styles.previewArea}>
               <Text style={styles.previewLabel}>Preview</Text>
               <View style={styles.previewContainer}>
                 <PostCard 
@@ -535,8 +543,9 @@ export default function FreedomWallScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
             </View>
+            </ScrollView>
           </BlurView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -702,7 +711,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   formArea: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'transparent',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -1005,6 +1014,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(42, 42, 42, 0.95)',
     alignSelf: 'center',
     overflow: 'hidden',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
   },
   modalHeader: {
     flexDirection: 'row',
