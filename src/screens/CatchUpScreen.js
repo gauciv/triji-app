@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, Animated, PanResponder } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-import { db } from '../config/firebaseConfig';
+import { db, auth } from '../config/firebaseConfig';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -49,29 +49,63 @@ export default function CatchUpScreen({ navigation }) {
   });
 
   useEffect(() => {
+    // Check if user is authenticated
+    if (!auth.currentUser) {
+      console.log('User not authenticated in CatchUpScreen');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    let unsubT = null;
+    let unsubW = null;
+    
     // Announcements
     const qA = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(10));
-    const unsubA = onSnapshot(qA, (snap) => {
-      const announcements = snap.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'announcement' }));
-      // Tasks
-      const qT = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(10));
-      const unsubT = onSnapshot(qT, (snap2) => {
-        const tasks = snap2.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'task' }));
-        // Wall Posts
-        const qW = query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'desc'), limit(10));
-        const unsubW = onSnapshot(qW, (snap3) => {
-          const wallPosts = snap3.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'wall' }));
-          // Combine in the order: announcements, tasks, wallPosts
-          const combined = [...announcements, ...tasks, ...wallPosts];
-          setUpdates(combined);
-          setLoading(false);
-        });
-        return unsubW;
-      });
-      return unsubT;
-    });
-    return () => { unsubA(); };
+    const unsubA = onSnapshot(
+      qA, 
+      (snap) => {
+        const announcements = snap.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'announcement' }));
+        // Tasks
+        const qT = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(10));
+        unsubT = onSnapshot(
+          qT, 
+          (snap2) => {
+            const tasks = snap2.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'task' }));
+            // Wall Posts
+            const qW = query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'desc'), limit(10));
+            unsubW = onSnapshot(
+              qW, 
+              (snap3) => {
+                const wallPosts = snap3.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'wall' }));
+                // Combine in the order: announcements, tasks, wallPosts
+                const combined = [...announcements, ...tasks, ...wallPosts];
+                setUpdates(combined);
+                setLoading(false);
+              },
+              (error) => {
+                console.log('Error fetching wall posts in CatchUp:', error.code, error.message);
+                setLoading(false);
+              }
+            );
+          },
+          (error) => {
+            console.log('Error fetching tasks in CatchUp:', error.code, error.message);
+            setLoading(false);
+          }
+        );
+      },
+      (error) => {
+        console.log('Error fetching announcements in CatchUp:', error.code, error.message);
+        setLoading(false);
+      }
+    );
+    
+    return () => { 
+      unsubA();
+      if (unsubT) unsubT();
+      if (unsubW) unsubW();
+    };
   }, []);
 
   // PanResponder for swipe gestures

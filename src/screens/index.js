@@ -3,7 +3,7 @@ export { default as SplashScreen } from './SplashScreen';
 export { default as LoginScreen } from './LoginScreen';
 export { default as RegisterScreen } from './RegisterScreen';
 export { default as VerificationScreen } from './VerificationScreen';
-export { default as DashboardScreen } from './DashboardScreen';
+// DashboardScreen is imported directly by TabNavigator, not through App.js
 export { default as AnnouncementsScreen } from './AnnouncementsScreen';
 export { default as ProfileScreen } from './ProfileScreen';
 export { default as CreateAnnouncementScreen } from './CreateAnnouncementScreen';
