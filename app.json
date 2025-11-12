@@ -20,6 +20,9 @@
     "web": {},
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
