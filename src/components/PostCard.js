@@ -81,11 +81,6 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
           </TouchableOpacity>
           
-          <View style={styles.seenCounter}>
-            <Feather name="eye" size={8} color="#666666" />
-            <Text style={styles.seenCount}>{post.viewCount || 0}</Text>
-          </View>
-          
           {post.status === 'pending' ? (
             <View style={styles.pendingIndicator}>
               <Feather name="clock" size={6} color="#FF9500" />
@@ -198,18 +193,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#FF6B35',
     fontStyle: 'italic',
-  },
-  seenCounter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  eyeIcon: {
-    marginRight: 2,
-  },
-  seenCount: {
-    fontSize: 8,
-    fontFamily: 'Inter_400Regular',
-    color: '#666666',
   },
   pendingIndicator: {
     flexDirection: 'row',

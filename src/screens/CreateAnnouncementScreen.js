@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,21 +35,45 @@ export default function CreateAnnouncementScreen({ navigation }) {
   });
 
   const handleCreateAnnouncement = async () => {
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim()) {
+      Alert.alert('Missing Title', 'Please provide a title for the announcement.');
+      return;
+    }
+    
+    if (!content.trim()) {
+      Alert.alert('Missing Content', 'Please provide content for the announcement.');
+      return;
+    }
+    
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Authentication Required', 'You must be logged in to create announcements.');
+      return;
+    }
+    
+    console.log('User authenticated:', user.uid);
+    console.log('Creating announcement with title:', title.trim());
     
     setLoading(true);
     try {
-      const user = auth.currentUser;
-      let authorName = '';
+      let authorName = 'Anonymous';
       
       // Fetch user's full name from profile
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        authorName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+          if (fullName) {
+            authorName = fullName;
+          }
+        }
+      } catch (userError) {
+        console.log('Error fetching user data:', userError);
+        // Continue with 'Anonymous' as fallback
       }
       
-      await addDoc(collection(db, 'announcements'), {
+      const announcementData = {
         title: title.trim(),
         content: content.trim(),
         type: selectedType,
@@ -58,10 +82,29 @@ export default function CreateAnnouncementScreen({ navigation }) {
         authorPhotoURL: '',
         createdAt: new Date(),
         expiresAt: expiresAt,
-      });
+      };
+      
+      console.log('Creating announcement with data:', announcementData);
+      
+      await addDoc(collection(db, 'announcements'), announcementData);
+      
+      console.log('Announcement created successfully');
       navigation.goBack();
     } catch (error) {
       console.log('Error creating announcement:', error);
+      console.log('Error code:', error.code);
+      console.log('Error message:', error.message);
+      
+      let errorMessage = 'Could not create announcement. Please try again.';
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied. You may not have access to create announcements.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }

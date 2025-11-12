@@ -11,7 +11,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 export default function AnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState('');
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
 
@@ -29,30 +28,25 @@ export default function AnnouncementsScreen({ navigation }) {
     setError(null);
     
     try {
-      // Fetch user role
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserRole(userDoc.data().role || '');
-        }
-      }
-
       // Set up announcements listener
       const q = query(
         collection(db, 'announcements'),
-        where('expiresAt', '>', new Date()),
-        orderBy('expiresAt', 'asc'),
         orderBy('createdAt', 'desc')
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const announcementsList = [];
+        const now = new Date();
         querySnapshot.forEach((doc) => {
-          announcementsList.push({
-            id: doc.id,
-            ...doc.data(),
-          });
+          const data = doc.data();
+          // Filter out expired announcements on the client side
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now) {
+            announcementsList.push({
+              id: doc.id,
+              ...data,
+            });
+          }
         });
         setAnnouncements(announcementsList);
         setLoading(false);
@@ -232,7 +226,11 @@ export default function AnnouncementsScreen({ navigation }) {
               contentContainerStyle={styles.listContainerModern}
               showsVerticalScrollIndicator={false}
             >
-              {announcements.map((item) => renderAnnouncement({ item }))}
+              {announcements.map((item) => (
+                <View key={item.id}>
+                  {renderAnnouncement({ item })}
+                </View>
+              ))}
             </ScrollView>
           )}
         </View>

@@ -10,7 +10,6 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   const { announcementId } = route.params;
   const [announcement, setAnnouncement] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState(null);
 
@@ -25,15 +24,6 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
     setError(null);
     
     try {
-      // Fetch user role
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserRole(userDoc.data().role || '');
-        }
-      }
-      
       // Fetch announcement
       const docRef = doc(db, 'announcements', announcementId);
       const docSnap = await getDoc(docRef);
@@ -151,7 +141,7 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
                 </Text>
               </View>
               <Text style={styles.authorNameModernPolished}>{announcement.authorName || 'Anonymous'}</Text>
-              {userRole === 'officer' && (
+              {auth.currentUser && announcement.authorId === auth.currentUser.uid && (
                 <TouchableOpacity style={styles.deleteButtonModern} onPress={handleDelete}>
                   <Feather name="trash-2" size={20} color="#FF3B30" />
                 </TouchableOpacity>

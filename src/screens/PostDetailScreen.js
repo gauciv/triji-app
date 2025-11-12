@@ -74,39 +74,6 @@ export default function PostDetailScreen({ route, navigation }) {
     
     animate();
     
-    // Track view count
-    const trackView = async () => {
-      const user = auth.currentUser;
-      if (!user || !post.id) return;
-      
-      const viewedBy = post.viewedBy || [];
-      const hasViewed = viewedBy.includes(user.uid);
-      
-      if (!hasViewed) {
-        try {
-          const postRef = doc(db, 'freedom-wall-posts', post.id);
-          
-          await runTransaction(db, async (transaction) => {
-            const postDoc = await transaction.get(postRef);
-            if (!postDoc.exists()) return;
-            
-            const data = postDoc.data();
-            const currentViewCount = data.viewCount || 0;
-            const currentViewedBy = data.viewedBy || [];
-            
-            transaction.update(postRef, {
-              viewCount: currentViewCount + 1,
-              viewedBy: [...currentViewedBy, user.uid]
-            });
-          });
-        } catch (error) {
-          console.log('Error tracking view:', error);
-        }
-      }
-    };
-    
-    trackView();
-    
     return () => clearInterval(interval);
   }, [post.expiresAt, post.id]);
 
@@ -315,11 +282,6 @@ export default function PostDetailScreen({ route, navigation }) {
               >
                 <Text style={styles.postText}>{post.content}</Text>
               </ScrollView>
-            </View>
-            
-            <View style={styles.seenCounter}>
-              <Feather name="eye" size={12} color="#666666" />
-              <Text style={styles.seenCount}>{currentPost.viewCount || 0}</Text>
             </View>
           </View>
         </View>
@@ -617,23 +579,6 @@ const styles = StyleSheet.create({
   },
   copiedText: {
     color: '#34C759',
-  },
-  seenCounter: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-
-  seenCount: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-    color: '#666666',
   },
   reportModalContainer: {
     flex: 1,
