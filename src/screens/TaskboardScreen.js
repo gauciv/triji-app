@@ -128,9 +128,11 @@ export default function TaskboardScreen({ navigation }) {
     const overdue = isOverdue(task.deadline);
     
     return (
-      <View 
+      <TouchableOpacity 
         key={task.id}
         style={styles.taskCard}
+        onPress={() => navigation.navigate('TaskDetail', { task })}
+        activeOpacity={0.7}
       >
         <View style={styles.taskCardHeader}>
           <View style={styles.subjectBadge}>
@@ -158,7 +160,7 @@ export default function TaskboardScreen({ navigation }) {
             <Text style={styles.taskDate}>{formatDate(task.deadline)}</Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

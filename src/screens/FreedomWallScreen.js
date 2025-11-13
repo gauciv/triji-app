@@ -502,6 +502,7 @@ export default function FreedomWallScreen({ navigation }) {
                   rotation={getRandomRotation(index)}
                   onLike={() => handleLike(item.id)}
                   isLiked={Array.isArray(item.likedBy) && auth.currentUser?.uid && item.likedBy.includes(auth.currentUser.uid)}
+                  onPress={() => navigation.navigate('PostDetail', { post: item })}
                 />
               )}
               numColumns={numColumns}

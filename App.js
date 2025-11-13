@@ -13,7 +13,8 @@ import {
   EditProfileScreen,
   GradeCalculatorScreen,
   PostDetailScreen,
-  CreateTaskScreen
+  CreateTaskScreen,
+  TaskDetailScreen
 } from './src/screens';
 import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -77,6 +78,7 @@ export default function App() {
           <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+          <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
         </Stack.Navigator>
         <StatusBar style="light" />
       </NavigationContainer>

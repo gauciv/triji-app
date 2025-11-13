@@ -247,6 +247,12 @@ export default function PostDetailScreen({ route, navigation }) {
   if (!fontsLoaded) {
     return (
       <View style={styles.container}>
+        <LinearGradient
+          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.backgroundGradient}
+        />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -254,6 +260,12 @@ export default function PostDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.backgroundGradient}
+      />
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -429,7 +441,14 @@ export default function PostDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#121212',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   header: {
     flexDirection: 'row',
@@ -438,7 +457,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
