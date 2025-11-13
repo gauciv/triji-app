@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Image } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
@@ -198,7 +198,11 @@ export default function RegisterScreen({ navigation }) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <View style={styles.bottomSection}>
           <View style={styles.logoBottom}>
-            <Text style={styles.logoTextBottom}>T</Text>
+            <Image 
+              source={require('../../assets/icon.png')} 
+              style={styles.logoImageBottom}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.loginContainer}>
             <Text style={styles.linkText}>Already have an account? </Text>
@@ -395,7 +399,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -404,12 +408,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 3,
+    overflow: 'hidden',
   },
-  logoTextBottom: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
-    color: '#fff',
-    letterSpacing: 0.2,
-    textAlign: 'center',
+  logoImageBottom: {
+    width: '100%',
+    height: '100%',
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 
@@ -115,14 +115,13 @@ export default function SplashScreen({ loadingMessage = 'Loading...' }) {
             { transform: [{ scale: pulseAnim }] },
           ]}
         >
-          <LinearGradient
-            colors={['#22e584', '#1ba365']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.logo}
-          >
-            <Text style={styles.logoText}>T</Text>
-          </LinearGradient>
+          <View style={styles.logo}>
+            <Image 
+              source={require('../../assets/icon.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
           
           {/* Rotating spinner around logo */}
           <Animated.View
@@ -212,11 +211,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 10,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   spinnerRing: {
     position: 'absolute',
