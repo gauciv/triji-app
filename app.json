@@ -1,31 +1,39 @@
 {
   "expo": {
-    "name": "triji-app",
+    "name": "Triji",
     "slug": "triji-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1B2845"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.triji.app"
+      "bundleIdentifier": "com.triji.app",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B2845"
       },
       "package": "com.triji.app",
+      "versionCode": 1,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "com.google.android.c2dm.permission.RECEIVE"
+        "com.google.android.c2dm.permission.RECEIVE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
       ]
     },
-
-    "web": {},
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
     "plugins": [
       "expo-font",
       [
@@ -34,6 +42,11 @@
           "color": "#22e584"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    }
   }
 }

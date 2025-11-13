@@ -8,6 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "eject": "expo eject",
+    "build:android": "eas build --platform android --profile preview",
+    "build:ios": "eas build --platform ios --profile preview",
+    "build:production": "eas build --platform all --profile production",
     "lint": "echo 'No linting configured yet'",
     "test": "echo 'No tests configured yet'"
   },
