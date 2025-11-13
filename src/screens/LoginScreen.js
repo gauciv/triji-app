@@ -26,6 +26,8 @@ export default function LoginScreen({ navigation }) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [lastResetTime, setLastResetTime] = useState(null);
   const [rememberMe, setRememberMe] = useState(false);
   
   // Load saved credentials on mount
@@ -52,6 +54,7 @@ export default function LoginScreen({ navigation }) {
     // Validate email input
     if (!resetEmail || resetEmail.trim() === '') {
       setResetMessage('Please enter your email address.');
+      setResetSuccess(false);
       return;
     }
     
@@ -59,31 +62,51 @@ export default function LoginScreen({ navigation }) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(resetEmail)) {
       setResetMessage('Please enter a valid email address.');
+      setResetSuccess(false);
+      return;
+    }
+    
+    // Rate limiting - prevent requests within 60 seconds
+    const now = Date.now();
+    if (lastResetTime && (now - lastResetTime) < 60000) {
+      const remainingSeconds = Math.ceil((60000 - (now - lastResetTime)) / 1000);
+      setResetMessage(`Please wait ${remainingSeconds} seconds before requesting another reset email.`);
+      setResetSuccess(false);
       return;
     }
     
     setResetLoading(true);
     setResetMessage('');
+    setResetSuccess(false);
     try {
       await sendPasswordResetEmail(auth, resetEmail);
-      setResetMessage('If an account exists for that email, a reset link has been sent.');
-      setTimeout(() => {
-        setShowForgotModal(false);
-        setResetEmail('');
-        setResetMessage('');
-      }, 2500);
+      setLastResetTime(Date.now());
+      setResetSuccess(true);
+      setResetMessage('Password reset email sent successfully! Please check your inbox (and spam folder).');
+      // Don't auto-close, let user close manually
     } catch (error) {
       console.log('Password reset error:', error.message);
+      setResetSuccess(false);
       if (error.code === 'auth/invalid-email') {
         setResetMessage('Invalid email format.');
       } else if (error.code === 'auth/too-many-requests') {
-        setResetMessage('Too many attempts. Please try again later.');
+        setResetMessage('Too many attempts. Please try again in a few minutes.');
+      } else if (error.code === 'auth/user-not-found') {
+        // For security, show generic message
+        setResetMessage('If an account exists for that email, a reset link has been sent.');
       } else {
         setResetMessage('Unable to send reset email. Please try again.');
       }
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const handleCloseResetModal = () => {
+    setShowForgotModal(false);
+    setResetEmail('');
+    setResetMessage('');
+    setResetSuccess(false);
   };
 
   const handleLogin = async () => {
@@ -260,13 +283,13 @@ export default function LoginScreen({ navigation }) {
           animationType="fade"
           onRequestClose={() => setShowForgotModal(false)}
         >
-          <TouchableWithoutFeedback onPress={() => setShowForgotModal(false)}>
+          <TouchableWithoutFeedback onPress={handleCloseResetModal}>
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                 <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>Reset Password</Text>
-                    <TouchableOpacity onPress={() => setShowForgotModal(false)}>
+                    <TouchableOpacity onPress={handleCloseResetModal}>
                       <Feather name="x" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
@@ -290,23 +313,33 @@ export default function LoginScreen({ navigation }) {
                   </View>
                   
                   {resetMessage ? (
-                    <Text style={[styles.resetMessage, resetMessage.includes('sent') ? styles.successMessage : styles.errorMessage]}>
+                    <Text style={[styles.resetMessage, resetSuccess ? styles.successMessage : styles.errorMessage]}>
                       {resetMessage}
                     </Text>
                   ) : null}
                   
-                  <TouchableOpacity
-                    style={[styles.modalButton, (resetLoading || !resetEmail) && styles.modalButtonDisabled]}
-                    onPress={handleForgotPassword}
-                    disabled={resetLoading || !resetEmail}
-                    activeOpacity={0.8}
-                  >
-                    {resetLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.modalButtonText}>Send Reset Link</Text>
-                    )}
-                  </TouchableOpacity>
+                  {resetSuccess ? (
+                    <TouchableOpacity
+                      style={styles.modalButton}
+                      onPress={handleCloseResetModal}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.modalButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.modalButton, (resetLoading || !resetEmail) && styles.modalButtonDisabled]}
+                      onPress={handleForgotPassword}
+                      disabled={resetLoading || !resetEmail}
+                      activeOpacity={0.8}
+                    >
+                      {resetLoading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.modalButtonText}>Send Reset Link</Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
                 </View>
               </TouchableWithoutFeedback>
             </View>
