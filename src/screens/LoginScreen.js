@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert, Image, ScrollView } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
@@ -210,7 +210,12 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* Login Card Overlay */}
-        <View style={styles.loginCard}>
+        <ScrollView 
+          style={styles.loginCard}
+          contentContainerStyle={styles.loginCardContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.loginLabel}>LOGIN</Text>
           {/* Username Input */}
           <View style={styles.inputWrapper}>
@@ -255,6 +260,7 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.needHelp}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
           {/* Sign In Button */}
           <TouchableOpacity style={styles.signInButton} onPress={handleLogin} disabled={loading}>
             {loading ? (
@@ -263,7 +269,6 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.signInButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <View style={styles.divider} />
           {/* Footer inside card for spacing */}
           <View style={styles.footerCardSpacer} />
@@ -274,7 +279,7 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
 
         {/* Forgot Password Modal */}
         <Modal
@@ -408,14 +413,9 @@ const styles = StyleSheet.create({
     height: LOGIN_CARD_HEIGHT,
     width: '100%',
     borderRadius: CARD_RADIUS,
-    paddingTop: 48,
-    paddingBottom: 48,
-    paddingLeft: 28,
-    paddingRight: 28,
     backgroundColor: 'rgba(30, 39, 70, 0.95)',
     borderWidth: 1.5,
     borderColor: 'rgba(34, 229, 132, 0.2)',
-    alignItems: 'center',
     marginTop: LOGIN_CARD_MARGIN_TOP - 20,
     zIndex: 2,
     shadowColor: '#22e584',
@@ -423,6 +423,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 35,
     elevation: 20,
+  },
+  loginCardContent: {
+    paddingTop: 48,
+    paddingBottom: 48,
+    paddingLeft: 28,
+    paddingRight: 28,
+    alignItems: 'center',
     justifyContent: 'flex-start',
   },
   loginLabel: {
@@ -571,10 +578,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#ff6b6b',
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    marginBottom: 10,
+    marginVertical: 12,
     textAlign: 'center',
+    paddingHorizontal: 8,
   },
   modalOverlay: {
     flex: 1,

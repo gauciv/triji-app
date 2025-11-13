@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Image, KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -86,7 +86,11 @@ export default function RegisterScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <LinearGradient
         colors={['#1B2845', '#23243a', '#22305a']}
         style={styles.backgroundGradient}
@@ -94,66 +98,68 @@ export default function RegisterScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
         locations={[0, 0.5, 1]}
       />
-      <BlurView intensity={80} tint="dark" style={styles.glassCard}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <BlurView intensity={80} tint="dark" style={styles.glassCard}>
         <Text style={styles.greeting}>Welcome!,</Text>
         <Text style={styles.headline}>Let's Get You Started.</Text>
         <View style={styles.inputContainer}>
           <View style={styles.inputGroup}>
             <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, !validateName(firstName) && firstName.length > 0 && styles.inputError]}
+              style={styles.input}
               placeholder="First Name"
               placeholderTextColor="#8E8E93"
               value={firstName}
               onChangeText={setFirstName}
               autoCapitalize="words"
-              selectionColor="#007AFF"
+              selectionColor="#22e584"
               underlineColorAndroid="transparent"
-              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
             <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, !validateName(lastName) && lastName.length > 0 && styles.inputError]}
+              style={styles.input}
               placeholder="Last Name"
               placeholderTextColor="#8E8E93"
               value={lastName}
               onChangeText={setLastName}
               autoCapitalize="words"
-              selectionColor="#007AFF"
+              selectionColor="#22e584"
               underlineColorAndroid="transparent"
-              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
             <Feather name="mail" size={18} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
+              style={styles.input}
               placeholder="Email"
               placeholderTextColor="#8E8E93"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
-              selectionColor="#007AFF"
+              selectionColor="#22e584"
               underlineColorAndroid="transparent"
-              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
           </View>
           <View style={styles.inputGroup}>
             <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, password.length > 0 && password.length < 6 && styles.inputError]}
+              style={styles.input}
               placeholder="Password"
               placeholderTextColor="#8E8E93"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
               autoCapitalize="none"
-              selectionColor="#007AFF"
+              selectionColor="#22e584"
               underlineColorAndroid="transparent"
-              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
               <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
@@ -162,16 +168,15 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.inputGroup}>
             <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, confirmPassword.length > 0 && confirmPassword !== password && styles.inputError]}
+              style={styles.input}
               placeholder="Confirm Password"
               placeholderTextColor="#8E8E93"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               autoCapitalize="none"
-              selectionColor="#007AFF"
+              selectionColor="#22e584"
               underlineColorAndroid="transparent"
-              {...(Platform.OS === 'web' ? { style: { ...styles.input, outline: 'none', boxShadow: 'none' } } : {})}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
               <Feather name={showConfirmPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
@@ -219,7 +224,9 @@ export default function RegisterScreen({ navigation }) {
           </View>
         </View>
       </BlurView>
-    </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -229,6 +236,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1B2845',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -297,10 +310,6 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
-  },
-  inputError: {
-    borderColor: '#FF3B30',
-    borderWidth: 1.5,
   },
   termsRow: {
     flexDirection: 'row',
