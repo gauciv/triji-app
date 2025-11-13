@@ -20,7 +20,7 @@ import {
 import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkProvider } from './src/context/NetworkContext';
-import OfflineBanner from './src/components/OfflineBanner';
+import { ErrorBoundary, OfflineBanner } from './src/components';
 import { setupNotificationListeners, registerForPushNotifications } from './src/utils/notifications';
 import { startAllListeners, stopAllListeners } from './src/utils/firestoreListeners';
 // Import Firebase to ensure it's initialized before the app starts
@@ -112,29 +112,31 @@ export default function App() {
   }
 
   return (
-    <NetworkProvider>
-      <OfflineBanner />
-      <NavigationContainer>
-        <Stack.Navigator 
-          initialRouteName={initialRouteName}
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="Verification" component={VerificationScreen} />
-          <Stack.Screen name="MainApp" component={TabNavigator} />
-          <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
-          <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
-          <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-          <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-          <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-          <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
-          <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-        </Stack.Navigator>
-        <StatusBar style="light" />
-      </NavigationContainer>
-    </NetworkProvider>
+    <ErrorBoundary>
+      <NetworkProvider>
+        <OfflineBanner />
+        <NavigationContainer>
+          <Stack.Navigator 
+            initialRouteName={initialRouteName}
+            screenOptions={{ headerShown: false }}
+          >
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Verification" component={VerificationScreen} />
+            <Stack.Screen name="MainApp" component={TabNavigator} />
+            <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
+            <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
+            <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
+            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+            <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+            <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+          </Stack.Navigator>
+          <StatusBar style="light" />
+        </NavigationContainer>
+      </NetworkProvider>
+    </ErrorBoundary>
   );
 }
