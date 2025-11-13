@@ -2,7 +2,7 @@
   "expo": {
     "name": "Triji",
     "slug": "triji-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#1B2845",
@@ -25,11 +25,6 @@
       "package": "com.triji.app",
       "versionCode": 1,
       "permissions": [
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "com.google.android.c2dm.permission.RECEIVE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "com.google.android.c2dm.permission.RECEIVE",
