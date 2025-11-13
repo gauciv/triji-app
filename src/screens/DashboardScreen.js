@@ -10,9 +10,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 const { width, height } = Dimensions.get('window');
 
 export default function DashboardScreen({ navigation }) {
-  const [tasks, setTasks] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [freedomWallPosts, setFreedomWallPosts] = useState([]);
+  const [recentUpdates, setRecentUpdates] = useState([]);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [totalAnnouncements, setTotalAnnouncements] = useState(0);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
@@ -54,9 +55,10 @@ export default function DashboardScreen({ navigation }) {
           unsubscribers = [];
         }
         setIsAuthenticated(false);
-        setTasks([]);
-        setAnnouncements([]);
-        setFreedomWallPosts([]);
+        setRecentUpdates([]);
+        setTotalTasks(0);
+        setTotalAnnouncements(0);
+        setTotalPosts(0);
         setLoading(false);
         navigation.replace('Login');
       }
@@ -80,89 +82,146 @@ export default function DashboardScreen({ navigation }) {
 
     try {
       const unsubscribers = [];
+      let taskUpdates = [];
+      let announcementUpdates = [];
+      let postUpdates = [];
+      const now = new Date();
+
+      const combineAndSortUpdates = () => {
+        const combined = [...taskUpdates, ...announcementUpdates, ...postUpdates];
+        combined.sort((a, b) => {
+          const aTime = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+          const bTime = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+          return bTime - aTime;
+        });
+        setRecentUpdates(combined.slice(0, 5));
+        setLoading(false);
+      };
       
-      // Fetch latest tasks (max 3)
+      // Fetch ALL tasks to get correct count
+      const allTasksQuery = query(collection(db, 'tasks'));
+      const unsubAllTasks = onSnapshot(allTasksQuery, (snapshot) => {
+        let pendingCount = 0;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const isCompletedByCurrentUser = auth.currentUser && 
+                                          data.completedBy && 
+                                          data.completedBy.includes(auth.currentUser.uid);
+          if (!isCompletedByCurrentUser) {
+            pendingCount++;
+          }
+        });
+        setTotalTasks(pendingCount);
+      });
+      unsubscribers.push(unsubAllTasks);
+
+      // Fetch ALL announcements to get correct count
+      const allAnnouncementsQuery = query(collection(db, 'announcements'));
+      const unsubAllAnnouncements = onSnapshot(allAnnouncementsQuery, (snapshot) => {
+        let activeCount = 0;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now) {
+            activeCount++;
+          }
+        });
+        setTotalAnnouncements(activeCount);
+      });
+      unsubscribers.push(unsubAllAnnouncements);
+
+      // Fetch ALL freedom wall posts to get correct count
+      const allPostsQuery = query(collection(db, 'freedom-wall-posts'));
+      const unsubAllPosts = onSnapshot(allPostsQuery, (snapshot) => {
+        let activeCount = 0;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now) {
+            activeCount++;
+          }
+        });
+        setTotalPosts(activeCount);
+      });
+      unsubscribers.push(unsubAllPosts);
+
+      // Fetch recent tasks for feed
       const tasksQuery = query(
         collection(db, 'tasks'),
-        orderBy('deadline', 'asc'),
-        limit(3)
+        orderBy('createdAt', 'desc'),
+        limit(10)
       );
       
       const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
-        const tasksList = [];
+        taskUpdates = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
-          // Only show tasks that current user has NOT completed
           const isCompletedByCurrentUser = auth.currentUser && 
                                           data.completedBy && 
                                           data.completedBy.includes(auth.currentUser.uid);
           
-          if (!isCompletedByCurrentUser) {
-            tasksList.push({ id: doc.id, ...data, source: 'tasks' });
-          }
-        });
-        setTasks(tasksList);
-      }, (error) => {
-        console.error('Error fetching tasks:', error);
-        setLoading(false);
-      });
-      
-      unsubscribers.push(unsubTasks);
-
-      // Fetch latest announcements (max 3)
-      const now = new Date();
-      const announcementsQuery = query(
-        collection(db, 'announcements'),
-        orderBy('createdAt', 'desc'),
-        limit(3)
-      );
-      
-      const unsubAnnouncements = onSnapshot(announcementsQuery, (snapshot) => {
-        const announcementsList = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-          if (expiresAt > now) {
-            announcementsList.push({ id: doc.id, ...data, source: 'announcements' });
-          }
-        });
-        setAnnouncements(announcementsList);
-      }, (error) => {
-        console.error('Error fetching announcements:', error);
-        setLoading(false);
-      });
-      
-      unsubscribers.push(unsubAnnouncements);
-
-      // Fetch latest freedom wall posts (max 3)
-      const postsQuery = query(
-        collection(db, 'freedom-wall-posts'),
-        orderBy('createdAt', 'desc'),
-        limit(3)
-      );
-      
-      const unsubPosts = onSnapshot(postsQuery, (snapshot) => {
-        const postsList = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-          if (expiresAt > now) {
-            postsList.push({ 
+          if (!isCompletedByCurrentUser && data.createdAt) {
+            taskUpdates.push({ 
               id: doc.id, 
               ...data, 
-              source: 'freedomwall',
-              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
-              reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
+              type: 'task',
+              timestamp: data.createdAt
             });
           }
         });
-        setFreedomWallPosts(postsList);
-        setLoading(false);
-      }, (error) => {
-        console.error('Error fetching freedom wall posts:', error);
-        setLoading(false);
+        combineAndSortUpdates();
       });
+      unsubscribers.push(unsubTasks);
+
+      // Fetch recent announcements for feed
+      const announcementsQuery = query(
+        collection(db, 'announcements'),
+        orderBy('createdAt', 'desc'),
+        limit(10)
+      );
       
+      const unsubAnnouncements = onSnapshot(announcementsQuery, (snapshot) => {
+        announcementUpdates = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now && data.createdAt) {
+            announcementUpdates.push({ 
+              id: doc.id, 
+              ...data, 
+              type: 'announcement',
+              timestamp: data.createdAt
+            });
+          }
+        });
+        combineAndSortUpdates();
+      });
+      unsubscribers.push(unsubAnnouncements);
+
+      // Fetch recent freedom wall posts for feed
+      const postsQuery = query(
+        collection(db, 'freedom-wall-posts'),
+        orderBy('createdAt', 'desc'),
+        limit(10)
+      );
+      
+      const unsubPosts = onSnapshot(postsQuery, (snapshot) => {
+        postUpdates = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          if (expiresAt > now && data.createdAt) {
+            postUpdates.push({ 
+              id: doc.id, 
+              ...data, 
+              type: 'post',
+              timestamp: data.createdAt,
+              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+            });
+          }
+        });
+        combineAndSortUpdates();
+      });
       unsubscribers.push(unsubPosts);
 
       setLoading(false);
@@ -214,10 +273,11 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const formatTimestamp = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp) return 'Just now';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -225,26 +285,57 @@ export default function DashboardScreen({ navigation }) {
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
     if (diffMins > 0) return `${diffMins}m ago`;
+    if (diffSecs > 0) return `${diffSecs}s ago`;
     return 'Just now';
   };
 
-  const renderTaskItem = (task) => {
-    if (!task) return null;
+  const renderUpdateItem = (item) => {
+    if (!item) return null;
+
+    let icon, iconColor, title, subtitle, onPress;
+
+    switch(item.type) {
+      case 'task':
+        icon = 'clipboard';
+        iconColor = '#22e584';
+        title = item.title || 'Untitled Task';
+        subtitle = item.subjectCode || item.subject || 'Task';
+        onPress = () => navigation.navigate('Tasks');
+        break;
+      case 'announcement':
+        icon = 'bell';
+        const badgeColors = getBadgeColors(item.announcementType || item.type);
+        iconColor = badgeColors.text;
+        title = item.title || 'Untitled Announcement';
+        subtitle = item.announcementType || item.type || 'General';
+        onPress = () => navigation.navigate('AnnouncementDetail', { announcementId: item.id });
+        break;
+      case 'post':
+        icon = 'message-circle';
+        iconColor = '#3498DB';
+        title = item.content || 'No content';
+        subtitle = `${item.nickname || item.displayName || 'Anonymous'} • ${item.likedBy?.length || 0} likes`;
+        onPress = () => navigation.navigate('PostDetail', { post: item });
+        break;
+      default:
+        return null;
+    }
     
     return (
       <TouchableOpacity 
-        key={task.id}
-        style={styles.feedItem}
+        key={item.id}
+        style={styles.updateItem}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate('Taskboard')}
+        onPress={onPress}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardBadge}>
-            <Text style={styles.cardBadgeText} numberOfLines={1}>{task.subjectCode || 'N/A'}</Text>
-          </View>
-          <Text style={styles.cardDate} numberOfLines={1}>{formatDate(task.deadline)}</Text>
+        <View style={[styles.updateIcon, { backgroundColor: `${iconColor}20` }]}>
+          <Feather name={icon} size={20} color={iconColor} />
         </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>{task.title || 'Untitled Task'}</Text>
+        <View style={styles.updateContent}>
+          <Text style={styles.updateTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.updateSubtitle} numberOfLines={1}>{subtitle}</Text>
+        </View>
+        <Text style={styles.updateTime}>{formatTimestamp(item.timestamp)}</Text>
       </TouchableOpacity>
     );
   };
@@ -261,73 +352,6 @@ export default function DashboardScreen({ navigation }) {
       default:
         return { bg: 'rgba(34, 229, 132, 0.2)', text: '#22e584' }; // Green
     }
-  };
-
-  const renderAnnouncementItem = (announcement) => {
-    if (!announcement) return null;
-    
-    const badgeColors = getBadgeColors(announcement.type);
-    
-    return (
-      <TouchableOpacity 
-        key={announcement.id}
-        style={styles.feedItem}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
-      >
-        <View style={styles.cardHeader}>
-          <View style={[styles.cardBadge, { backgroundColor: badgeColors.bg }]}>
-            <Text style={[styles.cardBadgeText, { color: badgeColors.text }]} numberOfLines={1}>
-              {announcement.type || 'General'}
-            </Text>
-          </View>
-          <Text style={styles.cardDate} numberOfLines={1}>{formatTimestamp(announcement.createdAt)}</Text>
-        </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>{announcement.title || 'Untitled'}</Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderFreedomWallItem = (post) => {
-    if (!post) return null;
-    
-    return (
-      <TouchableOpacity 
-        key={post.id}
-        style={styles.feedItem}
-        activeOpacity={0.7}
-        onPress={() => navigation.navigate('PostDetail', { post: post })}
-      >
-        <View style={styles.cardHeader}>
-          <View style={[styles.cardBadge, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
-            <Text style={[styles.cardBadgeText, { color: '#3498DB' }]} numberOfLines={1}>
-              {post.nickname || post.displayName || 'Anonymous'}
-            </Text>
-          </View>
-          <View style={styles.likeCount}>
-            <Feather name="heart" size={12} color="rgba(255, 255, 255, 0.5)" />
-            <Text style={styles.likeCountText}>{post.likeCount || 0}</Text>
-          </View>
-        </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>{post.content || 'No content'}</Text>
-      </TouchableOpacity>
-    );
-  };  const renderSection = (title, items, renderItem, emptyMessage, viewAllAction) => {
-    if (items.length === 0) return null;
-
-    return (
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <TouchableOpacity onPress={viewAllAction}>
-            <Text style={styles.viewAllText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.feedList}>
-          {items.slice(0, 3).map(renderItem)}
-        </View>
-      </View>
-    );
   };
 
   if (!fontsLoaded) {
@@ -373,20 +397,20 @@ export default function DashboardScreen({ navigation }) {
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{tasks.length}</Text>
+          <Text style={styles.statNumber}>{totalTasks}</Text>
           <Text style={styles.statLabel}>Tasks</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{announcements.length}</Text>
+          <Text style={styles.statNumber}>{totalAnnouncements}</Text>
           <Text style={styles.statLabel}>News</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{freedomWallPosts.length}</Text>
+          <Text style={styles.statNumber}>{totalPosts}</Text>
           <Text style={styles.statLabel}>Posts</Text>
         </View>
       </View>
 
-      {/* Feed */}
+      {/* Recent Updates Feed */}
       <ScrollView 
         style={styles.feedContainer}
         contentContainerStyle={styles.feedContent}
@@ -401,31 +425,14 @@ export default function DashboardScreen({ navigation }) {
           />
         }
       >
-        {renderSection(
-          'Upcoming Tasks',
-          tasks,
-          renderTaskItem,
-          'No tasks available',
-          () => navigation.navigate('Tasks')
-        )}
-
-        {renderSection(
-          'News',
-          announcements,
-          renderAnnouncementItem,
-          'No announcements',
-          () => navigation.navigate('Announcements')
-        )}
-
-        {renderSection(
-          'Freedom Wall',
-          freedomWallPosts,
-          renderFreedomWallItem,
-          'No posts yet',
-          () => navigation.navigate('FreedomWall')
-        )}
-
-        {tasks.length === 0 && announcements.length === 0 && freedomWallPosts.length === 0 && (
+        {recentUpdates.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Updates</Text>
+            <View style={styles.updatesContainer}>
+              {recentUpdates.map(renderUpdateItem)}
+            </View>
+          </View>
+        ) : (
           <View style={styles.emptyState}>
             <Feather name="inbox" size={64} color="rgba(255, 255, 255, 0.3)" />
             <Text style={styles.emptyStateText}>Nothing to show yet</Text>
@@ -518,91 +525,51 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
   sectionTitle: {
     fontSize: 19,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+    marginBottom: 12,
   },
-  viewAllText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#22e584',
-  },
-  feedList: {
-    gap: 0,
-  },
-  feedItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    marginBottom: 10,
-    height: 72,
-    justifyContent: 'center',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  cardBadge: {
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    maxWidth: 120,
-    flexShrink: 1,
-  },
-  cardBadgeText: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#007AFF',
-    textTransform: 'uppercase',
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  updatesContainer: {
     gap: 8,
   },
-  firstTag: {
-    fontSize: 11,
-    fontFamily: 'Inter_500Medium',
-    color: '#3498DB',
+  updateItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  cardDate: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.5)',
-    flexShrink: 0,
+  updateIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardTitle: {
+  updateContent: {
+    flex: 1,
+    gap: 4,
+  },
+  updateTitle: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    lineHeight: 20,
   },
-  likeCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-  likeCountText: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
+  updateSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.6)',
+  },
+  updateTime: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.5)',
+    flexShrink: 0,
   },
   emptyState: {
     alignItems: 'center',
