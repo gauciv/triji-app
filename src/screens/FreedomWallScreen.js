@@ -300,7 +300,7 @@ export default function FreedomWallScreen({ navigation }) {
       persona: finalPersona,
       personaColor: persona.color,
       noteColor: selectedColor,
-      userId: user.uid,
+      authorId: user.uid,
       likeCount: 0,
       likedBy: [],
     };
