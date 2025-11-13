@@ -27,8 +27,16 @@ service cloud.firestore {
       // Everyone can read tasks
       allow read: if request.auth != null;
       
-      // Only admins can create, update, or delete tasks
-      allow create, update, delete: if isAdmin();
+      // Only admins can create or delete tasks
+      allow create, delete: if isAdmin();
+      
+      // Admins can update everything
+      // Regular users can only update completedBy array (add/remove their own UID)
+      allow update: if request.auth != null && (
+        isAdmin() || 
+        (request.resource.data.keys().hasAll(resource.data.keys()) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedBy']))
+      );
     }
 
     // Rule for the 'announcements' collection

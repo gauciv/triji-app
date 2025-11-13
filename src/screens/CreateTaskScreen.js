@@ -96,6 +96,7 @@ export default function CreateTaskScreen({ navigation }) {
         subjectCode: selectedSubjectData?.subjectCode || '',
         status: 'To Do',
         userId: user.uid,
+        completedBy: [],
         createdAt: serverTimestamp()
       });
 

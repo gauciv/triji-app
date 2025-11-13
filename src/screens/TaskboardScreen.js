@@ -17,6 +17,7 @@ export default function TaskboardScreen({ navigation }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const ITEMS_PER_PAGE = 10;
 
   const windowWidth = Dimensions.get('window').width;
@@ -42,16 +43,24 @@ export default function TaskboardScreen({ navigation }) {
     try {
       const q = query(
         collection(db, 'tasks'),
-        orderBy('deadline', 'asc')
+        orderBy('deadline', sortOrder)
       );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const tasksList = [];
         querySnapshot.forEach((doc) => {
-          tasksList.push({
-            id: doc.id,
-            ...doc.data(),
-          });
+          const data = doc.data();
+          // Only show tasks that current user has NOT completed
+          const isCompletedByCurrentUser = auth.currentUser && 
+                                          data.completedBy && 
+                                          data.completedBy.includes(auth.currentUser.uid);
+          
+          if (!isCompletedByCurrentUser) {
+            tasksList.push({
+              id: doc.id,
+              ...data,
+            });
+          }
         });
         
         setTasks(tasksList);
@@ -89,7 +98,7 @@ export default function TaskboardScreen({ navigation }) {
     });
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [sortOrder]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -126,11 +135,12 @@ export default function TaskboardScreen({ navigation }) {
 
   const renderTaskCard = (task) => {
     const overdue = isOverdue(task.deadline);
+    const isCompleted = auth.currentUser && task.completedBy?.includes(auth.currentUser.uid);
     
     return (
       <TouchableOpacity 
         key={task.id}
-        style={styles.taskCard}
+        style={[styles.taskCard, isCompleted && styles.taskCardCompleted]}
         onPress={() => navigation.navigate('TaskDetail', { task })}
         activeOpacity={0.7}
       >
@@ -138,12 +148,25 @@ export default function TaskboardScreen({ navigation }) {
           <View style={styles.subjectBadge}>
             <Text style={styles.subjectBadgeText}>{task.subjectCode || 'N/A'}</Text>
           </View>
-          {overdue && (
-            <View style={styles.overdueTag}>
-              <Feather name="alert-circle" size={12} color="#FF3B30" />
-              <Text style={styles.overdueText}>Overdue</Text>
-            </View>
-          )}
+          <View style={styles.taskCardBadges}>
+            {isCompleted ? (
+              <View style={styles.completedBadge}>
+                <Feather name="check-circle" size={13} color="#22e584" />
+                <Text style={styles.completedText}>Done</Text>
+              </View>
+            ) : (
+              <View style={styles.pendingBadge}>
+                <Feather name="circle" size={13} color="#FFB800" />
+                <Text style={styles.pendingText}>Pending</Text>
+              </View>
+            )}
+            {overdue && !isCompleted && (
+              <View style={styles.overdueTag}>
+                <Feather name="alert-circle" size={12} color="#FF3B30" />
+                <Text style={styles.overdueText}>Overdue</Text>
+              </View>
+            )}
+          </View>
         </View>
         
         <Text style={styles.taskTitle}>{task.title || 'Untitled Task'}</Text>
@@ -196,6 +219,26 @@ export default function TaskboardScreen({ navigation }) {
         <View style={styles.headerTextContainer}>
           <Text style={styles.headerTitle}>Task Board</Text>
           <Text style={styles.headerSubtext}>View all tasks and upcoming deadlines</Text>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.sortButton}
+            onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            activeOpacity={0.7}
+          >
+            <Feather 
+              name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
+              size={18} 
+              color="#22e584" 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.archiveButton}
+            onPress={() => navigation.navigate('ArchivedTasks')}
+            activeOpacity={0.7}
+          >
+            <Feather name="archive" size={18} color="#22e584" />
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -305,6 +348,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sortButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  archiveButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
   iconCircle: {
     width: 35,
     height: 35,
@@ -342,18 +409,59 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   taskCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  taskCardCompleted: {
+    backgroundColor: 'rgba(34, 229, 132, 0.08)',
+    borderColor: 'rgba(34, 229, 132, 0.2)',
+    opacity: 0.85,
   },
   taskCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  taskCardBadges: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  completedText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11,
+    color: '#22e584',
+  },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.3)',
+  },
+  pendingText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11,
+    color: '#FFB800',
   },
   subjectBadge: {
     backgroundColor: 'rgba(34, 229, 132, 0.15)',

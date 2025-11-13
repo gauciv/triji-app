@@ -82,7 +82,15 @@ export default function DashboardScreen({ navigation }) {
       const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
         const tasksList = [];
         snapshot.forEach((doc) => {
-          tasksList.push({ id: doc.id, ...doc.data(), source: 'tasks' });
+          const data = doc.data();
+          // Only show tasks that current user has NOT completed
+          const isCompletedByCurrentUser = auth.currentUser && 
+                                          data.completedBy && 
+                                          data.completedBy.includes(auth.currentUser.uid);
+          
+          if (!isCompletedByCurrentUser) {
+            tasksList.push({ id: doc.id, ...data, source: 'tasks' });
+          }
         });
         setTasks(tasksList);
       }, (error) => {

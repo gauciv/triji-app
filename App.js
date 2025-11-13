@@ -16,6 +16,7 @@ import {
   PostDetailScreen,
   CreateTaskScreen,
   TaskDetailScreen,
+  ArchivedTasksScreen,
   ProfileScreen
 } from './src/screens';
 import TabNavigator from './src/navigation/TabNavigator';
@@ -156,6 +157,7 @@ export default function App() {
               <Stack.Screen name="PostDetail" component={PostDetailScreen} />
               <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
               <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+              <Stack.Screen name="ArchivedTasks" component={ArchivedTasksScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />
             </Stack.Navigator>
             <StatusBar style="light" />

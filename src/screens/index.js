@@ -16,3 +16,5 @@ export { default as PostDetailScreen } from './PostDetailScreen';
 export { default as TaskboardScreen } from './TaskboardScreen';
 export { default as CreateTaskScreen } from './CreateTaskScreen';
 export { default as TaskDetailScreen } from './TaskDetailScreen';
+export { default as ArchivedTasksScreen } from './ArchivedTasksScreen';
+export { default as ArchivedAnnouncementsScreen } from './ArchivedAnnouncementsScreen';

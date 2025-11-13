@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { db, auth } from '../config/firebaseConfig';
+import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params || {};
   
   const [countdown, setCountdown] = useState('');
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isTogglingCompletion, setIsTogglingCompletion] = useState(false);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  useEffect(() => {
+    // Check if current user has completed this task
+    if (task && auth.currentUser) {
+      const completedBy = task.completedBy || [];
+      setIsCompleted(completedBy.includes(auth.currentUser.uid));
+    }
+  }, [task]);
 
   useEffect(() => {
     // Calculate countdown to deadline
@@ -73,6 +85,34 @@ export default function TaskDetailScreen({ route, navigation }) {
     return deadline < today;
   };
 
+  const toggleTaskCompletion = async () => {
+    if (!auth.currentUser || !task?.id) return;
+    
+    setIsTogglingCompletion(true);
+    try {
+      const taskRef = doc(db, 'tasks', task.id);
+      
+      if (isCompleted) {
+        // Remove user from completedBy array
+        await updateDoc(taskRef, {
+          completedBy: arrayRemove(auth.currentUser.uid)
+        });
+        setIsCompleted(false);
+      } else {
+        // Add user to completedBy array
+        await updateDoc(taskRef, {
+          completedBy: arrayUnion(auth.currentUser.uid)
+        });
+        setIsCompleted(true);
+      }
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+      Alert.alert('Error', 'Failed to update task status. Please try again.');
+    } finally {
+      setIsTogglingCompletion(false);
+    }
+  };
+
   if (!fontsLoaded || !task) {
     return (
       <View style={styles.container}>
@@ -121,9 +161,27 @@ export default function TaskDetailScreen({ route, navigation }) {
               <Feather name="clipboard" size={24} color="#22e584" />
             </View>
             <View style={styles.taskInfo}>
-              <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode) }]} numberOfLines={2}>
-                {task.subjectCode || 'Subject'}
-              </Text>
+              <View style={styles.subjectRow}>
+                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode) }]} numberOfLines={1}>
+                  {task.subjectCode || 'Subject'}
+                </Text>
+                <View style={[
+                  styles.statusBadgeDisplay,
+                  isCompleted ? styles.statusBadgeCompleted : styles.statusBadgePending
+                ]}>
+                  <Feather 
+                    name={isCompleted ? "check-circle" : "circle"} 
+                    size={14} 
+                    color={isCompleted ? "#22e584" : "#FFB800"} 
+                  />
+                  <Text style={[
+                    styles.statusBadgeText,
+                    isCompleted ? styles.statusBadgeTextCompleted : styles.statusBadgeTextPending
+                  ]}>
+                    {isCompleted ? 'Done' : 'Pending'}
+                  </Text>
+                </View>
+              </View>
               <Text style={styles.taskDeadline}>{formatDate(task.deadline)}</Text>
             </View>
           </View>
@@ -147,6 +205,30 @@ export default function TaskDetailScreen({ route, navigation }) {
               <Text style={styles.emptyDescriptionText}>No description provided</Text>
             </View>
           )}
+
+          {/* Mark as Done Button */}
+          <TouchableOpacity
+            style={[
+              styles.markDoneButton,
+              isCompleted && styles.markDoneButtonCompleted,
+              isTogglingCompletion && styles.markDoneButtonDisabled
+            ]}
+            onPress={toggleTaskCompletion}
+            disabled={isTogglingCompletion}
+            activeOpacity={0.7}
+          >
+            <Feather 
+              name={isCompleted ? "check-circle" : "circle"} 
+              size={20} 
+              color={isCompleted ? "#22e584" : "#FFB800"} 
+            />
+            <Text style={[
+              styles.markDoneButtonText,
+              isCompleted && styles.markDoneButtonTextCompleted
+            ]}>
+              {isCompleted ? 'Completed' : 'Mark as Done'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -231,6 +313,46 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
+  subjectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  taskSubject: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#FFFFFF',
+    flex: 0,
+  },
+  statusBadgeDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    gap: 4,
+  },
+  statusBadgeCompleted: {
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  statusBadgePending: {
+    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.3)',
+  },
+  statusBadgeText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11,
+  },
+  statusBadgeTextCompleted: {
+    color: '#22e584',
+  },
+  statusBadgeTextPending: {
+    color: '#FFB800',
+  },
   subjectBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -243,35 +365,10 @@ const styles = StyleSheet.create({
     color: '#22e584',
     textAlign: 'center',
   },
-  taskSubject: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
   taskDeadline: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
-  },
-  subjectCode: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  taskMeta: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  overdueTag: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 59, 48, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   taskTitleContainer: {
     padding: 16,
@@ -304,5 +401,35 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: 'rgba(255, 255, 255, 0.4)',
     marginTop: 12,
+  },
+  markDoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 184, 0, 0.4)',
+  },
+  markDoneButtonCompleted: {
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    borderColor: 'rgba(34, 229, 132, 0.4)',
+  },
+  markDoneButtonDisabled: {
+    opacity: 0.5,
+  },
+  markDoneButtonText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 15,
+    color: '#FFB800',
+    marginLeft: 10,
+  },
+  markDoneButtonTextCompleted: {
+    color: '#22e584',
   },
 });
