@@ -8,6 +8,7 @@ import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePasswor
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPushNotifications, setNotificationPreference, getNotificationPreference } from '../utils/notifications';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -16,7 +17,9 @@ export default function AccountSettingsScreen({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [tasksNotifications, setTasksNotifications] = useState(true);
+  const [announcementsNotifications, setAnnouncementsNotifications] = useState(true);
+  const [freedomWallNotifications, setFreedomWallNotifications] = useState(true);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -26,7 +29,8 @@ export default function AccountSettingsScreen({ navigation }) {
 
   useEffect(() => {
     fetchUserData();
-    loadNotificationPreference();
+    loadNotificationPreferences();
+    requestNotificationPermissions();
   }, []);
 
   const fetchUserData = async () => {
@@ -43,24 +47,37 @@ export default function AccountSettingsScreen({ navigation }) {
     }
   };
 
-  const loadNotificationPreference = async () => {
+  const requestNotificationPermissions = async () => {
+    await registerForPushNotifications();
+  };
+
+  const loadNotificationPreferences = async () => {
     try {
-      const value = await AsyncStorage.getItem('notifications_enabled');
-      if (value !== null) {
-        setNotificationsEnabled(value === 'true');
-      }
+      const tasks = await getNotificationPreference('tasks');
+      const announcements = await getNotificationPreference('announcements');
+      const freedomWall = await getNotificationPreference('freedom_wall');
+      
+      setTasksNotifications(tasks);
+      setAnnouncementsNotifications(announcements);
+      setFreedomWallNotifications(freedomWall);
     } catch (error) {
-      console.log('Error loading notification preference:', error);
+      console.log('Error loading notification preferences:', error);
     }
   };
 
-  const toggleNotifications = async (value) => {
-    try {
-      setNotificationsEnabled(value);
-      await AsyncStorage.setItem('notifications_enabled', value.toString());
-    } catch (error) {
-      console.log('Error saving notification preference:', error);
-    }
+  const toggleTasksNotifications = async (value) => {
+    setTasksNotifications(value);
+    await setNotificationPreference('tasks', value);
+  };
+
+  const toggleAnnouncementsNotifications = async (value) => {
+    setAnnouncementsNotifications(value);
+    await setNotificationPreference('announcements', value);
+  };
+
+  const toggleFreedomWallNotifications = async (value) => {
+    setFreedomWallNotifications(value);
+    await setNotificationPreference('freedom_wall', value);
   };
 
   const handleLogout = async () => {
@@ -181,21 +198,57 @@ export default function AccountSettingsScreen({ navigation }) {
 
         {/* Preferences Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+          <Text style={styles.sectionTitle}>Notifications</Text>
           <View style={styles.group}>
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
                 <View style={styles.iconCircle}>
-                  <Feather name="bell" size={20} color="#22e584" />
+                  <Feather name="clipboard" size={20} color="#22e584" />
                 </View>
                 <View style={styles.settingText}>
-                  <Text style={styles.settingTitle}>Notifications</Text>
-                  <Text style={styles.settingSubtitle}>Receive push notifications</Text>
+                  <Text style={styles.settingTitle}>Tasks</Text>
+                  <Text style={styles.settingSubtitle}>Get notified about new tasks</Text>
                 </View>
               </View>
               <Switch
-                value={notificationsEnabled}
-                onValueChange={toggleNotifications}
+                value={tasksNotifications}
+                onValueChange={toggleTasksNotifications}
+                trackColor={{ false: '#3e3e3e', true: '#22e584' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+            
+            <View style={[styles.settingRow, styles.borderTop]}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Feather name="megaphone" size={20} color="#22e584" />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={styles.settingTitle}>Announcements</Text>
+                  <Text style={styles.settingSubtitle}>Get notified about new announcements</Text>
+                </View>
+              </View>
+              <Switch
+                value={announcementsNotifications}
+                onValueChange={toggleAnnouncementsNotifications}
+                trackColor={{ false: '#3e3e3e', true: '#22e584' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+            
+            <View style={[styles.settingRow, styles.borderTop]}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Feather name="message-circle" size={20} color="#22e584" />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={styles.settingTitle}>Freedom Wall</Text>
+                  <Text style={styles.settingSubtitle}>Get notified about new posts</Text>
+                </View>
+              </View>
+              <Switch
+                value={freedomWallNotifications}
+                onValueChange={toggleFreedomWallNotifications}
                 trackColor={{ false: '#3e3e3e', true: '#22e584' }}
                 thumbColor="#ffffff"
               />
@@ -425,6 +478,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  borderTop: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalOverlay: {
     flex: 1,
