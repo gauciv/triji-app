@@ -44,7 +44,13 @@ export default function DashboardScreen({ navigation }) {
           setUserName('User');
         }
         
-        fetchRecentData();
+        const unsubscribers = fetchRecentData();
+        
+        return () => {
+          if (unsubscribers) {
+            unsubscribers.forEach(unsub => unsub && unsub());
+          }
+        };
       } else {
         setIsAuthenticated(false);
         setLoading(false);
@@ -60,10 +66,12 @@ export default function DashboardScreen({ navigation }) {
     if (!auth.currentUser) {
       console.log('No authenticated user, skipping data fetch');
       setLoading(false);
-      return;
+      return [];
     }
 
     try {
+      const unsubscribers = [];
+      
       // Fetch latest tasks (max 3)
       const tasksQuery = query(
         collection(db, 'tasks'),
@@ -81,6 +89,8 @@ export default function DashboardScreen({ navigation }) {
         console.error('Error fetching tasks:', error);
         setLoading(false);
       });
+      
+      unsubscribers.push(unsubTasks);
 
       // Fetch latest announcements (max 3)
       const now = new Date();
@@ -104,6 +114,8 @@ export default function DashboardScreen({ navigation }) {
         console.error('Error fetching announcements:', error);
         setLoading(false);
       });
+      
+      unsubscribers.push(unsubAnnouncements);
 
       // Fetch latest freedom wall posts (max 3)
       const postsQuery = query(
@@ -133,15 +145,16 @@ export default function DashboardScreen({ navigation }) {
         console.error('Error fetching freedom wall posts:', error);
         setLoading(false);
       });
+      
+      unsubscribers.push(unsubPosts);
 
-      return () => {
-        unsubTasks();
-        unsubAnnouncements();
-        unsubPosts();
-      };
+      setLoading(false);
+      
+      return unsubscribers;
     } catch (error) {
       console.log('Error fetching data:', error);
       setLoading(false);
+      return [];
     }
   };
 

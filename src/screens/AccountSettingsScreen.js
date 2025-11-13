@@ -87,22 +87,19 @@ export default function AccountSettingsScreen({ navigation }) {
       setShowLogoutModal(true);
       
       // Give user visual feedback that logout is happening
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       // Stop all Firestore listeners before logging out
       stopAllListeners();
       
-      // Clear all saved credentials if remember me was unchecked
+      // Only clear user session - keep remember me credentials
       await AsyncStorage.removeItem('user_session');
-      await AsyncStorage.removeItem('saved_email');
-      await AsyncStorage.removeItem('saved_password');
-      await AsyncStorage.removeItem('remember_me');
       
       // Sign out from Firebase
       await signOut(auth);
       
       // Additional delay to ensure logout is processed
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 400));
       
       setShowLogoutModal(false);
       
@@ -377,10 +374,9 @@ export default function AccountSettingsScreen({ navigation }) {
         <View style={styles.logoutModalOverlay}>
           <View style={styles.logoutModalCard}>
             <View style={styles.logoutSpinner}>
-              <Feather name="log-out" size={48} color="#22e584" />
+              <Feather name="log-out" size={32} color="#22e584" />
             </View>
             <Text style={styles.logoutModalTitle}>Logging out...</Text>
-            <Text style={styles.logoutModalSubtext}>Please wait</Text>
           </View>
         </View>
       </Modal>
@@ -615,26 +611,25 @@ const styles = StyleSheet.create({
   },
   logoutModalCard: {
     backgroundColor: 'rgba(30, 32, 40, 0.98)',
-    borderRadius: 20,
-    padding: 40,
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(34, 229, 132, 0.3)',
-    minWidth: 200,
   },
   logoutSpinner: {
-    marginBottom: 20,
-    transform: [{ scale: 1 }],
+    marginBottom: 12,
   },
   logoutModalTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    marginBottom: 8,
   },
   logoutModalSubtext: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 4,
   },
 });
