@@ -11,6 +11,10 @@
     "build:android": "eas build --platform android --profile preview",
     "build:ios": "eas build --platform ios --profile preview",
     "build:production": "eas build --platform all --profile production",
+    "build:android:prod": "eas build --platform android --profile production",
+    "build:ios:prod": "eas build --platform ios --profile production",
+    "update:preview": "eas update --branch preview",
+    "update:production": "eas update --branch production",
     "lint": "echo 'No linting configured yet'",
     "test": "echo 'No tests configured yet'"
   },
