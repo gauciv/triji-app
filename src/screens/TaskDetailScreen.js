@@ -118,11 +118,7 @@ export default function TaskDetailScreen({ route, navigation }) {
           {/* Task Header Info */}
           <View style={styles.taskHeader}>
             <View style={styles.taskAvatar}>
-              <View style={styles.subjectBadge}>
-                <Text style={[styles.subjectBadgeText, { fontSize: getSubjectFontSize(task.subjectCode) }]}>
-                  {task.subjectCode || 'N/A'}
-                </Text>
-              </View>
+              <Feather name="clipboard" size={24} color="#22e584" />
             </View>
             <View style={styles.taskInfo}>
               <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode) }]} numberOfLines={2}>
@@ -234,6 +230,29 @@ const styles = StyleSheet.create({
   taskInfo: {
     flex: 1,
     marginLeft: 12,
+  },
+  subjectBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(34, 229, 132, 0.2)',
+  },
+  subjectBadgeText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#22e584',
+    textAlign: 'center',
+  },
+  taskSubject: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  taskDeadline: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   subjectCode: {
     fontFamily: 'Inter_600SemiBold',
