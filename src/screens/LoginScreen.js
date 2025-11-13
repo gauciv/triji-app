@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert, Image } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
@@ -154,7 +154,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient
-        colors={['#1e2756', '#253164', '#2d407e']}
+        colors={['#1B2845', '#23243a', '#22305a']}
         style={styles.container}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -162,12 +162,13 @@ export default function LoginScreen({ navigation }) {
       >
         {/* Background Card with Header */}
         <View style={styles.bgCard}>
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>Welcome Back to</Text>
+          <Text style={styles.appName}>TRIJI</Text>
           <Text style={styles.subtitle}>Your dashboard is waiting.</Text>
         </View>
 
         {/* Login Card Overlay */}
-        <View style={[styles.loginCard, { backgroundColor: 'rgba(27, 33, 64, 0.95)' }]}>
+        <View style={styles.loginCard}>
           <Text style={styles.loginLabel}>LOGIN</Text>
           {/* Username Input */}
           <View style={styles.inputWrapper}>
@@ -301,11 +302,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e2756', // Updated fallback color
+    backgroundColor: '#1B2845',
   },
   bgCard: {
     width: '100%',
-    backgroundColor: 'rgba(27, 33, 64, 0.85)',
+    backgroundColor: 'rgba(27, 40, 69, 0.9)',
     borderRadius: 0,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
@@ -323,12 +324,22 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 40,
+    fontSize: 28,
+    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
+    marginTop: 40,
+    marginBottom: 4,
+    letterSpacing: 0.2,
+    textAlign: 'left',
+    alignSelf: 'flex-start',
+  },
+  appName: {
+    color: '#22e584',
+    fontSize: 48,
     fontWeight: 'bold',
     fontFamily: 'Inter_700Bold',
-    marginTop: 40,
     marginBottom: 8,
-    letterSpacing: 0.2,
+    letterSpacing: 1,
     textAlign: 'left',
     alignSelf: 'flex-start',
   },
@@ -348,14 +359,15 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     paddingLeft: 28,
     paddingRight: 28,
+    backgroundColor: 'rgba(30, 39, 70, 0.95)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(34, 229, 132, 0.2)',
     alignItems: 'center',
     marginTop: LOGIN_CARD_MARGIN_TOP - 20,
     zIndex: 2,
-    shadowColor: '#000',
+    shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 15 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.2,
     shadowRadius: 35,
     elevation: 20,
     justifyContent: 'flex-start',
@@ -447,10 +459,16 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     width: '100%',
-    backgroundColor: '#3b4d94',
+    backgroundColor: '#22e584',
     borderRadius: 25,
     paddingVertical: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
     marginTop: 10,
     marginBottom: 24,
     borderWidth: 1.5,
@@ -462,9 +480,9 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   signInButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#1B2845',
+    fontSize: 17,
+    fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 0.5,
   },
@@ -472,11 +490,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    marginVertical: 2,
-    marginBottom: 40,
+    marginTop: 20,
+    marginBottom: 20,
   },
   footerCardSpacer: {
-    flex: 1,  // This will push the footer to the bottom
+    height: 0,
   },
   footer: {
     flexDirection: 'row',
@@ -573,18 +591,18 @@ const styles = StyleSheet.create({
   modalButton: {
     width: '100%',
     height: 52,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#22e584',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#007AFF',
+    shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   modalButtonText: {
-    color: '#fff',
+    color: '#1B2845',
     fontSize: 17,
     fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',

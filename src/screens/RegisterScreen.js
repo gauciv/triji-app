@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Image } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
@@ -86,7 +87,13 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
+      <LinearGradient
+        colors={['#1B2845', '#23243a', '#22305a']}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        locations={[0, 0.5, 1]}
+      />
       <BlurView intensity={80} tint="dark" style={styles.glassCard}>
         <Text style={styles.greeting}>Welcome!,</Text>
         <Text style={styles.headline}>Let's Get You Started.</Text>
@@ -219,7 +226,7 @@ export default function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#181C23',
+    backgroundColor: '#1B2845',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -229,21 +236,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#232A34',
-    opacity: 0.7,
   },
   glassCard: {
     width: '92%',
     maxWidth: 400,
-    backgroundColor: 'rgba(24, 28, 35, 0.85)',
+    backgroundColor: 'rgba(30, 39, 70, 0.9)',
     borderRadius: 24,
     padding: 28,
+    paddingTop: 32,
+    paddingBottom: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    shadowColor: '#000',
+    borderColor: 'rgba(34, 229, 132, 0.2)',
+    shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.15,
     shadowRadius: 24,
     elevation: 8,
   },
@@ -328,26 +335,26 @@ const styles = StyleSheet.create({
   registerButton: {
     width: '100%',
     height: 52,
-    backgroundColor: '#111216',
+    backgroundColor: '#22e584',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
     marginTop: 2,
-    shadowColor: '#7B61FF',
+    shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
   },
   registerButtonText: {
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
-    color: '#fff',
+    color: '#1B2845',
     letterSpacing: 0.3,
   },
   registerButtonDisabled: {
-    backgroundColor: '#232A34',
+    backgroundColor: 'rgba(34, 229, 132, 0.3)',
     opacity: 0.6,
   },
   errorText: {
@@ -364,7 +371,7 @@ const styles = StyleSheet.create({
   bottomSection: {
     alignItems: 'center',
     width: '100%',
-    marginTop: 8,
+    marginTop: 20,
   },
   brandText: {
     fontSize: 28,
