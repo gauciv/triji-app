@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Platform, Animated } from 'react-native';
 import DashboardScreen from '../screens/DashboardScreen';
 import TaskboardScreen from '../screens/TaskboardScreen';
 import AnnouncementsScreen from '../screens/AnnouncementsScreen';
@@ -35,7 +35,11 @@ export default function TabNavigator() {
             iconName = 'divide-square';
           }
 
-          return <Feather name={iconName} size={size} color={color} />;
+          return (
+            <Animated.View style={{ transform: [{ scale: focused ? 1.1 : 1 }] }}>
+              <Feather name={iconName} size={size} color={color} />
+            </Animated.View>
+          );
         },
         tabBarActiveTintColor: '#22e584',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
@@ -52,6 +56,9 @@ export default function TabNavigator() {
           fontSize: 11,
           fontWeight: '600',
         },
+        tabBarHideOnKeyboard: true,
+        lazy: true,
+        animationEnabled: true,
       })}
     >
       <Tab.Screen 

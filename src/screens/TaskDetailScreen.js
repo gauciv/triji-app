@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { showErrorAlert } from '../utils/errorHandler';
 
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params || {};
@@ -106,8 +107,7 @@ export default function TaskDetailScreen({ route, navigation }) {
         setIsCompleted(true);
       }
     } catch (error) {
-      console.error('Error toggling task completion:', error);
-      Alert.alert('Error', 'Failed to update task status. Please try again.');
+      showErrorAlert(error, 'Toggle Task Completion', 'Update Failed');
     } finally {
       setIsTogglingCompletion(false);
     }

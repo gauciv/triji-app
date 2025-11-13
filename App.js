@@ -142,21 +142,143 @@ export default function App() {
                 headerShown: false,
                 cardStyle: { backgroundColor: '#1B2845' },
                 animationEnabled: true,
-                animationTypeForReplace: 'pop'
+                animationTypeForReplace: 'push',
+                cardStyleInterpolator: ({ current, layouts }) => {
+                  return {
+                    cardStyle: {
+                      transform: [
+                        {
+                          translateX: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [layouts.screen.width, 0],
+                          }),
+                        },
+                      ],
+                      opacity: current.progress.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [0, 1, 1],
+                      }),
+                    },
+                  };
+                },
+                transitionSpec: {
+                  open: {
+                    animation: 'timing',
+                    config: {
+                      duration: 300,
+                      useNativeDriver: true,
+                    },
+                  },
+                  close: {
+                    animation: 'timing',
+                    config: {
+                      duration: 250,
+                      useNativeDriver: true,
+                    },
+                  },
+                },
               }}
             >
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
               <Stack.Screen name="Verification" component={VerificationScreen} />
               <Stack.Screen name="MainApp" component={TabNavigator} />
-              <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
-              <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
+              <Stack.Screen 
+                name="CreateAnnouncement" 
+                component={CreateAnnouncementScreen}
+                options={{
+                  cardStyleInterpolator: ({ current, layouts }) => ({
+                    cardStyle: {
+                      transform: [
+                        {
+                          translateY: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [layouts.screen.height, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  }),
+                }}
+              />
+              <Stack.Screen 
+                name="AnnouncementDetail" 
+                component={AnnouncementDetailScreen}
+                options={{
+                  cardStyleInterpolator: ({ current }) => ({
+                    cardStyle: {
+                      opacity: current.progress,
+                      transform: [
+                        {
+                          scale: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.92, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  }),
+                }}
+              />
               <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
               <Stack.Screen name="EditProfile" component={EditProfileScreen} />
               <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-              <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-              <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
-              <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+              <Stack.Screen 
+                name="PostDetail" 
+                component={PostDetailScreen}
+                options={{
+                  cardStyleInterpolator: ({ current }) => ({
+                    cardStyle: {
+                      opacity: current.progress,
+                      transform: [
+                        {
+                          scale: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.92, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  }),
+                }}
+              />
+              <Stack.Screen 
+                name="CreateTask" 
+                component={CreateTaskScreen}
+                options={{
+                  cardStyleInterpolator: ({ current, layouts }) => ({
+                    cardStyle: {
+                      transform: [
+                        {
+                          translateY: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [layouts.screen.height, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  }),
+                }}
+              />
+              <Stack.Screen 
+                name="TaskDetail" 
+                component={TaskDetailScreen}
+                options={{
+                  cardStyleInterpolator: ({ current }) => ({
+                    cardStyle: {
+                      opacity: current.progress,
+                      transform: [
+                        {
+                          scale: current.progress.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.92, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  }),
+                }}
+              />
               <Stack.Screen name="ArchivedTasks" component={ArchivedTasksScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />
             </Stack.Navigator>

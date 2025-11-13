@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -28,13 +28,30 @@ export default function VerificationScreen({ navigation }) {
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser);
         setResendMessage('Verification email sent! Please check your inbox.');
+        Alert.alert(
+          'Email Sent',
+          'Verification email sent successfully! Please check your inbox and spam folder.',
+          [{ text: 'OK' }]
+        );
         setResendDisabled(true);
         setTimeout(() => setResendDisabled(false), 30000); // 30 seconds cooldown
       } else {
         setResendMessage('No user is currently logged in.');
+        Alert.alert(
+          'Authentication Error',
+          'No user is currently logged in. Please log in again.',
+          [
+            { text: 'OK', onPress: () => navigation.navigate('Login') }
+          ]
+        );
       }
     } catch (error) {
-      setResendMessage('Failed to resend verification email.');
+      console.error('Error resending verification email:', error);
+      const errorMessage = error.code === 'auth/too-many-requests' 
+        ? 'Too many requests. Please try again later.'
+        : 'Failed to resend verification email. Please try again.';
+      setResendMessage(errorMessage);
+      Alert.alert('Error', errorMessage);
     } finally {
       setResendLoading(false);
     }

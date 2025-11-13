@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -29,19 +29,69 @@ export default function GradeCalculatorScreen({ navigation }) {
   };
 
   const calculateGWA = () => {
-    let totalUnits = 0;
-    let weightedSum = 0;
-    for (const subj of subjects) {
-      const units = parseFloat(subj.units);
-      const grade = parseFloat(subj.grade);
-      if (isNaN(units) || isNaN(grade)) continue;
-      totalUnits += units;
-      weightedSum += units * grade;
-    }
-    if (totalUnits === 0) {
-      setGwa('N/A');
-    } else {
-      setGwa((weightedSum / totalUnits).toFixed(2));
+    try {
+      // Validate all inputs first
+      let hasValidInput = false;
+      let hasInvalidInput = false;
+      
+      for (const subj of subjects) {
+        const units = parseFloat(subj.units);
+        const grade = parseFloat(subj.grade);
+        
+        // Check if both fields have values
+        if (subj.units.trim() !== '' || subj.grade.trim() !== '') {
+          // Validate numeric input
+          if (isNaN(units) || isNaN(grade)) {
+            hasInvalidInput = true;
+            break;
+          }
+          // Validate grade range (typical 1.0-5.0 scale)
+          if (grade < 1.0 || grade > 5.0) {
+            Alert.alert('Invalid Grade', 'Grades must be between 1.0 and 5.0');
+            return;
+          }
+          // Validate units are positive
+          if (units <= 0) {
+            Alert.alert('Invalid Units', 'Units must be greater than 0');
+            return;
+          }
+          hasValidInput = true;
+        }
+      }
+      
+      if (!hasValidInput) {
+        Alert.alert('No Data', 'Please enter at least one subject with units and grade.');
+        return;
+      }
+      
+      if (hasInvalidInput) {
+        Alert.alert('Invalid Input', 'Please enter valid numbers for units and grades.');
+        return;
+      }
+      
+      // Calculate GWA
+      let totalUnits = 0;
+      let weightedSum = 0;
+      
+      for (const subj of subjects) {
+        const units = parseFloat(subj.units);
+        const grade = parseFloat(subj.grade);
+        if (!isNaN(units) && !isNaN(grade) && units > 0) {
+          totalUnits += units;
+          weightedSum += units * grade;
+        }
+      }
+      
+      if (totalUnits === 0) {
+        setGwa('N/A');
+      } else {
+        const calculatedGwa = (weightedSum / totalUnits).toFixed(2);
+        setGwa(calculatedGwa);
+        Alert.alert('Success', `Your GWA is ${calculatedGwa}`);
+      }
+    } catch (error) {
+      console.error('Error calculating GWA:', error);
+      Alert.alert('Calculation Error', 'An error occurred while calculating your GWA. Please check your inputs.');
     }
   };
 

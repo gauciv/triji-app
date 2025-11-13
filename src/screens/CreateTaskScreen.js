@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
-
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db, auth } from '../config/firebaseConfig';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function CreateTaskScreen({ navigation }) {
   const [title, setTitle] = useState('');
@@ -52,7 +52,8 @@ export default function CreateTaskScreen({ navigation }) {
 
       return unsubscribe;
     } catch (error) {
-      console.log('Error fetching subjects:', error);
+      logError(error, 'Fetch Subjects');
+      Alert.alert('Error', 'Failed to load subjects. Please try again.');
       setLoading(false);
     }
   };
@@ -104,8 +105,7 @@ export default function CreateTaskScreen({ navigation }) {
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error) {
-      console.log('Error creating task:', error);
-      Alert.alert('Error', 'Failed to create task. Please try again.');
+      showErrorAlert(error, 'Create Task', 'Creation Failed');
     } finally {
       setSaving(false);
     }

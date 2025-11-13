@@ -8,6 +8,7 @@ import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserMessage } from '../utils/errorHandler';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -57,8 +58,9 @@ export default function RegisterScreen({ navigation }) {
       await AsyncStorage.setItem('user_session', JSON.stringify(user));
       navigation.navigate('Verification');
     } catch (error) {
-      console.log('Registration error:', error);
-      setError(error.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', error);
+      const userMessage = getUserMessage(error, 'Registration failed. Please try again.');
+      setError(userMessage);
     } finally {
       setLoading(false);
     }
