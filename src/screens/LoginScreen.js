@@ -208,8 +208,8 @@ export default function LoginScreen({ navigation }) {
               </View>
               <Text style={styles.rememberMe}>Remember Me</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => Alert.alert('Help', 'Please contact support or use the password reset option.')}> 
-              <Text style={styles.needHelp}>Need Help?</Text>
+            <TouchableOpacity onPress={() => setShowForgotModal(true)}> 
+              <Text style={styles.needHelp}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
           {/* Sign In Button */}
@@ -232,6 +232,65 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Forgot Password Modal */}
+        <Modal
+          visible={showForgotModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowForgotModal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowForgotModal(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <BlurView intensity={80} style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Reset Password</Text>
+                    <TouchableOpacity onPress={() => setShowForgotModal(false)}>
+                      <Feather name="x" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <Text style={styles.modalDescription}>
+                    Enter your email address and we'll send you a link to reset your password.
+                  </Text>
+                  
+                  <View style={styles.modalInputContainer}>
+                    <Feather name="mail" size={20} color="rgba(255, 255, 255, 0.6)" style={styles.modalInputIcon} />
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="Email Address"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={resetEmail}
+                      onChangeText={setResetEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                  
+                  {resetMessage ? (
+                    <Text style={[styles.resetMessage, resetMessage.includes('sent') ? styles.successMessage : styles.errorMessage]}>
+                      {resetMessage}
+                    </Text>
+                  ) : null}
+                  
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleForgotPassword}
+                    disabled={resetLoading || !resetEmail}
+                  >
+                    {resetLoading ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.modalButtonText}>Send Reset Link</Text>
+                    )}
+                  </TouchableOpacity>
+                </BlurView>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </LinearGradient>
     </KeyboardAvoidingView>
   );
@@ -445,5 +504,89 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: 'rgba(27, 33, 64, 0.95)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'Inter_700Bold',
+  },
+  modalDescription: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 24,
+    lineHeight: 22,
+    fontFamily: 'Inter_400Regular',
+  },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginBottom: 16,
+  },
+  modalInputIcon: {
+    marginRight: 12,
+  },
+  modalInput: {
+    flex: 1,
+    height: 52,
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+  },
+  resetMessage: {
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+    fontFamily: 'Inter_400Regular',
+  },
+  successMessage: {
+    color: '#22e584',
+  },
+  errorMessage: {
+    color: '#ff6b6b',
+  },
+  modalButton: {
+    width: '100%',
+    height: 52,
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
   },
 });
