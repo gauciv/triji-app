@@ -326,7 +326,9 @@ export default function FreedomWallScreen({ navigation }) {
     }
     
     try {
-      await addDoc(collection(db, 'freedom-wall-posts'), postData);
+      console.log('Attempting to create post with data:', postData);
+      const docRef = await addDoc(collection(db, 'freedom-wall-posts'), postData);
+      console.log('Post created successfully with ID:', docRef.id);
       
       // Save timestamp for cooldown
       await AsyncStorage.setItem('lastPostTime', Date.now().toString());
@@ -337,7 +339,17 @@ export default function FreedomWallScreen({ navigation }) {
       setShowModal(false);
     } catch (error) {
       console.log('Error posting:', error);
-      Alert.alert('Error', 'Could not create post. Please try again.');
+      console.log('Error code:', error.code);
+      console.log('Error message:', error.message);
+      
+      let errorMessage = 'Could not create post. Please try again.';
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied. Please check your account permissions.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setPosting(false);
     }
@@ -728,10 +740,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A2A',
   },
   previewArea: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    minHeight: 140,
-    maxHeight: 180,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    minHeight: 100,
+    maxHeight: 140,
   },
   previewLabel: {
     fontSize: 14,
@@ -748,10 +760,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    paddingBottom: 32,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   inputLabel: {
     fontSize: 13,
@@ -771,7 +783,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   messageInput: {
-    height: 90,
+    height: 80,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 10,
     paddingHorizontal: 14,
@@ -880,9 +892,14 @@ const styles = StyleSheet.create({
   postButton: {
     backgroundColor: '#34C759',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 8,
+    shadowColor: '#34C759',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   postButtonDisabled: {
     backgroundColor: '#666666',
@@ -1028,25 +1045,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 450,
-    maxHeight: '90%',
-    borderRadius: 24,
+    maxHeight: '92%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
     elevation: 15,
     backgroundColor: 'rgba(42, 42, 42, 0.95)',
-    alignSelf: 'center',
     overflow: 'hidden',
   },
   modalScrollContent: {
@@ -1055,15 +1070,15 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
