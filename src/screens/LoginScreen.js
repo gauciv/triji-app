@@ -49,6 +49,19 @@ export default function LoginScreen({ navigation }) {
   };
   
   const handleForgotPassword = async () => {
+    // Validate email input
+    if (!resetEmail || resetEmail.trim() === '') {
+      setResetMessage('Please enter your email address.');
+      return;
+    }
+    
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      setResetMessage('Please enter a valid email address.');
+      return;
+    }
+    
     setResetLoading(true);
     setResetMessage('');
     try {
@@ -58,10 +71,16 @@ export default function LoginScreen({ navigation }) {
         setShowForgotModal(false);
         setResetEmail('');
         setResetMessage('');
-      }, 2000);
+      }, 2500);
     } catch (error) {
       console.log('Password reset error:', error.message);
-      setResetMessage('Please enter a valid email address.');
+      if (error.code === 'auth/invalid-email') {
+        setResetMessage('Invalid email format.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setResetMessage('Too many attempts. Please try again later.');
+      } else {
+        setResetMessage('Unable to send reset email. Please try again.');
+      }
     } finally {
       setResetLoading(false);
     }
@@ -244,7 +263,7 @@ export default function LoginScreen({ navigation }) {
           <TouchableWithoutFeedback onPress={() => setShowForgotModal(false)}>
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                <BlurView intensity={80} style={styles.modalContent}>
+                <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>Reset Password</Text>
                     <TouchableOpacity onPress={() => setShowForgotModal(false)}>
@@ -277,9 +296,10 @@ export default function LoginScreen({ navigation }) {
                   ) : null}
                   
                   <TouchableOpacity
-                    style={styles.modalButton}
+                    style={[styles.modalButton, (resetLoading || !resetEmail) && styles.modalButtonDisabled]}
                     onPress={handleForgotPassword}
                     disabled={resetLoading || !resetEmail}
+                    activeOpacity={0.8}
                   >
                     {resetLoading ? (
                       <ActivityIndicator color="#FFFFFF" />
@@ -287,7 +307,7 @@ export default function LoginScreen({ navigation }) {
                       <Text style={styles.modalButtonText}>Send Reset Link</Text>
                     )}
                   </TouchableOpacity>
-                </BlurView>
+                </View>
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
@@ -525,17 +545,22 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
     width: '85%',
-    backgroundColor: 'rgba(27, 33, 64, 0.95)',
+    backgroundColor: 'rgba(30, 39, 70, 0.98)',
     borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+    shadowColor: '#22e584',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -560,10 +585,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(34, 229, 132, 0.3)',
     borderRadius: 12,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     marginBottom: 16,
   },
   modalInputIcon: {
@@ -600,6 +625,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  modalButtonDisabled: {
+    opacity: 0.5,
   },
   modalButtonText: {
     color: '#1B2845',
