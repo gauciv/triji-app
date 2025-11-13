@@ -51,10 +51,13 @@ export function startTasksListener() {
           return;
         }
 
+        const subject = task.subjectCode || task.subject || 'Task';
+        const title = task.title || 'New assignment';
         schedulePushNotification(
-          'New Task Added',
-          `${task.subject}: ${task.header || 'Check the task board'}`,
-          { type: 'task', taskId: change.doc.id }
+          '📋 New Task Added',
+          `${subject} • ${title}`,
+          { type: 'task', taskId: change.doc.id },
+          'tasks'
         );
       }
     });
@@ -104,10 +107,20 @@ export function startAnnouncementsListener() {
           return;
         }
 
+        const announcementType = announcement.announcementType || announcement.type || 'General';
+        let emoji = '📢';
+        switch(announcementType) {
+          case 'Critical': emoji = '🚨'; break;
+          case 'Event': emoji = '📅'; break;
+          case 'Reminder': emoji = '⏰'; break;
+          case 'General': emoji = '📢'; break;
+        }
+        
         schedulePushNotification(
-          'New Announcement',
+          `${emoji} ${announcementType} Announcement`,
           announcement.title || 'A new announcement has been posted',
-          { type: 'announcement', announcementId: change.doc.id }
+          { type: 'announcement', announcementId: change.doc.id },
+          'announcements'
         );
       }
     });
@@ -157,11 +170,14 @@ export function startFreedomWallListener() {
           return;
         }
 
-        const preview = post.note?.substring(0, 50) || 'New post on freedom wall';
+        const content = post.content || post.note || 'New post';
+        const preview = content.substring(0, 60);
+        const author = post.nickname || post.displayName || 'Anonymous';
         schedulePushNotification(
-          'Freedom Wall',
-          `${post.author || 'Someone'}: ${preview}${post.note?.length > 50 ? '...' : ''}`,
-          { type: 'freedomWall', postId: change.doc.id }
+          '💬 Freedom Wall',
+          `${author}: ${preview}${content.length > 60 ? '...' : ''}`,
+          { type: 'freedomWall', postId: change.doc.id },
+          'freedomwall'
         );
       }
     });

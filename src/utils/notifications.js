@@ -51,11 +51,35 @@ export async function registerForPushNotifications() {
 
   // Android-specific configuration
   if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
+    // Create multiple channels for different notification types
+    await Notifications.setNotificationChannelAsync('tasks', {
+      name: 'Tasks',
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
+      lightColor: '#22e584',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+    });
+    
+    await Notifications.setNotificationChannelAsync('announcements', {
+      name: 'Announcements',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#EF4444',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
+    });
+    
+    await Notifications.setNotificationChannelAsync('freedomwall', {
+      name: 'Freedom Wall',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#3498DB',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
     });
   }
 
@@ -67,17 +91,24 @@ export async function registerForPushNotifications() {
  * @param {string} title - Notification title
  * @param {string} body - Notification body
  * @param {object} data - Additional data to pass with notification
+ * @param {string} channelId - Android notification channel ID
  */
-export async function schedulePushNotification(title, body, data = {}) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      data,
-      sound: true,
-    },
-    trigger: null, // Send immediately
-  });
+export async function schedulePushNotification(title, body, data = {}, channelId = 'default') {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data,
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+        ...(Platform.OS === 'android' && { channelId }),
+      },
+      trigger: null, // Send immediately
+    });
+  } catch (error) {
+    console.log('Error scheduling notification:', error);
+  }
 }
 
 /**
