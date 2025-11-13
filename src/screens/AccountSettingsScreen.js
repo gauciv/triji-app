@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert, Switch, Linking } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
-import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword, deleteUser } from 'firebase/auth';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -14,12 +15,53 @@ export default function AccountSettingsScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
   });
+
+  useEffect(() => {
+    fetchUserData();
+    loadNotificationPreference();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserData(userDoc.data());
+      }
+    } catch (error) {
+      console.log('Error fetching user data:', error);
+    }
+  };
+
+  const loadNotificationPreference = async () => {
+    try {
+      const value = await AsyncStorage.getItem('notifications_enabled');
+      if (value !== null) {
+        setNotificationsEnabled(value === 'true');
+      }
+    } catch (error) {
+      console.log('Error loading notification preference:', error);
+    }
+  };
+
+  const toggleNotifications = async (value) => {
+    try {
+      setNotificationsEnabled(value);
+      await AsyncStorage.setItem('notifications_enabled', value.toString());
+    } catch (error) {
+      console.log('Error saving notification preference:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -72,41 +114,6 @@ export default function AccountSettingsScreen({ navigation }) {
     }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This action cannot be undone. All your data will be permanently deleted.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const user = auth.currentUser;
-              if (!user) return;
-
-              // Delete user document from Firestore
-              await deleteDoc(doc(db, 'users', user.uid));
-              
-              // Delete user from Firebase Authentication
-              await deleteUser(user);
-              
-              // Clear local storage
-              await AsyncStorage.removeItem('user_session');
-              
-              // Navigate to login
-              navigation.navigate('Login');
-            } catch (error) {
-              console.log('Delete account error:', error);
-              Alert.alert('Error', 'Failed to delete account. Please try again or contact support.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
   if (!fontsLoaded) {
     return (
       <View style={styles.container}>
@@ -120,63 +127,92 @@ export default function AccountSettingsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backgroundGradient} />
+      <LinearGradient
+        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.backgroundGradient}
+      />
       
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Feather name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Account Settings</Text>
-        </View>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Feather name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Settings</Text>
       </View>
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* User Info Card */}
+        {userData && (
+          <View style={styles.userCard}>
+            <View style={styles.userAvatar}>
+              <Feather name="user" size={32} color="#22e584" />
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>
+                {userData.firstName} {userData.lastName}
+              </Text>
+              <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Account Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.group}>
             <SettingsRow 
-              icon="user"
-              title="View Profile"
-              onPress={() => navigation.navigate('Profile')}
-            />
-            <SettingsRow 
-              icon="edit"
-              title="Edit Profile"
+              icon="edit-3"
+              title="Edit Name"
+              subtitle="Update your display name"
               onPress={() => navigation.navigate('EditProfile')}
             />
             <SettingsRow 
               icon="lock"
               title="Change Password"
+              subtitle="Update your password"
               onPress={() => setShowPasswordModal(true)}
             />
           </View>
         </View>
-        
+
+        {/* Preferences Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App</Text>
+          <Text style={styles.sectionTitle}>Preferences</Text>
+          <View style={styles.group}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Feather name="bell" size={20} color="#22e584" />
+                </View>
+                <View style={styles.settingText}>
+                  <Text style={styles.settingTitle}>Notifications</Text>
+                  <Text style={styles.settingSubtitle}>Receive push notifications</Text>
+                </View>
+              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={toggleNotifications}
+                trackColor={{ false: '#3e3e3e', true: '#22e584' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </View>
+        </View>
+        
+        {/* Actions Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Actions</Text>
           <View style={styles.group}>
             <SettingsRow 
               icon="log-out"
               title="Log Out"
+              subtitle="Sign out of your account"
               onPress={handleLogout}
-              isDestructive={true}
-              showArrow={false}
-            />
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Danger Zone</Text>
-          <View style={styles.group}>
-            <SettingsRow 
-              icon="trash-2"
-              title="Delete Account"
-              onPress={handleDeleteAccount}
-              isDestructive={true}
+              isDestructive={false}
               showArrow={false}
             />
           </View>
@@ -261,27 +297,26 @@ const styles = StyleSheet.create({
   },
   backgroundGradient: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    backgroundColor: '#007AFF',
-    opacity: 0.05,
   },
   header: {
-    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
   },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   backButton: {
-    padding: 8,
-    marginRight: 16,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
   headerTitle: {
     fontSize: 28,
@@ -296,45 +331,118 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
   },
   content: {
     flex: 1,
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  userAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   section: {
     marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: '#8E8E93',
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: 'rgba(255, 255, 255, 0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 8,
-    marginLeft: 24,
+    marginBottom: 12,
+    marginLeft: 20,
   },
   group: {
-    marginHorizontal: 24,
-    borderRadius: 12,
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  settingText: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  settingSubtitle: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCard: {
     width: '85%',
     maxWidth: 400,
-    backgroundColor: 'rgba(18, 18, 18, 0.95)',
+    backgroundColor: 'rgba(30, 32, 40, 0.95)',
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
     marginBottom: 20,
@@ -346,19 +454,19 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
-    color: '#FFFFFF',
-    marginBottom: 6,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
   },
   modalInput: {
     height: 48,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -367,32 +475,34 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    height: 44,
+    height: 48,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   cancelButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
   saveButton: {
     flex: 1,
-    height: 44,
-    backgroundColor: '#007AFF',
+    height: 48,
+    backgroundColor: '#22e584',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveButtonDisabled: {
     backgroundColor: '#4A4A4A',
-    opacity: 0.6,
+    opacity: 0.5,
   },
   saveButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
   },
 });
