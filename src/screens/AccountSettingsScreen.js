@@ -9,6 +9,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotifications, setNotificationPreference, getNotificationPreference } from '../utils/notifications';
+import { stopAllListeners } from '../utils/firestoreListeners';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -83,6 +84,9 @@ export default function AccountSettingsScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       setLoading(true);
+      
+      // Stop all Firestore listeners before logging out
+      stopAllListeners();
       
       // Clear all saved credentials if remember me was unchecked
       await AsyncStorage.removeItem('user_session');

@@ -10,6 +10,12 @@ let freedomWallUnsubscribe = null;
  * Start listening for new tasks in Firestore and send notifications
  */
 export function startTasksListener() {
+  // Check if user is authenticated
+  if (!auth.currentUser) {
+    console.log('Cannot start tasks listener: User not authenticated');
+    return;
+  }
+
   if (tasksUnsubscribe) {
     return; // Already listening
   }
@@ -59,6 +65,12 @@ export function startTasksListener() {
  * Start listening for new announcements in Firestore and send notifications
  */
 export function startAnnouncementsListener() {
+  // Check if user is authenticated
+  if (!auth.currentUser) {
+    console.log('Cannot start announcements listener: User not authenticated');
+    return;
+  }
+
   if (announcementsUnsubscribe) {
     return; // Already listening
   }
@@ -103,9 +115,15 @@ export function startAnnouncementsListener() {
 }
 
 /**
- * Start listening for new freedom wall posts in Firestore and send notifications
+ * Start listening for new Freedom Wall posts and send notifications
  */
 export function startFreedomWallListener() {
+  // Check if user is authenticated
+  if (!auth.currentUser) {
+    console.log('Cannot start freedom wall listener: User not authenticated');
+    return;
+  }
+
   if (freedomWallUnsubscribe) {
     return; // Already listening
   }

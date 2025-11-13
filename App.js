@@ -23,6 +23,8 @@ import { NetworkProvider } from './src/context/NetworkContext';
 import { ErrorBoundary, OfflineBanner } from './src/components';
 import { setupNotificationListeners, registerForPushNotifications } from './src/utils/notifications';
 import { startAllListeners, stopAllListeners } from './src/utils/firestoreListeners';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './src/config/firebaseConfig';
 // Import Firebase to ensure it's initialized before the app starts
 import './src/config/firebaseConfig';
 
@@ -32,6 +34,26 @@ export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initialRouteName, setInitialRouteName] = useState('Login');
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
+
+  // Listen to auth state changes and manage Firestore listeners
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, start listeners
+        console.log('User authenticated, starting listeners');
+        startAllListeners();
+      } else {
+        // User is signed out, stop listeners
+        console.log('User logged out, stopping listeners');
+        stopAllListeners();
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      stopAllListeners();
+    };
+  }, []);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -54,16 +76,6 @@ export default function App() {
           await registerForPushNotifications();
         } catch (error) {
           console.log('Push notification setup skipped:', error.message);
-        }
-        
-        // Start Firestore listeners for new content
-        if (savedSession) {
-          setLoadingMessage('Starting listeners...');
-          try {
-            startAllListeners();
-          } catch (error) {
-            console.log('Listener setup error:', error.message);
-          }
         }
         
         setLoadingMessage('Finalizing...');
