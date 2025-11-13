@@ -84,20 +84,32 @@ export default function TaskboardScreen({ navigation }) {
   };
 
   useEffect(() => {
+    let unsubscribeTasks = null;
+    
     // Wait for auth state before fetching
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        const unsubscribeTasks = fetchTasks();
-        return () => unsubscribeTasks && unsubscribeTasks();
+        unsubscribeTasks = fetchTasks();
       } else {
+        // User logged out, cleanup listener
+        if (unsubscribeTasks) {
+          unsubscribeTasks();
+          unsubscribeTasks = null;
+        }
         setIsAuthenticated(false);
+        setTasks([]);
         setLoading(false);
         setError('Please log in to view tasks');
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      if (unsubscribeTasks) {
+        unsubscribeTasks();
+      }
+      unsubscribeAuth();
+    };
   }, [sortOrder]);
 
   const onRefresh = async () => {

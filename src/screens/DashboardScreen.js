@@ -24,6 +24,8 @@ export default function DashboardScreen({ navigation }) {
   });
 
   useEffect(() => {
+    let unsubscribers = [];
+    
     // Wait for auth state before fetching data
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -44,21 +46,28 @@ export default function DashboardScreen({ navigation }) {
           setUserName('User');
         }
         
-        const unsubscribers = fetchRecentData();
-        
-        return () => {
-          if (unsubscribers) {
-            unsubscribers.forEach(unsub => unsub && unsub());
-          }
-        };
+        unsubscribers = fetchRecentData();
       } else {
+        // User logged out, cleanup all listeners
+        if (unsubscribers && unsubscribers.length > 0) {
+          unsubscribers.forEach(unsub => unsub && unsub());
+          unsubscribers = [];
+        }
         setIsAuthenticated(false);
+        setTasks([]);
+        setAnnouncements([]);
+        setFreedomWallPosts([]);
         setLoading(false);
         navigation.replace('Login');
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      if (unsubscribers && unsubscribers.length > 0) {
+        unsubscribers.forEach(unsub => unsub && unsub());
+      }
+      unsubscribeAuth();
+    };
   }, []);
 
   const fetchRecentData = () => {

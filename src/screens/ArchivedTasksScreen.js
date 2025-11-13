@@ -19,6 +19,8 @@ export default function ArchivedTasksScreen({ navigation }) {
   });
 
   useEffect(() => {
+    let unsubscribeTasks = null;
+    
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         const q = query(
@@ -26,7 +28,7 @@ export default function ArchivedTasksScreen({ navigation }) {
           orderBy('deadline', 'desc')
         );
 
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        unsubscribeTasks = onSnapshot(q, (querySnapshot) => {
           const tasksList = [];
           querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -44,14 +46,23 @@ export default function ArchivedTasksScreen({ navigation }) {
           console.error('Error fetching archived tasks:', error);
           setLoading(false);
         });
-
-        return () => unsubscribe();
       } else {
+        // User logged out, cleanup listener
+        if (unsubscribeTasks) {
+          unsubscribeTasks();
+          unsubscribeTasks = null;
+        }
+        setTasks([]);
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      if (unsubscribeTasks) {
+        unsubscribeTasks();
+      }
+      unsubscribeAuth();
+    };
   }, []);
 
   const onRefresh = async () => {
