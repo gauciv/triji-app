@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Rule for the 'users' collection
+    match /users/{userId} {
+      // Users can read and update their own profile data
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create their own profile during registration
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins can read all users
+      allow read: if isAdmin();
+    }
+
+    // Rule for 'tasks' collection
+    match /tasks/{taskId} {
+      // Everyone can read tasks
+      allow read: if request.auth != null;
+      
+      // Only admins can create, update, or delete tasks
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Rule for the 'announcements' collection
+    match /announcements/{announcementId} {
+      // Everyone can read announcements
+      allow read: if request.auth != null;
+
+      // Users can create announcements (must include their authorId)
+      allow create: if request.auth != null &&
+                      request.resource.data.authorId == request.auth.uid;
+                      
+      // Only the author can update their own announcement
+      allow update: if request.auth != null && 
+                      request.auth.uid == resource.data.authorId;
+
+      // Author or admin can delete
+      allow delete: if request.auth != null &&
+                      (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    // Rule for Freedom Wall Posts
+    match /freedom-wall-posts/{postId} {
+      // Everyone can read posts
+      allow read: if request.auth != null;
+      
+      // Users can create posts (must include their authorId)
+      allow create: if request.auth != null &&
+                      request.resource.data.authorId == request.auth.uid;
+      
+      // Only the author can update their own post
+      allow update: if request.auth != null && 
+                      request.auth.uid == resource.data.authorId;
+
+      // Author or admin can delete
+      allow delete: if request.auth != null &&
+                      (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    // Rule for the 'reports' collection
+    match /reports/{reportId} {
+      // Users can read their own reports, admins can read all
+      allow read: if request.auth != null &&
+                    (request.auth.uid == resource.data.userId || isAdmin());
+
+      // Users can create reports for themselves
+      allow create: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update/delete reports
+      allow update, delete: if isAdmin();
+    }
+  }
+}

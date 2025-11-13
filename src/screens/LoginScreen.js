@@ -97,16 +97,16 @@ export default function LoginScreen({ navigation }) {
         return;
       }
       
-      // Save credentials if Remember Me is checked
+      // Always clear credentials first
+      await AsyncStorage.removeItem('saved_email');
+      await AsyncStorage.removeItem('saved_password');
+      await AsyncStorage.removeItem('remember_me');
+      
+      // Save credentials only if Remember Me is checked
       if (rememberMe) {
         await AsyncStorage.setItem('saved_email', email);
         await AsyncStorage.setItem('saved_password', password);
         await AsyncStorage.setItem('remember_me', 'true');
-      } else {
-        // Clear saved credentials if Remember Me is unchecked
-        await AsyncStorage.removeItem('saved_email');
-        await AsyncStorage.removeItem('saved_password');
-        await AsyncStorage.removeItem('remember_me');
       }
       
       await AsyncStorage.setItem('user_session', JSON.stringify(user));

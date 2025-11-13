@@ -82,11 +82,30 @@ export default function AccountSettingsScreen({ navigation }) {
 
   const handleLogout = async () => {
     try {
+      setLoading(true);
+      
+      // Clear all saved credentials if remember me was unchecked
       await AsyncStorage.removeItem('user_session');
+      await AsyncStorage.removeItem('saved_email');
+      await AsyncStorage.removeItem('saved_password');
+      await AsyncStorage.removeItem('remember_me');
+      
+      // Sign out from Firebase
       await signOut(auth);
-      navigation.navigate('Login');
+      
+      // Small delay to ensure logout is processed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navigate to login and reset navigation stack
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (error) {
       console.log('Logout error:', error.message);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
