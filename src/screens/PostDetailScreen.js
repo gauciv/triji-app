@@ -34,6 +34,21 @@ export default function PostDetailScreen({ route, navigation }) {
 
   const isLiked = Array.isArray(currentPost.likedBy) && auth.currentUser?.uid && currentPost.likedBy.includes(auth.currentUser.uid);
 
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) return `${diffDays}d ago`;
+    if (diffHours > 0) return `${diffHours}h ago`;
+    if (diffMins > 0) return `${diffMins}m ago`;
+    return 'Just now';
+  };
+
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -278,63 +293,64 @@ export default function PostDetailScreen({ route, navigation }) {
       </View>
 
       <View style={styles.content}>
-        <View style={styles.noteContainer}>
-          <View style={styles.noteWrapper}>
-            <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
-              <View style={styles.personaContainer}>
-                <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
-                <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
-                  {post.persona || 'Anonymous'}
-                </Text>
-              </View>
-              
-              <ScrollView 
-                style={styles.postTextContainer}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.postTextContent}
-              >
-                <Text style={styles.postText}>{post.content}</Text>
-              </ScrollView>
+        <View style={styles.postCardContainer}>
+          {/* Author Header */}
+          <View style={styles.authorHeader}>
+            <View style={styles.authorAvatar}>
+              <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
             </View>
+            <View style={styles.authorInfo}>
+              <Text style={styles.authorName}>{post.persona || 'Anonymous'}</Text>
+              <Text style={styles.timestamp}>{formatTimestamp(post.createdAt)}</Text>
+            </View>
+          </View>
+          
+          {/* Post Content */}
+          <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
+            <ScrollView 
+              style={styles.postTextContainer}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.postTextContent}
+            >
+              <Text style={styles.postText}>{post.content}</Text>
+            </ScrollView>
+          </View>
+          
+          {/* Interactions */}
+          <View style={styles.interactionsBar}>
+            <TouchableOpacity 
+              style={styles.interactionButton}
+              onPress={handleLike}
+            >
+              <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
+              <Text style={styles.interactionText}>{currentPost.likeCount || 0} Likes</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.interactionButton}
+              onPress={handleCopyText}
+            >
+              <Feather name={showCopied ? "check" : "copy"} size={18} color={showCopied ? "#34C759" : "rgba(255,255,255,0.7)"} />
+              <Text style={styles.interactionText}>{showCopied ? 'Copied!' : 'Copy'}</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.interactionButton}
+              onPress={handleShare}
+            >
+              <Feather name="share" size={18} color="rgba(255,255,255,0.7)" />
+              <Text style={styles.interactionText}>Share</Text>
+            </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity 
-            style={styles.likeButton}
-            onPress={handleLike}
-          >
-            <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
-            <Text style={styles.likeCount}>{currentPost.likeCount || 0}</Text>
-          </TouchableOpacity>
-          
-          {countdown && (
-            <View style={styles.countdownContainer}>
-              <Feather name="clock" size={20} color="#FF6B35" />
-              <Text style={styles.countdownText}>{countdown}</Text>
-            </View>
-          )}
-        </View>
-        
-        <View style={styles.utilityButtons}>
-          <TouchableOpacity 
-            style={[styles.utilityButton, showCopied && styles.copiedButton]}
-            onPress={handleCopyText}
-          >
-            <Feather name={showCopied ? "check" : "copy"} size={18} color={showCopied ? "#34C759" : "#FFFFFF"} />
-            <Text style={[styles.utilityButtonText, showCopied && styles.copiedText]}>
-              {showCopied ? 'Copied!' : 'Copy Text'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.utilityButton}
-            onPress={handleShare}
-          >
-            <Feather name="share" size={18} color="#FFFFFF" />
-            <Text style={styles.utilityButtonText}>Share</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Countdown Info */}
+        {countdown && (
+          <View style={styles.countdownCard}>
+            <Feather name="clock" size={20} color="#FF6B35" />
+            <Text style={styles.countdownText}>{countdown}</Text>
+          </View>
+        )}
       </View>
       
       {/* Report Modal */}
@@ -456,8 +472,100 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  postCardContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  authorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  authorAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authorInfo: {
+    flex: 1,
+  },
+  authorName: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  timestamp: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  postCard: {
+    minHeight: 200,
+    maxHeight: 400,
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingVertical: 24,
+  },
+  postTextContainer: {
+    flex: 1,
+  },
+  postTextContent: {
+    flexGrow: 1,
+  },
+  postText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#2C2C2C',
+    lineHeight: 24,
+  },
+  interactionsBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  interactionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+  },
+  interactionText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  heartIcon: {
+    fontSize: 22,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  heartLiked: {
+    color: '#FF3B30',
+  },
+  countdownCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
+    marginTop: 16,
+    gap: 10,
   },
   noteContainer: {
     alignItems: 'center',

@@ -249,29 +249,31 @@ export default function AnnouncementsScreen({ navigation }) {
             <Text style={styles.headerTitle}>Announcements</Text>
             <Text style={styles.headerSubtext}>All important announcements in one place</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.archiveButton}
-            onPress={() => navigation.navigate('ArchivedAnnouncements')}
-          >
-            <Feather name="archive" size={20} color="#22e584" />
-          </TouchableOpacity>
         </View>
         
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Feather name="search" size={18} color="rgba(255,255,255,0.5)" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search announcements..."
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-              <Feather name="x" size={18} color="rgba(255,255,255,0.5)" />
-            </TouchableOpacity>
-          )}
+        {/* Search Bar and New Button */}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Feather name="search" size={18} color="rgba(255,255,255,0.5)" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search announcements..."
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                <Feather name="x" size={18} color="rgba(255,255,255,0.5)" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.newButton}
+            onPress={() => navigation.navigate('CreateAnnouncement')}
+          >
+            <Text style={styles.newButtonText}>New</Text>
+          </TouchableOpacity>
         </View>
       </View>
         
@@ -303,9 +305,11 @@ export default function AnnouncementsScreen({ navigation }) {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={onRefresh}
-                    tintColor="#22e584"
-                    colors={['#22e584']}
-                    progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+                    tintColor="#FFFFFF"
+                    colors={['#22e584', '#FFFFFF']}
+                    progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                    titleColor="#FFFFFF"
+                    title="Refreshing..."
                   />
                 }
               >
@@ -342,14 +346,6 @@ export default function AnnouncementsScreen({ navigation }) {
             </>
           )}
         </View>
-      
-      {/* Floating Action Button */}
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreateAnnouncement')}
-      >
-        <Feather name="plus" size={28} color="#fff" />
-      </TouchableOpacity>
     </View>
   );
 }
@@ -392,16 +388,6 @@ const styles = StyleSheet.create({
   headerTextContainer: {
     flex: 1,
   },
-  archiveButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(34, 229, 132, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(34, 229, 132, 0.3)',
-  },
   headerTitle: {
     fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
@@ -422,6 +408,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginBottom: 10,
   },
   searchIcon: {
     marginRight: 8,
@@ -432,6 +419,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
     paddingVertical: 0,
+  },
+  newButton: {
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  newButtonText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
   },
   clearButton: {
     padding: 4,

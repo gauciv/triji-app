@@ -9,7 +9,6 @@ import {
   VerificationScreen,
   CreateAnnouncementScreen,
   AnnouncementDetailScreen,
-  ArchivedAnnouncementsScreen,
   AccountSettingsScreen,
   EditProfileScreen,
   GradeCalculatorScreen,
@@ -73,7 +72,6 @@ export default function App() {
           <Stack.Screen name="MainApp" component={TabNavigator} />
           <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
           <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
-          <Stack.Screen name="ArchivedAnnouncements" component={ArchivedAnnouncementsScreen} />
           <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />

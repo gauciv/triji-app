@@ -8,7 +8,6 @@ export { default as AnnouncementsScreen } from './AnnouncementsScreen';
 export { default as ProfileScreen } from './ProfileScreen';
 export { default as CreateAnnouncementScreen } from './CreateAnnouncementScreen';
 export { default as AnnouncementDetailScreen } from './AnnouncementDetailScreen';
-export { default as ArchivedAnnouncementsScreen } from './ArchivedAnnouncementsScreen';
 export { default as AccountSettingsScreen } from './AccountSettingsScreen';
 export { default as EditProfileScreen } from './EditProfileScreen';
 export { default as GradeCalculatorScreen } from './GradeCalculatorScreen';

@@ -240,9 +240,11 @@ export default function TaskboardScreen({ navigation }) {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={onRefresh}
-                    tintColor="#22e584"
-                    colors={['#22e584']}
-                    progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+                    tintColor="#FFFFFF"
+                    colors={['#22e584', '#FFFFFF']}
+                    progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                    titleColor="#FFFFFF"
+                    title="Refreshing..."
                   />
                 }
               >

@@ -16,6 +16,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
   const [expiresAt, setExpiresAt] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // Default 7 days
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [step, setStep] = useState(1);
+  const [noExpiry, setNoExpiry] = useState(false);
 
   const announcementTypes = ['General', 'Reminder', 'Event', 'Critical'];
 
@@ -81,7 +82,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
         authorId: user.uid,
         authorPhotoURL: '',
         createdAt: new Date(),
-        expiresAt: expiresAt,
+        expiresAt: noExpiry ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : expiresAt, // 100 years if no expiry
       };
       
       console.log('Creating announcement with data:', announcementData);
@@ -204,51 +205,62 @@ export default function CreateAnnouncementScreen({ navigation }) {
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Expires On</Text>
-                {Platform.OS === 'web' ? (
-                  <input
-                    type="date"
-                    value={expiresAt.toISOString().split('T')[0]}
-                    onChange={(e) => setExpiresAt(new Date(e.target.value))}
-                    min={new Date().toISOString().split('T')[0]}
-                    style={{
-                      height: '52px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '14px',
-                      padding: '0 18px',
-                      fontSize: '15px',
-                      color: '#FFFFFF',
-                      fontFamily: 'Inter_400Regular',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                ) : (
-                  <>
-                    <TouchableOpacity 
-                      style={styles.dateButton}
-                      onPress={() => setShowDatePicker(true)}
-                    >
-                      <Feather name="calendar" size={20} color="#8E8E93" />
-                      <Text style={styles.dateButtonText}>
-                        {expiresAt.toLocaleDateString()}
-                      </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                      <DateTimePicker
-                        value={expiresAt}
-                        mode="date"
-                        display="default"
-                        onChange={(event, selectedDate) => {
-                          setShowDatePicker(false);
-                          if (selectedDate) {
-                            setExpiresAt(selectedDate);
-                          }
-                        }}
-                        minimumDate={new Date()}
-                      />
-                    )}
-                  </>
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setNoExpiry(!noExpiry)}
+                >
+                  <View style={[styles.checkbox, noExpiry && styles.checkboxChecked]}>
+                    {noExpiry && <Feather name="check" size={16} color="#fff" />}
+                  </View>
+                  <Text style={styles.checkboxLabel}>No expiry date (indefinite)</Text>
+                </TouchableOpacity>
+                {!noExpiry && (
+                  Platform.OS === 'web' ? (
+                    <input
+                      type="date"
+                      value={expiresAt.toISOString().split('T')[0]}
+                      onChange={(e) => setExpiresAt(new Date(e.target.value))}
+                      min={new Date().toISOString().split('T')[0]}
+                      style={{
+                        height: '52px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '14px',
+                        padding: '0 18px',
+                        fontSize: '15px',
+                        color: '#FFFFFF',
+                        fontFamily: 'Inter_400Regular',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <TouchableOpacity 
+                        style={styles.dateButton}
+                        onPress={() => setShowDatePicker(true)}
+                      >
+                        <Feather name="calendar" size={20} color="#8E8E93" />
+                        <Text style={styles.dateButtonText}>
+                          {expiresAt.toLocaleDateString()}
+                        </Text>
+                      </TouchableOpacity>
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={expiresAt}
+                          mode="date"
+                          display="default"
+                          onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                              setExpiresAt(selectedDate);
+                            }
+                          }}
+                          minimumDate={new Date()}
+                        />
+                      )}
+                    </>
+                  )
                 )}
               </View>
               <TouchableOpacity 
@@ -293,7 +305,9 @@ export default function CreateAnnouncementScreen({ navigation }) {
                 <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) + '22' }]}> 
                   <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>{selectedType}</Text>
                 </View>
-                <Text style={styles.twitterExpiry}>Expires {expiresAt.toLocaleDateString()}</Text>
+                <Text style={styles.twitterExpiry}>
+                  {noExpiry ? 'No expiry' : `Expires ${expiresAt.toLocaleDateString()}`}
+                </Text>
               </View>
             </View>
             <TextInput
@@ -345,7 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 12,
   },
   shiningGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -427,7 +441,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 2,
-    zIndex: 10,
+    zIndex: 100,
   },
   cardModernPolished: {
     backgroundColor: 'rgba(30, 32, 40, 0.65)',
@@ -530,8 +544,9 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   scrollContent: {
+    marginTop: 40,
     paddingHorizontal: 8,
-    paddingBottom: 80,
+    paddingBottom: 5,
   },
   card: {
     backgroundColor: 'rgba(30, 32, 40, 0.55)',
@@ -760,6 +775,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     color: '#FFFFFF',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#22e584',
+    borderColor: '#22e584',
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   cardWithMargin: {
     marginHorizontal: 18,
