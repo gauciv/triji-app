@@ -12,6 +12,7 @@ import { useNetwork } from '../context/NetworkContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { logError, showErrorAlert } from '../utils/errorHandler';
 
 export default function FreedomWallScreen({ navigation }) {
   const { isConnected, registerSyncCallback } = useNetwork();
@@ -82,7 +83,6 @@ export default function FreedomWallScreen({ navigation }) {
   const fetchPosts = () => {
     // Only fetch if user is authenticated
     if (!auth.currentUser) {
-      console.log('No authenticated user, skipping posts fetch');
       setLoading(false);
       setError('Please log in to view posts');
       return null;
@@ -143,7 +143,7 @@ export default function FreedomWallScreen({ navigation }) {
           } else {
             // Delete expired post from Firebase
             deleteDoc(doc(db, 'freedom-wall-posts', docSnapshot.id)).catch((error) => {
-              console.log('Error deleting expired post:', error);
+              logError(error, 'Delete Expired Post');
             });
           }
         });
@@ -151,7 +151,7 @@ export default function FreedomWallScreen({ navigation }) {
         setLoading(false);
         setIsInitialLoading(false);
       }, (error) => {
-        console.log('Error fetching posts:', error);
+        logError(error, 'Fetch Posts');
         setError('Could not load the Freedom Wall');
         setLoading(false);
         setIsInitialLoading(false);
@@ -159,7 +159,7 @@ export default function FreedomWallScreen({ navigation }) {
 
       return unsubscribe;
     } catch (error) {
-      console.log('Error setting up listener:', error);
+      logError(error, 'Setup Posts Listener');
       setError('Could not load the Freedom Wall');
       setLoading(false);
       return null;
@@ -203,8 +203,6 @@ export default function FreedomWallScreen({ navigation }) {
   const syncPendingPosts = async () => {
     if (pendingPosts.length === 0) return;
     
-    console.log(`Syncing ${pendingPosts.length} pending posts...`);
-    
     for (const pendingPost of pendingPosts) {
       try {
         const { id, status, ...postData } = pendingPost;
@@ -212,9 +210,8 @@ export default function FreedomWallScreen({ navigation }) {
         
         // Remove from pending posts after successful sync
         setPendingPosts(prev => prev.filter(p => p.id !== pendingPost.id));
-        console.log('Synced post:', pendingPost.id);
       } catch (error) {
-        console.log('Error syncing post:', error);
+        logError(error, 'Sync Pending Post');
       }
     }
   };
@@ -263,7 +260,7 @@ export default function FreedomWallScreen({ navigation }) {
         setCooldownSeconds(0);
       }
     } catch (error) {
-      console.log('Error checking cooldown:', error);
+      logError(error, 'Check Cooldown');
     }
   };
 
@@ -349,13 +346,12 @@ export default function FreedomWallScreen({ navigation }) {
       setSelectedColor('#FFFACD');
       setShowModal(false);
       setPosting(false);
+      Alert.alert('Posted Offline', 'Your post will be published when you\'re back online.');
       return;
     }
     
     try {
-      console.log('Attempting to create post with data:', postData);
       const docRef = await addDoc(collection(db, 'freedom-wall-posts'), postData);
-      console.log('Post created successfully with ID:', docRef.id);
       
       // Save timestamp for cooldown
       await AsyncStorage.setItem('lastPostTime', Date.now().toString());
@@ -365,9 +361,7 @@ export default function FreedomWallScreen({ navigation }) {
       setSelectedColor('#FFFACD');
       setShowModal(false);
     } catch (error) {
-      console.log('Error posting:', error);
-      console.log('Error code:', error.code);
-      console.log('Error message:', error.message);
+      logError(error, 'Create Post');
       
       let errorMessage = 'Could not create post. Please try again.';
       if (error.code === 'permission-denied') {
@@ -385,6 +379,11 @@ export default function FreedomWallScreen({ navigation }) {
   const handleLike = async (postId) => {
     const user = auth.currentUser;
     if (!user) return;
+
+    if (!isConnected) {
+      Alert.alert('Offline', 'You need an internet connection to like posts.');
+      return;
+    }
 
     try {
       const postRef = doc(db, 'freedom-wall-posts', postId);
@@ -413,8 +412,7 @@ export default function FreedomWallScreen({ navigation }) {
         }
       });
     } catch (error) {
-      console.log('Error updating like:', error);
-      Alert.alert('Error', 'Failed to update like. Please try again.');
+      showErrorAlert(error, 'Update Like', 'Like Failed');
     }
   };
 

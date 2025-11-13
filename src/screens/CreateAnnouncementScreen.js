@@ -7,8 +7,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
+import { useNetwork } from '../context/NetworkContext';
+import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function CreateAnnouncementScreen({ navigation }) {
+  const { isConnected } = useNetwork();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedType, setSelectedType] = useState('General');
@@ -51,9 +54,11 @@ export default function CreateAnnouncementScreen({ navigation }) {
       Alert.alert('Authentication Required', 'You must be logged in to create announcements.');
       return;
     }
-    
-    console.log('User authenticated:', user.uid);
-    console.log('Creating announcement with title:', title.trim());
+
+    if (!isConnected) {
+      Alert.alert('Offline', 'You need an internet connection to create announcements.');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -70,7 +75,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
           }
         }
       } catch (userError) {
-        console.log('Error fetching user data:', userError);
+        logError(userError, 'Fetch User Data');
         // Continue with 'Anonymous' as fallback
       }
       
@@ -85,27 +90,11 @@ export default function CreateAnnouncementScreen({ navigation }) {
         expiresAt: noExpiry ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : expiresAt, // 100 years if no expiry
       };
       
-      console.log('Creating announcement with data:', announcementData);
-      
       await addDoc(collection(db, 'announcements'), announcementData);
       
-      console.log('Announcement created successfully');
       navigation.goBack();
     } catch (error) {
-      console.log('Error creating announcement:', error);
-      console.log('Error code:', error.code);
-      console.log('Error message:', error.message);
-      
-      let errorMessage = 'Could not create announcement. Please try again.';
-      if (error.code === 'permission-denied') {
-        errorMessage = 'Permission denied. You may not have access to create announcements.';
-      } else if (error.code === 'unavailable') {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else if (error.message) {
-        errorMessage = `Error: ${error.message}`;
-      }
-      
-      Alert.alert('Error', errorMessage);
+      showErrorAlert(error, 'Create Announcement', 'Creation Failed');
     } finally {
       setLoading(false);
     }

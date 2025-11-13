@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
 import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import TaskCardSkeleton from '../components/TaskCardSkeleton';
+import { logError } from '../utils/errorHandler';
 
 export default function ArchivedTasksScreen({ navigation }) {
   const [tasks, setTasks] = useState([]);
@@ -43,7 +45,7 @@ export default function ArchivedTasksScreen({ navigation }) {
           setTasks(tasksList);
           setLoading(false);
         }, (error) => {
-          console.error('Error fetching archived tasks:', error);
+          logError(error, 'Fetch Archived Tasks');
           setLoading(false);
         });
       } else {
@@ -123,8 +125,10 @@ export default function ArchivedTasksScreen({ navigation }) {
         }
       >
         {loading ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyMessage}>Loading...</Text>
+          <View style={styles.listContainer}>
+            <TaskCardSkeleton />
+            <TaskCardSkeleton />
+            <TaskCardSkeleton />
           </View>
         ) : tasks.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -238,6 +242,9 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
   taskCard: {
     backgroundColor: 'rgba(34, 229, 132, 0.08)',

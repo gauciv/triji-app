@@ -10,6 +10,7 @@ import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotifications, setNotificationPreference, getNotificationPreference } from '../utils/notifications';
 import { stopAllListeners } from '../utils/firestoreListeners';
+import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -45,7 +46,7 @@ export default function AccountSettingsScreen({ navigation }) {
         setUserData(userDoc.data());
       }
     } catch (error) {
-      console.log('Error fetching user data:', error);
+      logError(error, 'Fetch User Data');
     }
   };
 
@@ -63,7 +64,7 @@ export default function AccountSettingsScreen({ navigation }) {
       setAnnouncementsNotifications(announcements);
       setFreedomWallNotifications(freedomWall);
     } catch (error) {
-      console.log('Error loading notification preferences:', error);
+      logError(error, 'Load Notification Preferences');
     }
   };
 
@@ -109,7 +110,7 @@ export default function AccountSettingsScreen({ navigation }) {
         routes: [{ name: 'Login' }],
       });
     } catch (error) {
-      console.log('Logout error:', error.message);
+      logError(error, 'Logout');
       setShowLogoutModal(false);
       Alert.alert('Error', 'Failed to logout. Please try again.');
     }
@@ -126,11 +127,32 @@ export default function AccountSettingsScreen({ navigation }) {
       return;
     }
 
-    if (newPassword.length < 6) {
-      Alert.alert('Error', 'New password must be at least 6 characters.');
+    if (newPassword.length < 8) {
+      Alert.alert('Weak Password', 'New password must be at least 8 characters long.');
       return;
     }
-
+    
+    // Check password strength
+    const hasUpperCase = /[A-Z]/.test(newPassword);
+    const hasLowerCase = /[a-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      Alert.alert(
+        'Weak Password',
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number for better security.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Continue Anyway', onPress: () => proceedWithPasswordChange() }
+        ]
+      );
+      return;
+    }
+    
+    await proceedWithPasswordChange();
+  };
+  
+  const proceedWithPasswordChange = async () => {
     setLoading(true);
     try {
       const user = auth.currentUser;
@@ -145,12 +167,7 @@ export default function AccountSettingsScreen({ navigation }) {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      console.log('Password change error:', error);
-      if (error.code === 'auth/wrong-password') {
-        Alert.alert('Error', 'Current password is incorrect.');
-      } else {
-        Alert.alert('Error', 'Failed to update password. Please try again.');
-      }
+      showErrorAlert(error, 'Change Password', 'Update Failed');
     } finally {
       setLoading(false);
     }

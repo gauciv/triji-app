@@ -6,6 +6,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
+import AnnouncementCardSkeleton from '../components/AnnouncementCardSkeleton';
+import { logError } from '../utils/errorHandler';
 
 export default function ArchivedAnnouncementsScreen({ navigation }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -38,11 +40,13 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         setAnnouncements(announcementsList);
         setLoading(false);
       }, (error) => {
+        logError(error, 'Fetch Archived Announcements');
         setError('Could not load archived announcements. Please check your internet connection.');
         setLoading(false);
       });
       return unsubscribe;
     } catch (error) {
+      logError(error, 'Setup Archived Announcements Listener');
       setError('Could not load archived announcements. Please check your internet connection.');
       setLoading(false);
     }
@@ -165,7 +169,13 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         <Text style={styles.headerTitleModernCard}>Archived Announcements</Text>
         <Text style={styles.headerSubtextCard}>Expired announcements are kept here for your reference.</Text>
         <View style={styles.announcementsContent}>
-          {announcements.length === 0 ? (
+          {loading ? (
+            <View style={styles.listContainerModern}>
+              <AnnouncementCardSkeleton />
+              <AnnouncementCardSkeleton />
+              <AnnouncementCardSkeleton />
+            </View>
+          ) : announcements.length === 0 ? (
             <View style={styles.emptyContainerModern}>
               <Feather name="archive" size={64} color="#8E8E93" />
               <Text style={styles.emptyTitleModern}>No archived announcements</Text>

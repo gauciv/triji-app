@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function EditProfileScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -24,7 +25,7 @@ export default function EditProfileScreen({ navigation }) {
           }
         }
       } catch (error) {
-        console.log('Error fetching user data:', error);
+        logError(error, 'Fetch User Data');
       } finally {
         setLoading(false);
       }
@@ -38,16 +39,48 @@ export default function EditProfileScreen({ navigation }) {
       setSaving(true);
       const user = auth.currentUser;
       
-      if (!firstName.trim() || !lastName.trim()) {
+      // Trim inputs
+      const trimmedFirst = firstName.trim();
+      const trimmedLast = lastName.trim();
+      
+      // Validate inputs
+      if (!trimmedFirst || !trimmedLast) {
         Alert.alert('Error', 'Please fill in all required fields.');
+        setSaving(false);
+        return;
+      }
+      
+      // Validate name contains only letters, spaces, hyphens, and apostrophes
+      const nameRegex = /^[a-zA-Z\s'-]+$/;
+      if (!nameRegex.test(trimmedFirst)) {
+        Alert.alert('Invalid Name', 'First name can only contain letters, spaces, hyphens, and apostrophes.');
+        setSaving(false);
+        return;
+      }
+      
+      if (!nameRegex.test(trimmedLast)) {
+        Alert.alert('Invalid Name', 'Last name can only contain letters, spaces, hyphens, and apostrophes.');
+        setSaving(false);
+        return;
+      }
+      
+      // Validate name length
+      if (trimmedFirst.length < 2 || trimmedFirst.length > 50) {
+        Alert.alert('Invalid Length', 'First name must be between 2 and 50 characters.');
+        setSaving(false);
+        return;
+      }
+      
+      if (trimmedLast.length < 2 || trimmedLast.length > 50) {
+        Alert.alert('Invalid Length', 'Last name must be between 2 and 50 characters.');
         setSaving(false);
         return;
       }
 
       if (user) {
         const updatedData = {
-          firstName: firstName.trim(),
-          lastName: lastName.trim()
+          firstName: trimmedFirst,
+          lastName: trimmedLast
         };
         
         await updateDoc(doc(db, 'users', user.uid), updatedData);
@@ -56,8 +89,7 @@ export default function EditProfileScreen({ navigation }) {
         ]);
       }
     } catch (error) {
-      console.log('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      showErrorAlert(error, 'Update Profile', 'Update Failed');
     } finally {
       setSaving(false);
     }

@@ -7,9 +7,12 @@ import { db } from '../config/firebaseConfig';
 import { doc, runTransaction, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
+import { useNetwork } from '../context/NetworkContext';
+import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function PostDetailScreen({ route, navigation }) {
   const { post } = route.params || {};
+  const { isConnected } = useNetwork();
   
   // Safety check - if no post, go back
   useEffect(() => {
@@ -109,6 +112,11 @@ export default function PostDetailScreen({ route, navigation }) {
     const user = auth.currentUser;
     if (!user) return;
 
+    if (!isConnected) {
+      Alert.alert('Offline', 'You need an internet connection to like posts.');
+      return;
+    }
+
     try {
       const postRef = doc(db, 'freedom-wall-posts', post.id);
       
@@ -146,8 +154,7 @@ export default function PostDetailScreen({ route, navigation }) {
         }));
       });
     } catch (error) {
-      console.log('Error updating like:', error);
-      Alert.alert('Error', 'Failed to update like. Please try again.');
+      showErrorAlert(error, 'Update Like', 'Like Failed');
     }
   };
 
@@ -157,19 +164,19 @@ export default function PostDetailScreen({ route, navigation }) {
       setShowCopied(true);
       setTimeout(() => setShowCopied(false), 2000);
     } catch (error) {
+      logError(error, 'Copy Text');
       Alert.alert('Error', 'Failed to copy text.');
     }
   };
 
   const handleShare = async () => {
     try {
-      const result = await Share.share({
+      await Share.share({
         message: post.content,
         title: 'Shared from Freedom Wall'
       });
-      console.log('Share result:', result);
     } catch (error) {
-      console.log('Share error:', error);
+      logError(error, 'Share Post');
       Alert.alert('Error', 'Failed to share text.');
     }
   };
@@ -177,6 +184,11 @@ export default function PostDetailScreen({ route, navigation }) {
   const handleSubmitReport = async () => {
     const user = auth.currentUser;
     if (!user || !selectedReason) return;
+
+    if (!isConnected) {
+      Alert.alert('Offline', 'You need an internet connection to submit reports.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -215,8 +227,7 @@ export default function PostDetailScreen({ route, navigation }) {
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.log('Error submitting report:', error);
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
+      showErrorAlert(error, 'Submit Report', 'Submission Failed');
     } finally {
       setSubmitting(false);
     }
