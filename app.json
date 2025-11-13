@@ -45,15 +45,14 @@
       ]
     ],
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-project-id-here"
+      "fallbackToCacheTimeout": 0
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "6a07be86-55ad-4659-b9b8-2d8cbdf18131"
       }
     }
   }
