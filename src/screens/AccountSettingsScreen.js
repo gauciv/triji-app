@@ -140,6 +140,11 @@ export default function AccountSettingsScreen({ navigation }) {
           <View style={styles.group}>
             <SettingsRow 
               icon="user"
+              title="View Profile"
+              onPress={() => navigation.navigate('Profile')}
+            />
+            <SettingsRow 
+              icon="edit"
               title="Edit Profile"
               onPress={() => navigation.navigate('EditProfile')}
             />

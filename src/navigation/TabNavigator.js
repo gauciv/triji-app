@@ -6,7 +6,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import TaskboardScreen from '../screens/TaskboardScreen';
 import AnnouncementsScreen from '../screens/AnnouncementsScreen';
 import FreedomWallScreen from '../screens/FreedomWallScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import GradeCalculatorScreen from '../screens/GradeCalculatorScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,8 +31,8 @@ export default function TabNavigator() {
             iconName = 'bell';
           } else if (route.name === 'FreedomWall') {
             iconName = 'message-circle';
-          } else if (route.name === 'Profile') {
-            iconName = 'user';
+          } else if (route.name === 'Calculator') {
+            iconName = 'calculator';
           }
 
           return <Feather name={iconName} size={size} color={color} />;
@@ -75,9 +75,9 @@ export default function TabNavigator() {
         options={{ tabBarLabel: 'Wall' }}
       />
       <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
+        name="Calculator" 
+        component={GradeCalculatorScreen}
+        options={{ tabBarLabel: 'Grades' }}
       />
     </Tab.Navigator>
   );
