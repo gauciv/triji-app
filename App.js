@@ -34,20 +34,34 @@ const Stack = createStackNavigator();
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
-  const [initialRouteName, setInitialRouteName] = useState('Login');
+  const [initialRouteName, setInitialRouteName] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
 
   // Listen to auth state changes and manage Firestore listeners
   useEffect(() => {
+    let hasSetInitialRoute = false;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         // User is signed in, start listeners
         console.log('User authenticated, starting listeners');
         startAllListeners();
+        
+        // Set initial route if not already set
+        if (!hasSetInitialRoute && !isReady) {
+          setInitialRouteName('MainApp');
+          hasSetInitialRoute = true;
+        }
       } else {
         // User is signed out, stop listeners
         console.log('User logged out, stopping listeners');
         stopAllListeners();
+        
+        // Set initial route if not already set
+        if (!hasSetInitialRoute && !isReady) {
+          setInitialRouteName('Login');
+          hasSetInitialRoute = true;
+        }
       }
     });
 
@@ -55,12 +69,12 @@ export default function App() {
       unsubscribeAuth();
       stopAllListeners();
     };
-  }, []);
+  }, [isReady]);
 
   useEffect(() => {
     const initializeApp = async () => {
       const startTime = Date.now();
-      const minDisplayTime = 3000; // Minimum 3 seconds to ensure assets loaded
+      const minDisplayTime = 2000; // Minimum 2 seconds for splash
 
       try {
         setLoadingMessage('Loading assets...');
@@ -68,14 +82,10 @@ export default function App() {
         // Preload any critical resources here
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        setLoadingMessage('Checking session...');
-        // Check for existing user session
-        const savedSession = await AsyncStorage.getItem('user_session');
-        if (savedSession) {
-          setInitialRouteName('MainApp');
-        } else {
-          setInitialRouteName('Login');
-        }
+        setLoadingMessage('Checking authentication...');
+        // Wait for Firebase Auth to restore session (if any)
+        // The onAuthStateChanged listener will set initialRouteName
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         setLoadingMessage('Setting up notifications...');
         // Register for push notifications (will gracefully handle Expo Go limitations)

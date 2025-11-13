@@ -156,7 +156,7 @@ export default function LoginScreen({ navigation }) {
         await AsyncStorage.setItem('remember_me', 'true');
       }
       
-      await AsyncStorage.setItem('user_session', JSON.stringify(user));
+      // No need to manually store user_session - Firebase Auth handles persistence automatically
       console.log('Login successful:', user.email);
       return user;
     };

@@ -93,10 +93,7 @@ export default function AccountSettingsScreen({ navigation }) {
       // Stop all Firestore listeners before logging out
       stopAllListeners();
       
-      // Only clear user session - keep remember me credentials
-      await AsyncStorage.removeItem('user_session');
-      
-      // Sign out from Firebase
+      // Sign out from Firebase (this clears the auth session automatically)
       await signOut(auth);
       
       // Additional delay to ensure logout is processed
