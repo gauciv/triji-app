@@ -32,7 +32,7 @@ export default function TabNavigator() {
           } else if (route.name === 'FreedomWall') {
             iconName = 'message-circle';
           } else if (route.name === 'Calculator') {
-            iconName = 'calculator';
+            iconName = 'divide-square';
           }
 
           return <Feather name={iconName} size={size} color={color} />;
@@ -77,7 +77,7 @@ export default function TabNavigator() {
       <Tab.Screen 
         name="Calculator" 
         component={GradeCalculatorScreen}
-        options={{ tabBarLabel: 'Grades' }}
+        options={{ tabBarLabel: 'Calc' }}
       />
     </Tab.Navigator>
   );

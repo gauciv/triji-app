@@ -46,129 +46,123 @@ export default function GradeCalculatorScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.mainContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.mainContainer}>
       {/* Base dark gradient */}
       <LinearGradient
-        colors={['#0A0F1C', '#0A0F1C', '#0A0F1C']}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
       />
 
-      {/* Radial effect overlay */}
-      <View style={styles.radialOverlay}>
-        <LinearGradient
-          colors={['rgba(78, 67, 118, 0.4)', 'rgba(47, 53, 103, 0.2)', 'transparent']}
-          style={styles.centerGlow}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 1, y: 1 }}
-        />
-      </View>
-
-      {/* Top edge glow */}
-      <LinearGradient
-        colors={['rgba(86, 95, 170, 0.15)', 'transparent']}
-        style={styles.topGlow}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-
-      {/* Content */}
-      <View style={styles.container}>
+      {/* Back Button - Fixed Position */}
+      <View style={styles.headerContainer}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Feather name="arrow-left" size={24} color="rgba(255,255,255,0.8)" />
+          <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
+      </View>
 
+      {/* Scrollable Content */}
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.cardContainer}>
-          <BlurView intensity={20} tint="dark" style={styles.mainCard}>
+          <View style={styles.mainCard}>
             <View style={styles.iconContainer}>
-              <Feather name="award" size={32} color="#4ADE80" style={styles.glowingIcon} />
+              <Feather name="trending-up" size={32} color="#22e584" />
             </View>
 
             <Text style={styles.headerTitle}>GWA Calculator</Text>
-            <Text style={styles.subtitle}>Enter your subjects, units, and grades below:</Text>
+            <Text style={styles.subtitle}>Calculate your General Weighted Average</Text>
 
             {/* Result Field Container */}
-            <View style={styles.resultContainer}>
-              <Text style={styles.resultLabel}>Result:</Text>
-              <Text style={styles.resultValue}>{gwa !== null ? gwa : '--'}</Text>
-            </View>
+            {gwa !== null && (
+              <View style={styles.resultContainer}>
+                <Text style={styles.resultLabel}>Your GWA</Text>
+                <Text style={styles.resultValue}>{gwa}</Text>
+              </View>
+            )}
             
-            <View style={styles.subjectsScrollViewContainer}> 
-              <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.scrollContentContainer}> 
-                {subjects.map((subject, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.subjectContainer,
-                      selectedSubjectIdx === idx && styles.selectedSubjectContainer,
-                    ]}
-                    activeOpacity={0.8}
-                    onPress={() => setSelectedSubjectIdx(idx)}
-                  >
-                    <View style={styles.subjectRow}>
-                      <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
-                      <View style={styles.inputsContainer}>
-                        <TextInput
-                          style={[styles.input, styles.unitsInput]}
-                          placeholder="Units"
-                          placeholderTextColor="rgba(255,255,255,0.3)"
-                          keyboardType="numeric"
-                          value={subject.units}
-                          onChangeText={text => handleInputChange(idx, 'units', text)}
-                        />
-                        <TextInput
-                          style={[styles.input, styles.gradeInput]}
-                          placeholder="Grade"
-                          placeholderTextColor="rgba(255,255,255,0.3)"
-                          keyboardType="numeric"
-                          value={subject.grade}
-                          onChangeText={text => handleInputChange(idx, 'grade', text)}
-                        />
-                      </View>
+            {/* Subjects List */}
+            <View style={styles.subjectsContainer}>
+              {subjects.map((subject, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.subjectCard,
+                    selectedSubjectIdx === idx && styles.selectedSubjectCard,
+                  ]}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedSubjectIdx(idx)}
+                >
+                  <Text style={styles.subjectNumber}>Subject {idx + 1}</Text>
+                  <View style={styles.inputsContainer}>
+                    <View style={styles.inputWrapper}>
+                      <Text style={styles.inputLabel}>Units</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="0"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        keyboardType="numeric"
+                        value={subject.units}
+                        onChangeText={text => handleInputChange(idx, 'units', text)}
+                      />
                     </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                    <View style={styles.inputWrapper}>
+                      <Text style={styles.inputLabel}>Grade</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="0.0"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        keyboardType="decimal-pad"
+                        value={subject.grade}
+                        onChangeText={text => handleInputChange(idx, 'grade', text)}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
             </View>
 
+            {/* Action Buttons */}
             <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.addButton} onPress={addSubject}>
+                <Feather name="plus" size={20} color="#22e584" />
+                <Text style={styles.addButtonText}>Add Subject</Text>
+              </TouchableOpacity>
+
+              {selectedSubjectIdx !== null && subjects.length > 1 && (
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={deleteSubject}
+                >
+                  <Feather name="trash-2" size={20} color="#FF3B30" />
+                  <Text style={styles.deleteButtonText}>Remove Selected</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity style={styles.calculateButton} onPress={calculateGWA}>
                 <Feather name="check-circle" size={20} color="#fff" />
                 <Text style={styles.calculateButtonText}>Calculate GWA</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.addButton} onPress={addSubject}>
-                <Text style={styles.addButtonText}>Add Another Subject</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.deleteButton, subjects.length === 1 || selectedSubjectIdx === null ? styles.deleteButtonDisabled : null]}
-                onPress={deleteSubject}
-                disabled={subjects.length === 1 || selectedSubjectIdx === null}
-              >
-                <Text style={styles.deleteButtonText}>Delete Subject</Text>
-              </TouchableOpacity>
             </View>
-          </BlurView>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#0A0F1C',
-  },
-  scrollContentForMainContainer: {
-    flexGrow: 1,
-    // minHeight: height, // Removed to allow content to dictate height and enable scrolling
+    backgroundColor: '#121212',
   },
   gradientBackground: {
     position: 'absolute',
@@ -177,241 +171,171 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
   },
-  radialOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerGlow: {
-    position: 'absolute',
-    width: Math.max(width, height) * 1.5,
-    height: Math.max(width, height) * 1.5,
-    borderRadius: Math.max(width, height) * 0.75,
-    transform: [
-      { translateX: -Math.max(width, height) * 0.75 },
-      { translateY: -Math.max(width, height) * 0.75 }
-    ],
-  },
-  topGlow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: height * 0.4,
-  },
-  container: {
-    flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 48 : 24,
+  headerContainer: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 16,
-    marginBottom: 8,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   cardContainer: {
-    flex: 1,
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginTop: 10,
   },
   mainCard: {
-    backgroundColor: 'rgba(17, 20, 33, 0.95)',
-    borderRadius: 24,
-    padding: 24,
-    paddingBottom: 16, // Adjusted padding to give more space for content and buttons
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    backgroundColor: 'rgba(30, 32, 40, 0.7)',
+    borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
     marginBottom: 16,
-    shadowColor: '#4ADE80',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  glowingIcon: {
-    textShadowColor: '#4ADE80',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  scrollView: {
-    // flex: 1, // Removed to allow content to dictate its height and enable scrolling
-    marginBottom: 16,
-  },
-  scrollContentContainer: {
-    flexGrow: 1, // Allows content to grow and enable scrolling
-    paddingBottom: 20, // Add some padding at the bottom for better scroll experience
-  },
-  subjectsScrollViewContainer: {
-    maxHeight: height * 0.35, // Approximately 35% of screen height
-    marginBottom: 16,
-  },
-  subjectContainer: {
-    marginBottom: 16,
-  },
-  selectedSubjectContainer: {
-    borderColor: '#FF4D4F',
-    borderWidth: 0.5,
-    borderRadius: 12,
-  },
-  subjectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(30, 34, 58, 0.5)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  resultContainer: {
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  resultLabel: {
+    color: '#22e584',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  resultValue: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '700',
+  },
+  subjectsContainer: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  subjectCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  selectedSubjectCard: {
+    borderColor: '#FF3B30',
+    borderWidth: 2,
+    backgroundColor: 'rgba(255, 59, 48, 0.05)',
   },
   subjectNumber: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
-    flex: 1,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   inputsContainer: {
     flexDirection: 'row',
     gap: 12,
+  },
+  inputWrapper: {
     flex: 1,
-    justifyContent: 'flex-end',
+  },
+  inputLabel: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: 'rgba(15, 18, 31, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 8,
-    padding: 8,
+    padding: 12,
     color: '#FFFFFF',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    height: 36,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     textAlign: 'center',
-  },
-  unitsInput: {
-    width: 70,
-  },
-  gradeInput: {
-    width: 70,
   },
   buttonContainer: {
     gap: 12,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#22e584',
+    gap: 8,
+  },
+  addButtonText: {
+    color: '#22e584',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: '#FF3B30',
+    fontSize: 15,
+    fontWeight: '600',
   },
   calculateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4ADE80',
+    backgroundColor: '#22e584',
     padding: 16,
     borderRadius: 12,
-    shadowColor: '#4ADE80',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 5,
+    gap: 8,
   },
   calculateButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  addButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  addButtonText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  deleteButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#FF4D4F',
-    marginTop: 0,
-  },
-  deleteButtonText: {
-    color: '#FF4D4F',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  deleteButtonDisabled: {
-    opacity: 0.5,
-  },
-  resultContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: '#4ADE80',
-    backgroundColor: '#1A223A80',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  resultLabel: {
-    color: '#4ADE80',
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  resultValue: {
-    color: '#fff',
-    fontSize: 22,
     fontWeight: '700',
   },
 }); 
