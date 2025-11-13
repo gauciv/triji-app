@@ -300,7 +300,7 @@ export default function DashboardScreen({ navigation }) {
         iconColor = '#22e584';
         title = item.title || 'Untitled Task';
         subtitle = item.subjectCode || item.subject || 'Task';
-        onPress = () => navigation.navigate('Tasks');
+        onPress = () => navigation.navigate('TaskDetail', { task: item });
         break;
       case 'announcement':
         icon = 'bell';
