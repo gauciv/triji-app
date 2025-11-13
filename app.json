@@ -42,6 +42,16 @@
         {
           "color": "#22e584"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRuleFiles": ["android/app/proguard-rules.pro"]
+          }
+        }
       ]
     ],
     "assetBundlePatterns": [

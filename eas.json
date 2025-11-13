@@ -24,10 +24,7 @@
       "channel": "production",
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease",
-        "enableProguardInReleaseBuilds": true,
-        "enableShrinkResourcesInReleaseBuilds": true,
-        "extraProguardRules": "android/app/proguard-rules.pro"
+        "gradleCommand": ":app:assembleRelease"
       },
       "ios": {
         "resourceClass": "m-medium"
