@@ -860,8 +860,9 @@ const styles = StyleSheet.create({
   sortModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    paddingTop: 140,
+    alignItems: 'flex-end',
+    paddingTop: Platform.OS === 'ios' ? 110 : 95,
+    paddingRight: 20,
   },
   sortDropdown: {
     backgroundColor: 'rgba(42, 42, 42, 0.95)',
