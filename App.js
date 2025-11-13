@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import {
   SplashScreen,
   LoginScreen,
@@ -58,9 +59,14 @@ export default function App() {
   useEffect(() => {
     const initializeApp = async () => {
       const startTime = Date.now();
-      const minDisplayTime = 2000; // Minimum 2 seconds splash screen
+      const minDisplayTime = 3000; // Minimum 3 seconds to ensure assets loaded
 
       try {
+        setLoadingMessage('Loading assets...');
+        
+        // Preload any critical resources here
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         setLoadingMessage('Checking session...');
         // Check for existing user session
         const savedSession = await AsyncStorage.getItem('user_session');
@@ -126,28 +132,35 @@ export default function App() {
   return (
     <ErrorBoundary>
       <NetworkProvider>
-        <OfflineBanner />
-        <NavigationContainer>
-          <Stack.Navigator 
-            initialRouteName={initialRouteName}
-            screenOptions={{ headerShown: false }}
-          >
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="Verification" component={VerificationScreen} />
-            <Stack.Screen name="MainApp" component={TabNavigator} />
-            <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
-            <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
-            <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-            <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-            <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
-            <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-          </Stack.Navigator>
-          <StatusBar style="light" />
-        </NavigationContainer>
+        <View style={{ flex: 1, backgroundColor: '#1B2845' }}>
+          <OfflineBanner />
+          <NavigationContainer>
+            <Stack.Navigator 
+              initialRouteName={initialRouteName}
+              screenOptions={{ 
+                headerShown: false,
+                cardStyle: { backgroundColor: '#1B2845' },
+                animationEnabled: true,
+                animationTypeForReplace: 'pop'
+              }}
+            >
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name="Verification" component={VerificationScreen} />
+              <Stack.Screen name="MainApp" component={TabNavigator} />
+              <Stack.Screen name="CreateAnnouncement" component={CreateAnnouncementScreen} />
+              <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} />
+              <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+              <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+              <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
+              <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+              <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+              <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+              <Stack.Screen name="Profile" component={ProfileScreen} />
+            </Stack.Navigator>
+            <StatusBar style="light" />
+          </NavigationContainer>
+        </View>
       </NetworkProvider>
     </ErrorBoundary>
   );

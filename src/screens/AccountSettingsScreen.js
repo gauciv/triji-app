@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert, Switch, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert, Switch, Linking, ActivityIndicator } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,7 @@ import { stopAllListeners } from '../utils/firestoreListeners';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -83,7 +84,10 @@ export default function AccountSettingsScreen({ navigation }) {
 
   const handleLogout = async () => {
     try {
-      setLoading(true);
+      setShowLogoutModal(true);
+      
+      // Give user visual feedback that logout is happening
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Stop all Firestore listeners before logging out
       stopAllListeners();
@@ -97,8 +101,10 @@ export default function AccountSettingsScreen({ navigation }) {
       // Sign out from Firebase
       await signOut(auth);
       
-      // Small delay to ensure logout is processed
+      // Additional delay to ensure logout is processed
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setShowLogoutModal(false);
       
       // Navigate to login and reset navigation stack
       navigation.reset({
@@ -107,9 +113,8 @@ export default function AccountSettingsScreen({ navigation }) {
       });
     } catch (error) {
       console.log('Logout error:', error.message);
+      setShowLogoutModal(false);
       Alert.alert('Error', 'Failed to logout. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -362,6 +367,23 @@ export default function AccountSettingsScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+      
+      {/* Logout Loading Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.logoutModalOverlay}>
+          <View style={styles.logoutModalCard}>
+            <View style={styles.logoutSpinner}>
+              <Feather name="log-out" size={48} color="#22e584" />
+            </View>
+            <Text style={styles.logoutModalTitle}>Logging out...</Text>
+            <Text style={styles.logoutModalSubtext}>Please wait</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -584,5 +606,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+  },
+  logoutModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutModalCard: {
+    backgroundColor: 'rgba(30, 32, 40, 0.98)',
+    borderRadius: 20,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+    minWidth: 200,
+  },
+  logoutSpinner: {
+    marginBottom: 20,
+    transform: [{ scale: 1 }],
+  },
+  logoutModalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  logoutModalSubtext: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });

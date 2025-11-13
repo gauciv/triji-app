@@ -4,7 +4,8 @@
     "slug": "triji-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#1B2845",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
