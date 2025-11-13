@@ -64,11 +64,11 @@ export default function DashboardScreen({ navigation }) {
     }
 
     try {
-      // Fetch latest tasks (max 5)
+      // Fetch latest tasks (max 3)
       const tasksQuery = query(
         collection(db, 'tasks'),
         orderBy('deadline', 'asc'),
-        limit(5)
+        limit(3)
       );
       
       const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
@@ -82,12 +82,12 @@ export default function DashboardScreen({ navigation }) {
         setLoading(false);
       });
 
-      // Fetch latest announcements (max 5)
+      // Fetch latest announcements (max 3)
       const now = new Date();
       const announcementsQuery = query(
         collection(db, 'announcements'),
         orderBy('createdAt', 'desc'),
-        limit(5)
+        limit(3)
       );
       
       const unsubAnnouncements = onSnapshot(announcementsQuery, (snapshot) => {
@@ -105,11 +105,11 @@ export default function DashboardScreen({ navigation }) {
         setLoading(false);
       });
 
-      // Fetch latest freedom wall posts (max 5)
+      // Fetch latest freedom wall posts (max 3)
       const postsQuery = query(
         collection(db, 'freedom-wall-posts'),
         orderBy('createdAt', 'desc'),
-        limit(5)
+        limit(3)
       );
       
       const unsubPosts = onSnapshot(postsQuery, (snapshot) => {
@@ -202,27 +202,20 @@ export default function DashboardScreen({ navigation }) {
     if (!task) return null;
     
     return (
-      <View 
+      <TouchableOpacity 
         key={task.id}
         style={styles.feedItem}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('Taskboard')}
       >
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardBadge}>
-              <Text style={styles.cardBadgeText} numberOfLines={1}>{task.subjectCode || 'N/A'}</Text>
-            </View>
-            <Text style={styles.cardDate} numberOfLines={1}>{formatDate(task.deadline)}</Text>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardBadge}>
+            <Text style={styles.cardBadgeText} numberOfLines={1}>{task.subjectCode || 'N/A'}</Text>
           </View>
-          <Text style={styles.cardTitle} numberOfLines={2}>{task.title || 'Untitled Task'}</Text>
-          <Text style={styles.cardDescription} numberOfLines={2}>
-            {task.description || 'No description available'}
-          </Text>
+          <Text style={styles.cardDate} numberOfLines={1}>{formatDate(task.deadline)}</Text>
         </View>
-        <TouchableOpacity style={styles.viewDetailsButton} activeOpacity={0.7}>
-          <Text style={styles.viewDetailsText}>View Details</Text>
-          <Feather name="chevron-right" size={16} color="#22e584" />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.cardTitle} numberOfLines={1}>{task.title || 'Untitled Task'}</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -230,33 +223,22 @@ export default function DashboardScreen({ navigation }) {
     if (!announcement) return null;
     
     return (
-      <View 
+      <TouchableOpacity 
         key={announcement.id}
         style={styles.feedItem}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
       >
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardBadge, { backgroundColor: 'rgba(255, 107, 53, 0.2)' }]}>
-              <Text style={[styles.cardBadgeText, { color: '#FF6B35' }]} numberOfLines={1}>
-                {announcement.type || 'Info'}
-              </Text>
-            </View>
-            <Text style={styles.cardDate} numberOfLines={1}>{formatTimestamp(announcement.createdAt)}</Text>
+        <View style={styles.cardHeader}>
+          <View style={[styles.cardBadge, { backgroundColor: 'rgba(255, 107, 53, 0.2)' }]}>
+            <Text style={[styles.cardBadgeText, { color: '#FF6B35' }]} numberOfLines={1}>
+              {announcement.type || 'Info'}
+            </Text>
           </View>
-          <Text style={styles.cardTitle} numberOfLines={2}>{announcement.title || 'Untitled'}</Text>
-          <Text style={styles.cardDescription} numberOfLines={2}>
-            {announcement.content || 'No content available'}
-          </Text>
+          <Text style={styles.cardDate} numberOfLines={1}>{formatTimestamp(announcement.createdAt)}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.viewDetailsButton} 
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
-        >
-          <Text style={styles.viewDetailsText}>View Details</Text>
-          <Feather name="chevron-right" size={16} color="#22e584" />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.cardTitle} numberOfLines={1}>{announcement.title || 'Untitled'}</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -264,39 +246,25 @@ export default function DashboardScreen({ navigation }) {
     if (!post) return null;
     
     return (
-      <View 
+      <TouchableOpacity 
         key={post.id}
         style={styles.feedItem}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('PostDetail', { post: post })}
       >
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardBadge, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
-              <Text style={[styles.cardBadgeText, { color: '#3498DB' }]} numberOfLines={1}>
-                {post.nickname || post.displayName || 'Anonymous'}
-              </Text>
-            </View>
-            <View style={styles.likeCount}>
-              <Feather name="heart" size={12} color="rgba(255, 255, 255, 0.5)" />
-              <Text style={styles.likeCountText}>{post.likeCount || 0}</Text>
-            </View>
-            <Text style={styles.cardDate} numberOfLines={1}>{formatTimestamp(post.createdAt)}</Text>
+        <View style={styles.cardHeader}>
+          <View style={[styles.cardBadge, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
+            <Text style={[styles.cardBadgeText, { color: '#3498DB' }]} numberOfLines={1}>
+              {post.nickname || post.displayName || 'Anonymous'}
+            </Text>
           </View>
-          <Text style={styles.cardTitle} numberOfLines={2}>{post.content || 'No content'}</Text>
-          <Text style={styles.cardDescription} numberOfLines={2}>
-            {post.tags && Array.isArray(post.tags) && post.tags.length > 0 
-              ? post.tags.map(tag => `#${tag}`).join(' ')
-              : 'No tags'}
-          </Text>
+          <View style={styles.likeCount}>
+            <Feather name="heart" size={12} color="rgba(255, 255, 255, 0.5)" />
+            <Text style={styles.likeCountText}>{post.likeCount || 0}</Text>
+          </View>
         </View>
-        <TouchableOpacity 
-          style={styles.viewDetailsButton} 
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate('PostDetail', { post: post })}
-        >
-          <Text style={styles.viewDetailsText}>View Details</Text>
-          <Feather name="chevron-right" size={16} color="#22e584" />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.cardTitle} numberOfLines={1}>{post.content || 'No content'}</Text>
+      </TouchableOpacity>
     );
   };  const renderSection = (title, items, renderItem, emptyMessage, viewAllAction) => {
     if (items.length === 0) return null;
@@ -310,7 +278,7 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <View style={styles.feedList}>
-          {items.slice(0, 5).map(renderItem)}
+          {items.slice(0, 3).map(renderItem)}
         </View>
       </View>
     );
@@ -502,13 +470,13 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   section: {
-    marginBottom: 28,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 19,
@@ -525,23 +493,19 @@ const styles = StyleSheet.create({
   },
   feedItem: {
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 10,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    marginBottom: 12,
-    minHeight: 112,
-  },
-  cardContent: {
-    marginBottom: 12,
-    flex: 1,
+    marginBottom: 10,
+    height: 72,
+    justifyContent: 'center',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    minHeight: 24,
+    marginBottom: 6,
   },
   cardBadge: {
     backgroundColor: 'rgba(0, 122, 255, 0.2)',
@@ -574,25 +538,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    lineHeight: 21,
-    marginBottom: 6,
-    minHeight: 42,
-  },
-  cardDescription: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 20,
-    minHeight: 40,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
   },
   likeCount: {
     flexDirection: 'row',
@@ -608,20 +557,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     color: 'rgba(255, 255, 255, 0.6)',
-  },
-  viewDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  viewDetailsText: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#22e584',
   },
   emptyState: {
     alignItems: 'center',
