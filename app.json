@@ -29,6 +29,11 @@
         "VIBRATE",
         "com.google.android.c2dm.permission.RECEIVE",
         "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "INTERNET",
         "ACCESS_NETWORK_STATE"
       ]
     },
@@ -45,7 +50,8 @@
       ]
     ],
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/6a07be86-55ad-4659-b9b8-2d8cbdf18131"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
