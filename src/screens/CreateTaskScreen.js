@@ -91,7 +91,7 @@ export default function CreateTaskScreen({ navigation }) {
       await addDoc(collection(db, 'tasks'), {
         title: title.trim(),
         details: details.trim(),
-        deadline: formatDate(deadline),
+        deadline: deadline.toISOString(),
         subjectId: selectedSubject,
         subjectName: selectedSubjectData?.subjectName || '',
         subjectCode: selectedSubjectData?.subjectCode || '',

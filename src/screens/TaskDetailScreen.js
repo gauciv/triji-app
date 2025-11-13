@@ -58,9 +58,24 @@ export default function TaskDetailScreen({ route, navigation }) {
     return () => clearInterval(interval);
   }, [task]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'No deadline';
-    const date = new Date(dateString);
+  const formatDate = (deadline) => {
+    if (!deadline) return 'No deadline';
+    
+    let date;
+    // Handle Firestore Timestamp object
+    if (deadline.toDate && typeof deadline.toDate === 'function') {
+      date = deadline.toDate();
+    }
+    // Handle timestamp in seconds
+    else if (deadline.seconds) {
+      date = new Date(deadline.seconds * 1000);
+    }
+    // Handle regular date string
+    else {
+      date = new Date(deadline);
+    }
+    
+    if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -79,11 +94,25 @@ export default function TaskDetailScreen({ route, navigation }) {
     return 11; // Very long subject names
   };
 
-  const isOverdue = (dateString) => {
-    if (!dateString) return false;
-    const deadline = new Date(dateString);
+  const isOverdue = (deadline) => {
+    if (!deadline) return false;
+    
+    let date;
+    // Handle Firestore Timestamp object
+    if (deadline.toDate && typeof deadline.toDate === 'function') {
+      date = deadline.toDate();
+    }
+    // Handle timestamp in seconds
+    else if (deadline.seconds) {
+      date = new Date(deadline.seconds * 1000);
+    }
+    // Handle regular date string
+    else {
+      date = new Date(deadline);
+    }
+    
     const today = new Date();
-    return deadline < today;
+    return date < today;
   };
 
   const toggleTaskCompletion = async () => {
@@ -162,8 +191,8 @@ export default function TaskDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.taskInfo}>
               <View style={styles.subjectRow}>
-                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode) }]} numberOfLines={1}>
-                  {task.subjectCode || 'Subject'}
+                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode || task.subject) }]} numberOfLines={1}>
+                  {task.subjectCode || task.subject || 'Subject'}
                 </Text>
                 <View style={[
                   styles.statusBadgeDisplay,
@@ -195,9 +224,9 @@ export default function TaskDetailScreen({ route, navigation }) {
           </View>
 
           {/* Task Description */}
-          {task.description && task.description.trim() ? (
+          {(task.description || task.details) && (task.description || task.details).trim() ? (
             <View style={styles.taskDescriptionContainer}>
-              <Text style={styles.taskDescription}>{task.description}</Text>
+              <Text style={styles.taskDescription}>{task.description || task.details}</Text>
             </View>
           ) : (
             <View style={styles.emptyDescriptionContainer}>

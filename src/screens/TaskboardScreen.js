@@ -121,9 +121,24 @@ export default function TaskboardScreen({ navigation }) {
     }, 800);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'No deadline';
-    const date = new Date(dateString);
+  const formatDate = (deadline) => {
+    if (!deadline) return 'No deadline';
+    
+    let date;
+    // Handle Firestore Timestamp object
+    if (deadline.toDate && typeof deadline.toDate === 'function') {
+      date = deadline.toDate();
+    } 
+    // Handle timestamp in seconds (Firestore format)
+    else if (deadline.seconds) {
+      date = new Date(deadline.seconds * 1000);
+    }
+    // Handle regular date string or ISO string
+    else {
+      date = new Date(deadline);
+    }
+    
+    if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -137,12 +152,26 @@ export default function TaskboardScreen({ navigation }) {
   const paginatedTasks = tasks.slice(startIndex, endIndex);
   const totalPages = Math.ceil(tasks.length / ITEMS_PER_PAGE);
 
-  const isOverdue = (dateString) => {
-    if (!dateString) return false;
-    const deadline = new Date(dateString);
+  const isOverdue = (deadline) => {
+    if (!deadline) return false;
+    
+    let date;
+    // Handle Firestore Timestamp object
+    if (deadline.toDate && typeof deadline.toDate === 'function') {
+      date = deadline.toDate();
+    }
+    // Handle timestamp in seconds
+    else if (deadline.seconds) {
+      date = new Date(deadline.seconds * 1000);
+    }
+    // Handle regular date string
+    else {
+      date = new Date(deadline);
+    }
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return deadline < today;
+    return date < today;
   };
 
   const renderTaskCard = (task) => {
@@ -158,7 +187,9 @@ export default function TaskboardScreen({ navigation }) {
       >
         <View style={styles.taskCardHeader}>
           <View style={styles.subjectBadge}>
-            <Text style={styles.subjectBadgeText}>{task.subjectCode || 'N/A'}</Text>
+            <Text style={styles.subjectBadgeText} numberOfLines={1} ellipsizeMode="tail">
+              {task.subjectCode || task.subject || 'N/A'}
+            </Text>
           </View>
           <View style={styles.taskCardBadges}>
             {isCompleted ? (
@@ -183,9 +214,9 @@ export default function TaskboardScreen({ navigation }) {
         
         <Text style={styles.taskTitle}>{task.title || 'Untitled Task'}</Text>
         
-        {task.description && (
+        {(task.description || task.details) && (
           <Text style={styles.taskDescription} numberOfLines={2}>
-            {task.description}
+            {task.description || task.details}
           </Text>
         )}
         
@@ -412,7 +443,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   tasksScroll: {
     flex: 1,
@@ -422,9 +453,9 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -437,11 +468,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    gap: 8,
   },
   taskCardBadges: {
     flexDirection: 'row',
     gap: 8,
+    flexShrink: 0,
   },
   completedBadge: {
     flexDirection: 'row',
@@ -477,14 +510,16 @@ const styles = StyleSheet.create({
   },
   subjectBadge: {
     backgroundColor: 'rgba(34, 229, 132, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(34, 229, 132, 0.3)',
+    flexShrink: 1,
+    maxWidth: '65%',
   },
   subjectBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     color: '#22e584',
   },
@@ -503,18 +538,18 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   taskTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
-    marginBottom: 8,
-    lineHeight: 24,
+    marginBottom: 6,
+    lineHeight: 22,
   },
   taskDescription: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.7)',
-    lineHeight: 20,
-    marginBottom: 12,
+    color: 'rgba(255, 255, 255, 0.65)',
+    lineHeight: 18,
+    marginBottom: 8,
   },
   taskFooter: {
     flexDirection: 'row',
@@ -527,7 +562,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   taskDate: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Inter_500Medium',
     color: '#8E8E93',
   },

@@ -74,9 +74,24 @@ export default function ArchivedTasksScreen({ navigation }) {
     }, 800);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'No deadline';
-    const date = new Date(dateString);
+  const formatDate = (deadline) => {
+    if (!deadline) return 'No deadline';
+    
+    let date;
+    // Handle Firestore Timestamp object
+    if (deadline.toDate && typeof deadline.toDate === 'function') {
+      date = deadline.toDate();
+    }
+    // Handle timestamp in seconds
+    else if (deadline.seconds) {
+      date = new Date(deadline.seconds * 1000);
+    }
+    // Handle regular date string
+    else {
+      date = new Date(deadline);
+    }
+    
+    if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -146,7 +161,9 @@ export default function ArchivedTasksScreen({ navigation }) {
             >
               <View style={styles.taskCardHeader}>
                 <View style={styles.subjectBadge}>
-                  <Text style={styles.subjectBadgeText}>{task.subjectCode || 'N/A'}</Text>
+                  <Text style={styles.subjectBadgeText} numberOfLines={1} ellipsizeMode="tail">
+                    {task.subjectCode || task.subject || 'N/A'}
+                  </Text>
                 </View>
                 <View style={styles.completedBadge}>
                   <Feather name="check-circle" size={13} color="#22e584" />
@@ -156,9 +173,9 @@ export default function ArchivedTasksScreen({ navigation }) {
 
               <Text style={styles.taskTitle}>{task.title || 'Untitled Task'}</Text>
 
-              {task.description && (
+              {(task.description || task.details) && (
                 <Text style={styles.taskDescription} numberOfLines={2}>
-                  {task.description}
+                  {task.description || task.details}
                 </Text>
               )}
 
@@ -259,12 +276,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   subjectBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: 'rgba(34, 229, 132, 0.2)',
+    flexShrink: 1,
+    maxWidth: '65%',
   },
   subjectBadgeText: {
     fontFamily: 'Inter_600SemiBold',
