@@ -209,6 +209,22 @@ export default function FreedomWallScreen({ navigation }) {
     checkCooldown();
   }, [showModal]);
 
+  useEffect(() => {
+    if (cooldownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setCooldownSeconds(prev => {
+          const newValue = prev - 1;
+          if (newValue <= 0) {
+            setIsOnCooldown(false);
+            return 0;
+          }
+          return newValue;
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownSeconds]);
+
   const checkCooldown = async () => {
     try {
       const lastPostTime = await AsyncStorage.getItem('lastPostTime');
@@ -220,20 +236,13 @@ export default function FreedomWallScreen({ navigation }) {
           const remainingTime = Math.ceil((cooldownTime - timeDiff) / 1000);
           setIsOnCooldown(true);
           setCooldownSeconds(remainingTime);
-          
-          const interval = setInterval(() => {
-            setCooldownSeconds(prev => {
-              if (prev <= 1) {
-                setIsOnCooldown(false);
-                clearInterval(interval);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-          
-          return () => clearInterval(interval);
+        } else {
+          setIsOnCooldown(false);
+          setCooldownSeconds(0);
         }
+      } else {
+        setIsOnCooldown(false);
+        setCooldownSeconds(0);
       }
     } catch (error) {
       console.log('Error checking cooldown:', error);
@@ -518,6 +527,7 @@ export default function FreedomWallScreen({ navigation }) {
                   rotation="2deg"
                   onLike={() => {}}
                   isLiked={false}
+                  textColor={getTextColor(selectedColor)}
                 />
               </View>
             </View>
@@ -567,10 +577,10 @@ export default function FreedomWallScreen({ navigation }) {
               <TouchableOpacity 
                 style={[
                   styles.postButton, 
-                  (posting || isOnCooldown) && styles.postButtonDisabled
+                  (posting || isOnCooldown || !postContent.trim()) && styles.postButtonDisabled
                 ]}
                 onPress={handlePost}
-                disabled={posting || isOnCooldown}
+                disabled={posting || isOnCooldown || !postContent.trim()}
               >
                 <Text style={[
                   styles.postButtonText,
@@ -583,6 +593,39 @@ export default function FreedomWallScreen({ navigation }) {
             </ScrollView>
           </BlurView>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Sort Modal */}
+      <Modal visible={showSortModal} animationType="fade" transparent onRequestClose={() => setShowSortModal(false)}>
+        <TouchableOpacity 
+          style={styles.sortModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
+          <View style={styles.sortDropdown}>
+            {['Oldest to Newest', 'Newest to Oldest', 'Most Hearts', 'Fewest Hearts'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.sortOption,
+                  sortBy === option && styles.sortOptionSelected
+                ]}
+                onPress={() => {
+                  setSortBy(option);
+                  setShowSortModal(false);
+                }}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === option && styles.sortOptionTextSelected
+                ]}>
+                  {option}
+                </Text>
+                {sortBy === option && <Feather name="check" size={16} color="#34C759" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -723,6 +766,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 6,
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   colorCircle: {
     width: 36,
@@ -741,9 +785,11 @@ const styles = StyleSheet.create({
   },
   previewArea: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
-    minHeight: 100,
-    maxHeight: 140,
+    paddingTop: 4,
+    paddingBottom: 8,
+    marginBottom: 60,
+    minHeight: 60,
+    maxHeight: 100,
   },
   previewLabel: {
     fontSize: 14,
@@ -754,6 +800,7 @@ const styles = StyleSheet.create({
   previewContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ scale: 1 }],
   },
   formArea: {
     backgroundColor: 'transparent',

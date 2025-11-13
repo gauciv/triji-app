@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 
-export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress }) {
+export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress, textColor }) {
   const [countdown, setCountdown] = useState('');
   
   let [fontsLoaded] = useFonts({
@@ -44,6 +44,17 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
     return null;
   }
 
+  const getTextColor = (backgroundColor) => {
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128 ? '#2C2C2C' : '#FFFFFF';
+  };
+
+  const dynamicTextColor = textColor || getTextColor(post.noteColor || '#FFFACD');
+
   return (
     <TouchableOpacity 
       style={[
@@ -60,12 +71,12 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
       <View style={styles.cardContent}>
         <View style={styles.personaContainer}>
           <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
-          <Text style={[styles.personaText, { color: post.personaColor || '#34C759' }]}>
+          <Text style={[styles.personaText, { color: dynamicTextColor }]}>
             {post.persona || 'Anonymous'}
           </Text>
         </View>
         
-        <Text style={styles.postText} numberOfLines={4} ellipsizeMode="tail">
+        <Text style={[styles.postText, { color: textColor || '#2C2C2C' }]} numberOfLines={4} ellipsizeMode="tail">
           {post.content}
         </Text>
         
@@ -78,7 +89,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             }}
           >
             <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
-            <Text style={styles.likeCount}>{post.likeCount || 0}</Text>
+            <Text style={[styles.likeCount, { color: dynamicTextColor, opacity: 0.7 }]}>{post.likeCount || 0}</Text>
           </TouchableOpacity>
           
           {post.status === 'pending' ? (
@@ -87,7 +98,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
               <Text style={styles.pendingText}>Syncing...</Text>
             </View>
           ) : countdown && (
-            <Text style={styles.countdown}>{countdown}</Text>
+            <Text style={[styles.countdown, { color: dynamicTextColor, opacity: 0.6 }]}>{countdown}</Text>
           )}
         </View>
       </View>
