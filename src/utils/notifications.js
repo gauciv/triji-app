@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -19,7 +18,10 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotifications() {
   let token = null;
 
-  if (Device.isDevice) {
+  try {
+    // Check if running in Expo Go (which doesn't support push notifications in SDK 53+)
+    const isExpoGo = typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
+    
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -29,15 +31,22 @@ export async function registerForPushNotifications() {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      console.log('Push notification permissions not granted');
       return null;
     }
 
-    // Get the token that uniquely identifies this device
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log('Push notification token:', token);
-  } else {
-    console.log('Must use physical device for Push Notifications');
+    // Only try to get push token if permissions are granted
+    if (finalStatus === 'granted') {
+      try {
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log('Push notification token:', token);
+      } catch (error) {
+        console.log('Could not get push token (normal in Expo Go):', error.message);
+      }
+    }
+  } catch (error) {
+    console.log('Push notification setup error (normal in Expo Go):', error.message);
+    return null;
   }
 
   // Android-specific configuration

@@ -24,21 +24,14 @@
         "com.google.android.c2dm.permission.RECEIVE"
       ]
     },
-    "notification": {
-      "icon": "./assets/notification-icon.png",
-      "color": "#22e584",
-      "androidMode": "default",
-      "androidCollapsedTitle": "Triji"
-    },
+
     "web": {},
     "plugins": [
       "expo-font",
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#22e584",
-          "sounds": []
+          "color": "#22e584"
         }
       ]
     ]

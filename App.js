@@ -49,13 +49,21 @@ export default function App() {
         }
         
         setLoadingMessage('Setting up notifications...');
-        // Register for push notifications
-        await registerForPushNotifications();
+        // Register for push notifications (will gracefully handle Expo Go limitations)
+        try {
+          await registerForPushNotifications();
+        } catch (error) {
+          console.log('Push notification setup skipped:', error.message);
+        }
         
         // Start Firestore listeners for new content
         if (savedSession) {
           setLoadingMessage('Starting listeners...');
-          startAllListeners();
+          try {
+            startAllListeners();
+          } catch (error) {
+            console.log('Listener setup error:', error.message);
+          }
         }
         
         setLoadingMessage('Finalizing...');
