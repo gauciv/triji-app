@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
 import { Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DashboardScreen from '../screens/DashboardScreen';
 import TaskboardScreen from '../screens/TaskboardScreen';
 import AnnouncementsScreen from '../screens/AnnouncementsScreen';
@@ -11,6 +12,8 @@ import GradeCalculatorScreen from '../screens/GradeCalculatorScreen';
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+  const insets = useSafeAreaInsets();
+  
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -47,8 +50,8 @@ export default function TabNavigator() {
           backgroundColor: 'rgba(28, 34, 47, 0.95)',
           borderTopColor: 'rgba(34, 229, 132, 0.2)',
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 85 : 65,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          height: Platform.OS === 'ios' ? 85 : Math.max(65, 65 + insets.bottom),
+          paddingBottom: Platform.OS === 'ios' ? 25 : Math.max(10, insets.bottom),
           paddingTop: 10,
           elevation: 0,
         },
