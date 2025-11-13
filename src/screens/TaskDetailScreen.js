@@ -191,7 +191,7 @@ export default function TaskDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.taskInfo}>
               <View style={styles.subjectRow}>
-                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode || task.subject) }]} numberOfLines={1}>
+                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode || task.subject) }]} numberOfLines={1} ellipsizeMode="tail">
                   {task.subjectCode || task.subject || 'Subject'}
                 </Text>
                 <View style={[
@@ -347,12 +347,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    gap: 8,
   },
   taskSubject: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
     color: '#FFFFFF',
-    flex: 0,
+    flex: 1,
+    flexShrink: 1,
   },
   statusBadgeDisplay: {
     flexDirection: 'row',
@@ -361,6 +363,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
     gap: 4,
+    flexShrink: 0,
   },
   statusBadgeCompleted: {
     backgroundColor: 'rgba(34, 229, 132, 0.15)',
