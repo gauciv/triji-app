@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   iconCircle: {
-    width: 48,
-    height: 48,
+    width: 35,
+    height: 35,
     borderRadius: 24,
     backgroundColor: 'rgba(34, 229, 132, 0.15)',
     alignItems: 'center',
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,

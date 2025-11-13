@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions, ScrollView, TextInput } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
@@ -15,6 +15,7 @@ export default function AnnouncementsScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const windowWidth = Dimensions.get('window').width;
   const isSmallScreen = windowWidth < 400;
@@ -139,6 +140,11 @@ export default function AnnouncementsScreen({ navigation }) {
     return 'Expires soon';
   };
   
+  // Filter announcements based on search query
+  const filteredAnnouncements = announcements.filter(announcement => 
+    announcement.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   const renderAnnouncement = ({ item }) => {
     const typeColor = getTypeColor(item.type);
     const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
@@ -212,12 +218,37 @@ export default function AnnouncementsScreen({ navigation }) {
       />
       
       <View style={styles.header}>
-        <View style={styles.iconCircle}>
-          <MaterialCommunityIcons name="bell-ring" size={28} color="#22e584" />
+        <View style={styles.headerTop}>
+          <View style={styles.iconCircle}>
+            <MaterialCommunityIcons name="bell-ring" size={28} color="#22e584" />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Announcements</Text>
+            <Text style={styles.headerSubtext}>All important announcements in one place</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.archiveButton}
+            onPress={() => navigation.navigate('ArchivedAnnouncements')}
+          >
+            <Feather name="archive" size={20} color="#22e584" />
+          </TouchableOpacity>
         </View>
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>Announcements</Text>
-          <Text style={styles.headerSubtext}>All important announcements in one place</Text>
+        
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Feather name="search" size={18} color="rgba(255,255,255,0.5)" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search announcements..."
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Feather name="x" size={18} color="rgba(255,255,255,0.5)" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
         
@@ -229,11 +260,15 @@ export default function AnnouncementsScreen({ navigation }) {
               <AnnouncementCardSkeleton />
               <AnnouncementCardSkeleton />
             </View>
-          ) : announcements.length === 0 ? (
+          ) : filteredAnnouncements.length === 0 ? (
             <View style={styles.emptyContainerModern}>
               <Feather name="bell" size={64} color="#8E8E93" />
-              <Text style={styles.emptyTitleModern}>No announcements yet</Text>
-              <Text style={styles.emptyMessageModern}>Check back soon!</Text>
+              <Text style={styles.emptyTitleModern}>
+                {searchQuery ? 'No matching announcements' : 'No announcements yet'}
+              </Text>
+              <Text style={styles.emptyMessageModern}>
+                {searchQuery ? 'Try a different search term' : 'Check back soon!'}
+              </Text>
             </View>
           ) : (
             <ScrollView
@@ -241,7 +276,7 @@ export default function AnnouncementsScreen({ navigation }) {
               contentContainerStyle={styles.listContainerModern}
               showsVerticalScrollIndicator={false}
             >
-              {announcements.map((item) => (
+              {filteredAnnouncements.map((item) => (
                 <View key={item.id}>
                   {renderAnnouncement({ item })}
                 </View>
@@ -249,23 +284,14 @@ export default function AnnouncementsScreen({ navigation }) {
             </ScrollView>
           )}
         </View>
-        
-      <View style={styles.actionBar}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('ArchivedAnnouncements')}
-        >
-          <Feather name="archive" size={20} color="#22e584" />
-          <Text style={styles.actionButtonText}>Archive</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.actionButtonPrimary]}
-          onPress={() => navigation.navigate('CreateAnnouncement')}
-        >
-          <Feather name="plus" size={20} color="#fff" />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextPrimary]}>New</Text>
-        </TouchableOpacity>
-      </View>
+      
+      {/* Floating Action Button */}
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={() => navigation.navigate('CreateAnnouncement')}
+      >
+        <Feather name="plus" size={28} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -283,14 +309,17 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 16,
-    gap: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
   },
   iconCircle: {
     width: 48,
@@ -305,6 +334,16 @@ const styles = StyleSheet.create({
   headerTextContainer: {
     flex: 1,
   },
+  archiveButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
   headerTitle: {
     fontSize: 22,
     fontFamily: 'Inter_600SemiBold',
@@ -316,6 +355,30 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.6)',
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
   backgroundGradient: {
     position: 'absolute',
     top: 0,
@@ -324,35 +387,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#007AFF',
     opacity: 0.05,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 48, // more space from top
-    paddingBottom: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 0,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginLeft: 0, // ensure not flush to border
-  },
-  headerBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 18, // move buttons down for visual appeal
   },
   archiveButtonGhost: {
     flexDirection: 'row',
@@ -389,52 +423,51 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContainerModern: {
-    paddingHorizontal: 16,
-    paddingTop: 24, // more margin from header
-    paddingBottom: 48,
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 100,
     alignItems: 'stretch',
-    gap: 24,
+    gap: 12,
   },
   announcementCardModern: {
     backgroundColor: 'rgba(30, 32, 40, 0.55)',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
     borderLeftWidth: 3,
-    marginBottom: 12,
+    marginBottom: 0,
     elevation: 3,
+    maxHeight: Dimensions.get('window').width / 2,
   },
   cardMainModern: {
     flexDirection: 'row',
-    gap: 18,
+    gap: 12,
     alignItems: 'flex-start',
-    // Allow wrapping for dynamic content
     flexWrap: 'wrap',
   },
   cardLeftModern: {
     alignItems: 'center',
-    marginRight: 18,
-    minWidth: 70,
-    // Allow vertical expansion for long names
+    marginRight: 12,
+    minWidth: 60,
     flexShrink: 0,
   },
   authorPictureModern: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 2,
   },
   authorInitialModern: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
     zIndex: 1,
@@ -661,6 +694,7 @@ const styles = StyleSheet.create({
     elevation: 10,
     width: '100%',
     maxWidth: 700,
+    maxHeight: Dimensions.get('window').width / 2,
     alignSelf: 'center',
     minWidth: 0,
     backdropFilter: 'blur(18px)', // web only
@@ -683,23 +717,23 @@ const styles = StyleSheet.create({
   },
   cardContentModernPolished: {
     flex: 1,
-    padding: 18,
+    padding: 12,
     justifyContent: 'center',
   },
   cardHeaderModernPolished: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 10,
+    marginBottom: 6,
+    gap: 8,
   },
   authorPictureModernPolished: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 6,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.13,
@@ -707,7 +741,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   authorInitialModernPolished: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
     color: '#fff',
   },
@@ -720,17 +754,17 @@ const styles = StyleSheet.create({
     maxWidth: 120,
   },
   titleModernPolished: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter_600SemiBold',
     color: '#fff',
-    marginBottom: 8,
-    lineHeight: 28,
+    marginBottom: 6,
+    lineHeight: 24,
     flexWrap: 'wrap',
   },
   cardMetaModernPolished: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     marginTop: 2,
   },
   typeChipModernPolished: {
@@ -889,38 +923,21 @@ const styles = StyleSheet.create({
   announcementsScroll: {
     flex: 1,
   },
-  actionBar: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: Platform.OS === 'ios' ? 90 : 80,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'ios' ? 100 : 90,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#22e584',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(34, 229, 132, 0.3)',
-  },
-  actionButtonPrimary: {
-    backgroundColor: 'rgba(34, 229, 132, 0.2)',
-  },
-  actionButtonText: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#22e584',
-  },
-  actionButtonTextPrimary: {
-    color: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   fixedActionBarCard: {
     flexDirection: 'row',
