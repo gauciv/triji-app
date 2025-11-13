@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions, ScrollView, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions, ScrollView, TextInput, RefreshControl } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
@@ -16,6 +16,9 @@ export default function AnnouncementsScreen({ navigation }) {
   const [initialLoad, setInitialLoad] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const windowWidth = Dimensions.get('window').width;
   const isSmallScreen = windowWidth < 400;
@@ -145,6 +148,26 @@ export default function AnnouncementsScreen({ navigation }) {
     announcement.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  // Pagination
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedAnnouncements = filteredAnnouncements.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
+  
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    // Data will refresh automatically through onSnapshot listener
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+  
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+  
   const renderAnnouncement = ({ item }) => {
     const typeColor = getTypeColor(item.type);
     const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
@@ -271,17 +294,52 @@ export default function AnnouncementsScreen({ navigation }) {
               </Text>
             </View>
           ) : (
-            <ScrollView
-              style={styles.announcementsScroll}
-              contentContainerStyle={styles.listContainerModern}
-              showsVerticalScrollIndicator={false}
-            >
-              {filteredAnnouncements.map((item) => (
-                <View key={item.id}>
-                  {renderAnnouncement({ item })}
+            <>
+              <ScrollView
+                style={styles.announcementsScroll}
+                contentContainerStyle={styles.listContainerModern}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor="#22e584"
+                    colors={['#22e584']}
+                    progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+                  />
+                }
+              >
+                {paginatedAnnouncements.map((item) => (
+                  <View key={item.id}>
+                    {renderAnnouncement({ item })}
+                  </View>
+                ))}
+              </ScrollView>
+              
+              {totalPages > 1 && (
+                <View style={styles.paginationControls}>
+                  <TouchableOpacity
+                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                    onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
+                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
+                    onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
+                    <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
+                  </TouchableOpacity>
                 </View>
-              ))}
-            </ScrollView>
+              )}
+            </>
           )}
         </View>
       
@@ -1096,5 +1154,56 @@ const styles = StyleSheet.create({
     borderColor: '#22e584',
     backgroundColor: 'transparent',
     shadowColor: 'transparent',
+  },
+  paginationInfo: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(34, 229, 132, 0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  paginationText: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  paginationControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  pageButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
+  },
+  pageButtonTextDisabled: {
+    color: '#555',
+  },
+  pageIndicator: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });

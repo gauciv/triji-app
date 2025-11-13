@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform, RefreshControl } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +15,9 @@ export default function TaskboardScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [initialLoad, setInitialLoad] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const windowWidth = Dimensions.get('window').width;
 
@@ -88,6 +91,15 @@ export default function TaskboardScreen({ navigation }) {
     return () => unsubscribeAuth();
   }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    // Data will refresh automatically through onSnapshot listener
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'No deadline';
     const date = new Date(dateString);
@@ -97,6 +109,12 @@ export default function TaskboardScreen({ navigation }) {
       year: 'numeric'
     });
   };
+
+  // Paginated tasks
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTasks = tasks.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(tasks.length / ITEMS_PER_PAGE);
 
   const isOverdue = (dateString) => {
     if (!dateString) return false;
@@ -178,6 +196,14 @@ export default function TaskboardScreen({ navigation }) {
           <Text style={styles.headerSubtext}>View all tasks and upcoming deadlines</Text>
         </View>
       </View>
+      
+      {!initialLoad && tasks.length > 0 && (
+        <View style={styles.paginationInfo}>
+          <Text style={styles.paginationText}>
+            Showing {startIndex + 1}-{Math.min(endIndex, tasks.length)} of {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+          </Text>
+        </View>
+      )}
         
       <View style={styles.tasksContent}>
           {initialLoad ? (
@@ -205,13 +231,48 @@ export default function TaskboardScreen({ navigation }) {
               <Text style={styles.emptyMessage}>Tasks will appear here once added by administrators</Text>
             </View>
           ) : (
-            <ScrollView
-              style={styles.tasksScroll}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {tasks.map((task) => renderTaskCard(task))}
-            </ScrollView>
+            <>
+              <ScrollView
+                style={styles.tasksScroll}
+                contentContainerStyle={styles.listContainer}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor="#22e584"
+                    colors={['#22e584']}
+                    progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+                  />
+                }
+              >
+                {paginatedTasks.map((task) => renderTaskCard(task))}
+              </ScrollView>
+              
+              {totalPages > 1 && (
+                <View style={styles.paginationControls}>
+                  <TouchableOpacity
+                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                    onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
+                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
+                    onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
+                    <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
           )}
         </View>
     </View>
@@ -388,5 +449,56 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter_500Medium',
+  },
+  paginationInfo: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(34, 229, 132, 0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  paginationText: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  paginationControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  pageButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
+  },
+  pageButtonTextDisabled: {
+    color: '#555',
+  },
+  pageIndicator: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });

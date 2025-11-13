@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, ScrollView, Platform, RefreshControl } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -32,10 +32,28 @@ export default function FreedomWallScreen({ navigation }) {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [cardWidth, setCardWidth] = useState(Dimensions.get('window').width * 0.92);
   const [numColumns, setNumColumns] = useState(3);
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 30;
 
   const combinedPosts = useMemo(() => {
     return [...posts, ...pendingPosts];
   }, [posts, pendingPosts]);
+  
+  // Pagination
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedPosts = combinedPosts.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(combinedPosts.length / ITEMS_PER_PAGE);
+  
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    // Data will refresh automatically through onSnapshot listener
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
 
   const colorPalette = [
     '#FFFACD', // Pale yellow
@@ -450,6 +468,14 @@ export default function FreedomWallScreen({ navigation }) {
           <Feather name="filter" size={20} color="#22e584" />
         </TouchableOpacity>
       </View>
+      
+      {!isInitialLoading && combinedPosts.length > 0 && (
+        <View style={styles.paginationInfo}>
+          <Text style={styles.paginationText}>
+            Showing {startIndex + 1}-{Math.min(endIndex, combinedPosts.length)} of {combinedPosts.length} {combinedPosts.length === 1 ? 'post' : 'posts'}
+          </Text>
+        </View>
+      )}
         
       <View style={styles.cardContent}>
           {/* Posts list or empty state */}
@@ -467,7 +493,7 @@ export default function FreedomWallScreen({ navigation }) {
             </View>
           ) : (
             <FlatList
-              data={combinedPosts}
+              data={paginatedPosts}
               keyExtractor={(item) => item.id}
               renderItem={({ item, index }) => (
                 <PostCard 
@@ -481,10 +507,44 @@ export default function FreedomWallScreen({ navigation }) {
               numColumns={numColumns}
               contentContainerStyle={styles.postsGridContainer}
               showsVerticalScrollIndicator={false}
-              key={numColumns} // force re-render on column change
+              key={numColumns}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#22e584"
+                  colors={['#22e584']}
+                  progressBackgroundColor="rgba(255, 255, 255, 0.1)"
+                />
+              }
             />
           )}
       </View>
+      
+      {/* Pagination Controls */}
+      {totalPages > 1 && !isInitialLoading && (
+        <View style={styles.paginationControls}>
+          <TouchableOpacity
+            style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+            onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
+            <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
+          
+          <TouchableOpacity
+            style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
+            onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
+            <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
+          </TouchableOpacity>
+        </View>
+      )}
       
       {/* Show FAB only when modal is not open */}
       {!showModal && (
@@ -1149,5 +1209,57 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     justifyContent: 'flex-start',
     alignItems: 'center', // Center the grid content
+  },
+  paginationInfo: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(34, 229, 132, 0.05)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  paginationText: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+  },
+  paginationControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 0,
+  },
+  pageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(34, 229, 132, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 229, 132, 0.3)',
+  },
+  pageButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
+  },
+  pageButtonTextDisabled: {
+    color: '#555',
+  },
+  pageIndicator: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
   },
 });
