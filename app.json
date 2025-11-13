@@ -49,6 +49,12 @@
         }
       ]
     ],
+    "assetBundlePatterns": [
+      "assets/**/*"
+    ],
+    "packagerOpts": {
+      "assetExts": ["png", "jpg"]
+    },
     "updates": {
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/6a07be86-55ad-4659-b9b8-2d8cbdf18131"

@@ -23,10 +23,17 @@
     "production": {
       "channel": "production",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "enableProguardInReleaseBuilds": true,
+        "enableShrinkResourcesInReleaseBuilds": true,
+        "extraProguardRules": "android/app/proguard-rules.pro"
       },
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_NO_DOTENV": "1"
       }
     }
   },
