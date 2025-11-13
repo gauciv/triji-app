@@ -70,7 +70,14 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setLoading(true);
     setError('');
-    try {
+    
+    // Create a timeout promise that rejects after 20 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 20000);
+    });
+    
+    // Create the login promise
+    const loginPromise = async () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -80,8 +87,7 @@ export default function LoginScreen({ navigation }) {
       if (!userDoc.exists()) {
         // User document doesn't exist, log them out and show error
         await signOut(auth);
-        setError('Your account data could not be found. Please contact support.');
-        return;
+        throw new Error('USER_DOC_NOT_FOUND');
       }
       
       // Check if email is verified
@@ -93,8 +99,7 @@ export default function LoginScreen({ navigation }) {
           console.log('Error sending verification email:', verificationError);
         }
         await signOut(auth);
-        setError('Please verify your email address before logging in. A new verification link has been sent.');
-        return;
+        throw new Error('EMAIL_NOT_VERIFIED');
       }
       
       // Always clear credentials first
@@ -111,10 +116,25 @@ export default function LoginScreen({ navigation }) {
       
       await AsyncStorage.setItem('user_session', JSON.stringify(user));
       console.log('Login successful:', user.email);
+      return user;
+    };
+    
+    try {
+      // Race between login and timeout
+      await Promise.race([loginPromise(), timeoutPromise]);
       navigation.navigate('MainApp');
     } catch (error) {
       console.log('Login error:', error.message);
-      setError('Invalid email or password. Please try again.');
+      
+      if (error.message === 'LOGIN_TIMEOUT') {
+        setError('Login is taking too long. Please check your connection and try again.');
+      } else if (error.message === 'USER_DOC_NOT_FOUND') {
+        setError('Your account data could not be found. Please contact support.');
+      } else if (error.message === 'EMAIL_NOT_VERIFIED') {
+        setError('Please verify your email address before logging in. A new verification link has been sent.');
+      } else {
+        setError('Invalid email or password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

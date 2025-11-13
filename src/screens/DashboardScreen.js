@@ -249,8 +249,24 @@ export default function DashboardScreen({ navigation }) {
     );
   };
 
+  const getBadgeColors = (type) => {
+    switch(type) {
+      case 'Critical':
+        return { bg: 'rgba(239, 68, 68, 0.2)', text: '#EF4444' }; // Red
+      case 'Event':
+        return { bg: 'rgba(139, 92, 246, 0.2)', text: '#8B5CF6' }; // Purple
+      case 'Reminder':
+        return { bg: 'rgba(251, 191, 36, 0.2)', text: '#FBBF24' }; // Yellow/Amber
+      case 'General':
+      default:
+        return { bg: 'rgba(34, 229, 132, 0.2)', text: '#22e584' }; // Green
+    }
+  };
+
   const renderAnnouncementItem = (announcement) => {
     if (!announcement) return null;
+    
+    const badgeColors = getBadgeColors(announcement.type);
     
     return (
       <TouchableOpacity 
@@ -260,9 +276,9 @@ export default function DashboardScreen({ navigation }) {
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: announcement.id })}
       >
         <View style={styles.cardHeader}>
-          <View style={[styles.cardBadge, { backgroundColor: 'rgba(255, 107, 53, 0.2)' }]}>
-            <Text style={[styles.cardBadgeText, { color: '#FF6B35' }]} numberOfLines={1}>
-              {announcement.type || 'Info'}
+          <View style={[styles.cardBadge, { backgroundColor: badgeColors.bg }]}>
+            <Text style={[styles.cardBadgeText, { color: badgeColors.text }]} numberOfLines={1}>
+              {announcement.type || 'General'}
             </Text>
           </View>
           <Text style={styles.cardDate} numberOfLines={1}>{formatTimestamp(announcement.createdAt)}</Text>
