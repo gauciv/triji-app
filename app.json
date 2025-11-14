@@ -60,7 +60,8 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/6a07be86-55ad-4659-b9b8-2d8cbdf18131"
+      "url": "https://u.expo.dev/6a07be86-55ad-4659-b9b8-2d8cbdf18131",
+      "channel": "production"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
