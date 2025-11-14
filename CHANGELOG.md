@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.4.0](https://github.com/gauciv/triji-app/compare/v1.3.1...v1.4.0) (2025-11-14)
+
+
+### ✨ Features
+
+* modify loading screen version and settings ([474928a](https://github.com/gauciv/triji-app/commit/474928a637f7d517b6647e0ae39051d0f39af7d1))
+
 ## [1.3.1](https://github.com/gauciv/triji-app/compare/v1.3.0...v1.3.1) (2025-11-14)
 
 
