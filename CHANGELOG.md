@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.3.1](https://github.com/gauciv/triji-app/compare/v1.3.0...v1.3.1) (2025-11-14)
+
+
+### 🐛 Bug Fixes
+
+* **updates:** add production channel to enable OTA updates ([91ab056](https://github.com/gauciv/triji-app/commit/91ab056e2041e333f52eb840e6af947d12d7055b))
+
 ## [1.3.0](https://github.com/gauciv/triji-app/compare/v1.2.0...v1.3.0) (2025-11-14)
 
 
