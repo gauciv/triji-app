@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.2.0](https://github.com/gauciv/triji-app/compare/v1.1.2...v1.2.0) (2025-11-14)
+
+
+### ✨ Features
+
+* **announcements:** news full view layout optimization ([5916bb2](https://github.com/gauciv/triji-app/commit/5916bb29d30f1c210f583af45cd01f71293f8933))
+
+
+### 🐛 Bug Fixes
+
+* **deps:** sync async-storage version to 1.24.0 in package-lock.json ([f8ff635](https://github.com/gauciv/triji-app/commit/f8ff635b4cb65917d68d802b2ff4be3d683df064))
+* resolve announcement section not loading anything ([ffbfe7f](https://github.com/gauciv/triji-app/commit/ffbfe7f7652fa9d805d3937d5b874d135fac1efe))
+* resolve package json lock on job failure ([54de111](https://github.com/gauciv/triji-app/commit/54de1115747a140d72d88602eabdb9e00391bff0))
+* resolve unfriendly offline feedback ([140c4ee](https://github.com/gauciv/triji-app/commit/140c4ee93b4484943d12d68ead52761db8f171fe))
+* **tests:** update test expectations to match implementation and sync package-lock.json ([7fe11d0](https://github.com/gauciv/triji-app/commit/7fe11d0164d9678dbbdd892ddfefe62440c36cfc))
+
 ## [1.1.2](https://github.com/gauciv/triji-app/compare/v1.1.1...v1.1.2) (2025-11-14)
 
 
