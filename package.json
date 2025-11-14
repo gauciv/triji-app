@@ -80,6 +80,7 @@
     "@types/react-native": "^0.73.0",
     "babel-preset-expo": "~54.0.0",
     "conventional-changelog-conventionalcommits": "^7.0.2",
+    "eas-cli": "^16.27.0",
     "eslint": "^8.56.0",
     "eslint-config-expo": "^7.0.0",
     "eslint-config-prettier": "^9.1.0",
