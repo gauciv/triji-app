@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.1.1](https://github.com/gauciv/triji-app/compare/v1.1.0...v1.1.1) (2025-11-14)
+
+
+### 🐛 Bug Fixes
+
+* reorder semantic-release plugins to ensure EAS deployment triggers ([4958a3e](https://github.com/gauciv/triji-app/commit/4958a3e3d0b65ee6903b97bd9cd8d83c93f91729))
+
 ## [1.1.0](https://github.com/gauciv/triji-app/compare/v1.0.0...v1.1.0) (2025-11-14)
 
 
