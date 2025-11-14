@@ -66,9 +66,19 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                       request.resource.data.authorId == request.auth.uid;
       
-      // Only the author can update their own post
-      allow update: if request.auth != null && 
-                      request.auth.uid == resource.data.authorId;
+      // Author can update their own post content
+      // Any authenticated user can update likeCount and likedBy arrays (for liking/unliking)
+      // Any authenticated user can update reportedBy array (for reporting)
+      allow update: if request.auth != null && (
+        // Author can update everything
+        request.auth.uid == resource.data.authorId ||
+        // Anyone can update only likeCount and likedBy (for liking)
+        (request.resource.data.keys().hasAll(resource.data.keys()) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'likedBy'])) ||
+        // Anyone can update only reportedBy (for reporting)
+        (request.resource.data.keys().hasAll(resource.data.keys()) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reportedBy']))
+      );
 
       // Author or admin can delete
       allow delete: if request.auth != null &&

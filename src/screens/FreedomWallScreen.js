@@ -363,7 +363,7 @@ export default function FreedomWallScreen({ navigation }) {
     const persona = generatePersona();
     const finalPersona = customNickname.trim() || persona.name;
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
 
     const postData = {
       content: postContent.trim(),
