@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import { version } from '../../package.json';
 
 export default function SplashScreen({ loadingMessage = 'Loading...' }) {
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
@@ -144,7 +145,7 @@ export default function SplashScreen({ loadingMessage = 'Loading...' }) {
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>Powered by Triji Team</Text>
-        <Text style={styles.version}>v1.0.0</Text>
+        <Text style={styles.version}>v{version}</Text>
       </View>
     </View>
   );

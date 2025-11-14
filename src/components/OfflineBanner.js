@@ -115,18 +115,24 @@ export default function OfflineBanner() {
 
 const styles = StyleSheet.create({
   banner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    gap: 6,
+    gap: 8,
+    zIndex: 9999,
+    elevation: 10,
   },
   offlineBanner: {
-    backgroundColor: '#4A4A4A',
+    backgroundColor: '#FF6B6B',
   },
   onlineBanner: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#4CAF50',
   },
   offlineText: {
     color: '#FFFFFF',

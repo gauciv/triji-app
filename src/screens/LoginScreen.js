@@ -171,10 +171,15 @@ export default function LoginScreen({ navigation }) {
           ['saved_email', email],
           ['saved_password', password],
           ['remember_me', 'true'],
+          ['last_user_email', email], // For offline detection
         ]).catch(err => console.log('Error saving credentials:', err));
       } else {
         AsyncStorage.multiRemove(['saved_email', 'saved_password', 'remember_me']).catch(err =>
           console.log('Error removing credentials:', err)
+        );
+        // Keep last_user_email for offline mode
+        AsyncStorage.setItem('last_user_email', email).catch(err =>
+          console.log('Error saving last user:', err)
         );
       }
 

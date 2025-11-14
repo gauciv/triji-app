@@ -21,8 +21,8 @@ import {
 } from './src/screens';
 import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NetworkProvider } from './src/context/NetworkContext';
-import { ErrorBoundary, OfflineBanner } from './src/components';
+import { NetworkProvider, useNetwork } from './src/context/NetworkContext';
+import { ErrorBoundary, OfflineBanner, OfflineScreen } from './src/components';
 import {
   setupNotificationListeners,
   registerForPushNotifications,
@@ -39,34 +39,52 @@ export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initialRouteName, setInitialRouteName] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
+  const [isInitiallyOffline, setIsInitiallyOffline] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Listen to auth state changes and manage Firestore listeners
   useEffect(() => {
     let hasSetInitialRoute = false;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, user => {
-      if (user) {
-        // User is signed in, start listeners
-        console.log('User authenticated, starting listeners');
-        startAllListeners();
+    const unsubscribeAuth = onAuthStateChanged(
+      auth,
+      user => {
+        console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
 
-        // Set initial route if not already set
-        if (!hasSetInitialRoute && !isReady) {
-          setInitialRouteName('MainApp');
-          hasSetInitialRoute = true;
+        if (user) {
+          // User is signed in, start listeners
+          console.log('User authenticated, starting listeners');
+          startAllListeners();
+
+          // Set initial route if not already set
+          if (!hasSetInitialRoute && !isReady) {
+            setInitialRouteName('MainApp');
+            hasSetInitialRoute = true;
+          }
+        } else {
+          // User is signed out, stop listeners
+          console.log('User logged out, stopping listeners');
+          stopAllListeners();
+
+          // Set initial route if not already set
+          if (!hasSetInitialRoute && !isReady) {
+            setInitialRouteName('Login');
+            hasSetInitialRoute = true;
+          }
         }
-      } else {
-        // User is signed out, stop listeners
-        console.log('User logged out, stopping listeners');
-        stopAllListeners();
 
-        // Set initial route if not already set
+        setAuthChecked(true);
+      },
+      error => {
+        console.error('Auth state change error:', error);
+        // On error, default to login screen
         if (!hasSetInitialRoute && !isReady) {
           setInitialRouteName('Login');
           hasSetInitialRoute = true;
         }
+        setAuthChecked(true);
       }
-    });
+    );
 
     return () => {
       unsubscribeAuth();
@@ -82,13 +100,44 @@ export default function App() {
       try {
         setLoadingMessage('Loading assets...');
 
+        // Check network connectivity first
+        const NetInfo = await import('@react-native-community/netinfo');
+        const netState = await NetInfo.default.fetch();
+
+        if (!netState.isConnected) {
+          console.log('App starting in offline mode');
+          setIsInitiallyOffline(true);
+          // Check for cached auth state
+          const cachedUser = await AsyncStorage.getItem('last_user_email');
+          if (cachedUser) {
+            setInitialRouteName('MainApp');
+          } else {
+            setInitialRouteName('Login');
+          }
+          setIsReady(true);
+          return;
+        }
+
         // Preload any critical resources here
         await new Promise(resolve => setTimeout(resolve, 500));
 
         setLoadingMessage('Checking authentication...');
         // Wait for Firebase Auth to restore session (if any)
         // The onAuthStateChanged listener will set initialRouteName
-        await new Promise(resolve => setTimeout(resolve, 800));
+        let authWaitTime = 0;
+        const authCheckInterval = 100;
+        const maxAuthWait = 3000;
+
+        while (!authChecked && authWaitTime < maxAuthWait) {
+          await new Promise(resolve => setTimeout(resolve, authCheckInterval));
+          authWaitTime += authCheckInterval;
+        }
+
+        // If auth check timed out or no route set, default to Login
+        if (!initialRouteName) {
+          console.log('No initial route set, defaulting to Login');
+          setInitialRouteName('Login');
+        }
 
         setLoadingMessage('Setting up notifications...');
         // Register for push notifications (will gracefully handle Expo Go limitations)
@@ -119,20 +168,25 @@ export default function App() {
           await new Promise(resolve => setTimeout(resolve, remainingTime));
         }
 
+        // Mark app as ready
+        setIsReady(true);
+
         return () => {
           listeners.remove();
           stopAllListeners();
         };
       } catch (error) {
-        console.log('Error checking session:', error);
-        setInitialRouteName('Login');
-      } finally {
+        console.error('Error initializing app:', error);
+        // On error, try to recover gracefully
+        if (!initialRouteName) {
+          setInitialRouteName('Login');
+        }
         setIsReady(true);
       }
     };
 
     initializeApp();
-  }, []);
+  }, [authChecked]);
 
   if (!isReady) {
     return (
