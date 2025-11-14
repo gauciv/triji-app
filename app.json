@@ -2,7 +2,7 @@
   "expo": {
     "name": "Triji",
     "slug": "triji-app",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#1B2845",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.triji.app",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.1.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#1B2845"
       },
       "package": "com.triji.app",
-      "versionCode": 1,
+      "versionCode": 10100,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
@@ -49,7 +49,9 @@
           "android": {
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRuleFiles": ["android/app/proguard-rules.pro"]
+            "extraProguardRuleFiles": [
+              "android/app/proguard-rules.pro"
+            ]
           }
         }
       ]
@@ -58,7 +60,10 @@
       "assets/**/*"
     ],
     "packagerOpts": {
-      "assetExts": ["png", "jpg"]
+      "assetExts": [
+        "png",
+        "jpg"
+      ]
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
