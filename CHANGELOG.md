@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.4.1](https://github.com/gauciv/triji-app/compare/v1.4.0...v1.4.1) (2025-11-14)
+
+
+### 🐛 Bug Fixes
+
+* enable liking for all users and reduce freedom wall post lifespan to 24h ([f953a99](https://github.com/gauciv/triji-app/commit/f953a998ea74701ccb4bae176f49ba8308d3e289))
+
 ## [1.4.0](https://github.com/gauciv/triji-app/compare/v1.3.1...v1.4.0) (2025-11-14)
 
 
