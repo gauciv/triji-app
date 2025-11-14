@@ -119,10 +119,15 @@ export async function schedulePushNotification(title, body, data = {}, channelId
 export async function getNotificationPreference(type) {
   try {
     const value = await AsyncStorage.getItem(`notifications_${type}`);
+    // Default to true (enabled) if no preference is set
+    if (value === null) {
+      return true;
+    }
     return value === 'true';
   } catch (error) {
     console.log('Error reading notification preference:', error);
-    return false;
+    // Default to true on error
+    return true;
   }
 }
 

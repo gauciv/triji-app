@@ -113,26 +113,12 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     setError('');
     
-    // Create a timeout promise that rejects after 20 seconds
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 20000);
-    });
-    
-    // Create the login promise
-    const loginPromise = async () => {
+    try {
+      // Perform Firebase authentication (fast, cached locally)
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check if user document exists in Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (!userDoc.exists()) {
-        // User document doesn't exist, log them out and show error
-        await signOut(auth);
-        throw new Error('USER_DOC_NOT_FOUND');
-      }
-      
-      // Check if email is verified
+      // Check email verification first (no network call)
       if (!user.emailVerified) {
         // Email not verified, send new verification and log out
         try {
@@ -141,41 +127,59 @@ export default function LoginScreen({ navigation }) {
           console.log('Error sending verification email:', verificationError);
         }
         await signOut(auth);
-        throw new Error('EMAIL_NOT_VERIFIED');
-      }
-      
-      // Always clear credentials first
-      await AsyncStorage.removeItem('saved_email');
-      await AsyncStorage.removeItem('saved_password');
-      await AsyncStorage.removeItem('remember_me');
-      
-      // Save credentials only if Remember Me is checked
-      if (rememberMe) {
-        await AsyncStorage.setItem('saved_email', email);
-        await AsyncStorage.setItem('saved_password', password);
-        await AsyncStorage.setItem('remember_me', 'true');
-      }
-      
-      // No need to manually store user_session - Firebase Auth handles persistence automatically
-      console.log('Login successful:', user.email);
-      return user;
-    };
-    
-    try {
-      // Race between login and timeout
-      await Promise.race([loginPromise(), timeoutPromise]);
-      navigation.navigate('MainApp');
-    } catch (error) {
-      console.log('Login error:', error.message);
-      
-      if (error.message === 'LOGIN_TIMEOUT') {
-        setError('Login is taking too long. Please check your connection and try again.');
-      } else if (error.message === 'USER_DOC_NOT_FOUND') {
-        setError('Your account data could not be found. Please contact support.');
-      } else if (error.message === 'EMAIL_NOT_VERIFIED') {
         setError('Please verify your email address before logging in. A new verification link has been sent.');
+        setLoading(false);
+        return;
+      }
+      
+      // Save credentials in background (non-blocking)
+      if (rememberMe) {
+        AsyncStorage.multiSet([
+          ['saved_email', email],
+          ['saved_password', password],
+          ['remember_me', 'true']
+        ]).catch(err => console.log('Error saving credentials:', err));
       } else {
-        setError('Invalid email or password. Please try again.');
+        AsyncStorage.multiRemove(['saved_email', 'saved_password', 'remember_me'])
+          .catch(err => console.log('Error removing credentials:', err));
+      }
+      
+      // Verify user document exists in background (don't block navigation)
+      getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+        if (!userDoc.exists()) {
+          console.warn('User document not found for:', user.uid);
+          // Could show a non-blocking warning or create the document
+        }
+      }).catch(err => console.log('Error checking user doc:', err));
+      
+      // Navigate immediately - don't wait for background tasks
+      console.log('Login successful:', user.email);
+      navigation.navigate('MainApp');
+      
+    } catch (error) {
+      console.log('Login error:', error.code, error.message);
+      
+      // Handle specific Firebase auth errors
+      switch (error.code) {
+        case 'auth/invalid-email':
+          setError('Invalid email address format.');
+          break;
+        case 'auth/user-disabled':
+          setError('This account has been disabled. Please contact support.');
+          break;
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          setError('Invalid email or password. Please try again.');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many failed attempts. Please try again later.');
+          break;
+        case 'auth/network-request-failed':
+          setError('Network error. Please check your connection and try again.');
+          break;
+        default:
+          setError('Login failed. Please try again.');
       }
     } finally {
       setLoading(false);

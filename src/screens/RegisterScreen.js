@@ -49,14 +49,20 @@ export default function RegisterScreen({ navigation }) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // Create user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
         createdAt: new Date().toISOString(),
       });
+      
+      // Send email verification
       await sendEmailVerification(user);
-      await AsyncStorage.setItem('user_session', JSON.stringify(user));
+      
+      // No need to manually store session - Firebase Auth with AsyncStorage persistence handles this
+      console.log('Registration successful:', user.email);
       navigation.navigate('Verification');
     } catch (error) {
       console.error('Registration error:', error);
