@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   Alert,
+  Animated,
 } from 'react-native';
 import {
   useFonts,
@@ -19,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { showErrorAlert } from '../utils/errorHandler';
+import { successHaptic, mediumHaptic, lightHaptic } from '../utils/haptics';
 
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params || {};
@@ -26,6 +28,8 @@ export default function TaskDetailScreen({ route, navigation }) {
   const [countdown, setCountdown] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
   const [isTogglingCompletion, setIsTogglingCompletion] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const checkmarkScale = useRef(new Animated.Value(0)).current;
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -37,7 +41,11 @@ export default function TaskDetailScreen({ route, navigation }) {
     // Check if current user has completed this task
     if (task && auth.currentUser) {
       const completedBy = task.completedBy || [];
-      setIsCompleted(completedBy.includes(auth.currentUser.uid));
+      const completed = completedBy.includes(auth.currentUser.uid);
+      setIsCompleted(completed);
+
+      // Initialize checkmark animation
+      checkmarkScale.setValue(completed ? 1 : 0);
     }
   }, [task]);
 
@@ -133,6 +141,23 @@ export default function TaskDetailScreen({ route, navigation }) {
   const toggleTaskCompletion = async () => {
     if (!auth.currentUser || !task?.id) return;
 
+    // Haptic feedback on press
+    mediumHaptic();
+
+    // Button press animation
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     setIsTogglingCompletion(true);
     try {
       const taskRef = doc(db, 'tasks', task.id);
@@ -143,12 +168,33 @@ export default function TaskDetailScreen({ route, navigation }) {
           completedBy: arrayRemove(auth.currentUser.uid),
         });
         setIsCompleted(false);
+
+        // Animate checkmark out
+        Animated.spring(checkmarkScale, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }).start();
+
+        lightHaptic();
       } else {
         // Add user to completedBy array
         await updateDoc(taskRef, {
           completedBy: arrayUnion(auth.currentUser.uid),
         });
         setIsCompleted(true);
+
+        // Animate checkmark in with bounce
+        Animated.spring(checkmarkScale, {
+          toValue: 1,
+          tension: 80,
+          friction: 6,
+          useNativeDriver: true,
+        }).start();
+
+        // Success haptic feedback
+        successHaptic();
       }
     } catch (error) {
       showErrorAlert(error, 'Toggle Task Completion', 'Update Failed');
@@ -185,7 +231,13 @@ export default function TaskDetailScreen({ route, navigation }) {
       />
 
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => {
+          lightHaptic();
+          navigation.goBack();
+        }}
+      >
         <Feather name="arrow-left" size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
@@ -259,27 +311,44 @@ export default function TaskDetailScreen({ route, navigation }) {
           )}
 
           {/* Mark as Done Button */}
-          <TouchableOpacity
-            style={[
-              styles.markDoneButton,
-              isCompleted && styles.markDoneButtonCompleted,
-              isTogglingCompletion && styles.markDoneButtonDisabled,
-            ]}
-            onPress={toggleTaskCompletion}
-            disabled={isTogglingCompletion}
-            activeOpacity={0.7}
-          >
-            <Feather
-              name={isCompleted ? 'check-circle' : 'circle'}
-              size={20}
-              color={isCompleted ? '#22e584' : '#FFB800'}
-            />
-            <Text
-              style={[styles.markDoneButtonText, isCompleted && styles.markDoneButtonTextCompleted]}
+          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <TouchableOpacity
+              style={[
+                styles.markDoneButton,
+                isCompleted && styles.markDoneButtonCompleted,
+                isTogglingCompletion && styles.markDoneButtonDisabled,
+              ]}
+              onPress={toggleTaskCompletion}
+              disabled={isTogglingCompletion}
+              activeOpacity={0.7}
             >
-              {isCompleted ? 'Completed' : 'Mark as Done'}
-            </Text>
-          </TouchableOpacity>
+              <Animated.View
+                style={{
+                  transform: [{ scale: checkmarkScale }],
+                  opacity: checkmarkScale,
+                }}
+              >
+                <Feather
+                  name={isCompleted ? 'check-circle' : 'circle'}
+                  size={20}
+                  color={isCompleted ? '#22e584' : '#FFB800'}
+                />
+              </Animated.View>
+              <Text
+                style={[
+                  styles.markDoneButtonText,
+                  isCompleted && styles.markDoneButtonTextCompleted,
+                ]}
+              >
+                {task.archived && isCompleted
+                  ? 'Unmark as Done'
+                  : isCompleted
+                    ? 'Tap to Unmark'
+                    : 'Mark as Done'}
+              </Text>
+              {isCompleted && <Text style={styles.markDoneButtonHint}>✓ Completed</Text>}
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </ScrollView>
     </View>
@@ -485,5 +554,11 @@ const styles = StyleSheet.create({
   },
   markDoneButtonTextCompleted: {
     color: '#22e584',
+  },
+  markDoneButtonHint: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: 'rgba(34, 229, 132, 0.6)',
+    marginLeft: 8,
   },
 });

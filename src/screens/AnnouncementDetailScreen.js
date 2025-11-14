@@ -19,6 +19,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { lightHaptic, mediumHaptic, warningHaptic, successHaptic } from '../utils/haptics';
 
 export default function AnnouncementDetailScreen({ route, navigation }) {
   const { announcementId } = route.params || {};
@@ -94,13 +95,16 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   };
 
   const handleDelete = () => {
+    warningHaptic();
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
+    mediumHaptic();
     setShowDeleteModal(false);
     try {
       await deleteDoc(doc(db, 'announcements', announcementId));
+      successHaptic();
       navigation.navigate('Announcements');
     } catch (error) {
       console.log('Error deleting announcement:', error);
@@ -153,7 +157,13 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
       />
       {/* Header: Only back button, styled as floating glassy button */}
       <View style={styles.headerModernPolished}>
-        <TouchableOpacity style={styles.floatingBackButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.floatingBackButton}
+          onPress={() => {
+            lightHaptic();
+            navigation.goBack();
+          }}
+        >
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
       </View>

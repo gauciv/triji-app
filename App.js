@@ -222,7 +222,7 @@ export default function App() {
                         },
                       ],
                       opacity: current.progress.interpolate({
-                        inputRange: [0, 0.5, 1],
+                        inputRange: [0, 0.3, 1],
                         outputRange: [0, 1, 1],
                       }),
                     },
@@ -230,16 +230,26 @@ export default function App() {
                 },
                 transitionSpec: {
                   open: {
-                    animation: 'timing',
+                    animation: 'spring',
                     config: {
-                      duration: 300,
+                      stiffness: 300,
+                      damping: 30,
+                      mass: 0.8,
+                      overshootClamping: true,
+                      restDisplacementThreshold: 0.01,
+                      restSpeedThreshold: 0.01,
                       useNativeDriver: true,
                     },
                   },
                   close: {
-                    animation: 'timing',
+                    animation: 'spring',
                     config: {
-                      duration: 250,
+                      stiffness: 350,
+                      damping: 35,
+                      mass: 0.7,
+                      overshootClamping: true,
+                      restDisplacementThreshold: 0.01,
+                      restSpeedThreshold: 0.01,
                       useNativeDriver: true,
                     },
                   },
