@@ -285,6 +285,12 @@ npm run update:production      # Publish OTA update to production
 npm run update:preview         # Publish OTA update to preview
 ```
 
+### Automated Releases
+```bash
+npm run semantic-release       # Run semantic-release locally
+npm run version:sync           # Sync version to app.json
+```
+
 ### EAS Workflows
 ```bash
 eas workflow:run create-production-builds  # Build APK + publish update
@@ -295,36 +301,39 @@ eas workflow:run publish-update            # Fast OTA update only
 ```bash
 npm run lint           # Run linter (not configured yet)
 npm run test           # Run tests (not configured yet)
-npm run release        # Create release with standard-version
 ```
+
+**Note:** Releases are automated via GitHub Actions. See [VERSIONING.md](docs/VERSIONING.md) for details.
 
 ---
 
 ## 📦 Build & Deployment
 
-### Production APK Build
+### Automated Versioning & Releases
 
-1. **Ensure version is bumped** in `app.json`:
-   ```json
-   {
-     "expo": {
-       "version": "1.0.X"
-     }
-   }
-   ```
+This project uses **semantic-release** for fully automated versioning, changelog generation, and deployments based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-2. **Build the APK:**
-   ```bash
-   npm run build:android:prod
-   ```
+**How it works:**
+1. Commit with conventional format: `feat: add feature` or `fix: bug fix`
+2. Push to `main` branch
+3. GitHub Actions automatically:
+   - Determines version bump (patch/minor/major)
+   - Updates CHANGELOG.md
+   - Creates Git tag
+   - Publishes GitHub Release
+   - Deploys via EAS Update (OTA) or EAS Build (APK)
 
-3. **Download APK** from [EAS Build Dashboard](https://expo.dev/accounts/gauciv/projects/triji-app/builds)
+**Version Bump Rules:**
+- `fix:`, `perf:`, `revert:` → **PATCH** (1.0.0 → 1.0.1) → EAS Update
+- `feat:` → **MINOR** (1.0.0 → 1.1.0) → EAS Update
+- `feat!:` or `BREAKING CHANGE:` → **MAJOR** (1.0.0 → 2.0.0) → EAS Build
 
-4. **Distribute** via GitHub Releases or direct download
+📖 **Full guide:** [docs/VERSIONING.md](docs/VERSIONING.md)  
+⚡ **Quick reference:** [docs/COMMIT_GUIDE.md](docs/COMMIT_GUIDE.md)
 
-### OTA Update (JavaScript Changes Only)
+### Manual OTA Update (Emergency)
 
-For quick bug fixes and UI updates without rebuilding:
+For immediate bug fixes bypassing CI:
 
 ```bash
 npm run update:production
@@ -332,16 +341,24 @@ npm run update:production
 
 **Updates are live in ~30 seconds** and users receive them automatically within 5 minutes.
 
+### Manual Production Build
+
+For testing or emergency releases:
+
+```bash
+npm run build:android:prod
+```
+
 ### What Can Be Updated via OTA?
 
-✅ **Yes (OTA):**
+✅ **Yes (OTA - PATCH/MINOR):**
 - JavaScript code changes
 - UI layouts, styles, colors
 - Business logic, Firebase queries
 - New screens/features (pure JS)
 - Bug fixes
 
-❌ **No (Requires Rebuild):**
+❌ **No (Requires Rebuild - MAJOR):**
 - Native dependencies (new npm packages)
 - `app.json` changes (permissions, icons)
 - ProGuard rules

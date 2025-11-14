@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Verify Conventional Commits
+        run: |
+          # Get the last commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Checking commit: $COMMIT_MSG"
+          
+          # Check if commit follows conventional format
+          if ! echo "$COMMIT_MSG" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\(.+\))?!?: .+'; then
+            echo "❌ Commit does not follow Conventional Commits format"
+            echo "Expected format: <type>(<scope>): <description>"
+            echo "Examples:"
+            echo "  feat: add new feature"
+            echo "  fix: resolve bug"
+            echo "  feat!: breaking change"
+            echo "  fix(auth): fix login issue"
+            exit 1
+          fi
+          echo "✅ Commit follows Conventional Commits format"
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx semantic-release
+
+      - name: Upload build artifacts (if major release)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-info
+          path: |
+            CHANGELOG.md
+            package.json
+            app.json
+          retention-days: 90

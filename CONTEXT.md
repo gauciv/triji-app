@@ -471,23 +471,74 @@ try {
 
 ---
 
-## 🔄 Update Process
+## 🔄 Automated Release Process
 
-### For Small Changes (JavaScript, UI, Logic)
-1. Make changes to `.js` files
-2. Test locally: `npx expo start --tunnel`
-3. Commit changes: `git commit -m "fix: description"`
-4. Publish OTA: `npm run update:production`
-5. Users get update automatically (no reinstall needed)
+### Overview
+This project uses **semantic-release** for fully automated versioning, changelog generation, and deployments. All releases are triggered by pushing commits to `main` branch with Conventional Commits format.
 
-### For Native Changes (Dependencies, Icons, Permissions)
-1. Make changes to `app.json`, native code, or add native dependencies
-2. Bump version: `app.json` → `"version": "1.0.X"`
-3. Commit changes
-4. Build APK: `npm run build:android:prod`
-5. Download APK from EAS
-6. Upload to GitHub Releases
-7. Users must reinstall APK manually
+### Workflow
+1. **Commit with conventional format:**
+   ```bash
+   git commit -m "feat: add new feature"  # Minor release
+   git commit -m "fix: resolve bug"       # Patch release
+   git commit -m "feat!: breaking change" # Major release
+   ```
+
+2. **Push to main:**
+   ```bash
+   git push origin main
+   ```
+
+3. **GitHub Actions automatically:**
+   - Validates commit message format
+   - Analyzes commits to determine version bump
+   - Updates `package.json`, `app.json`, `CHANGELOG.md`
+   - Creates Git tag
+   - Publishes GitHub Release
+   - Triggers deployment:
+     - **PATCH/MINOR:** EAS Update (OTA) - users auto-update in ~5 minutes
+     - **MAJOR:** EAS Build (APK) - users must reinstall
+
+### Version Bump Rules
+
+| Commit Type | Version Change | Deployment | User Action |
+|-------------|----------------|------------|-------------|
+| `fix:`, `perf:`, `revert:` | PATCH (1.0.0 → 1.0.1) | EAS Update | Auto-update |
+| `feat:` | MINOR (1.0.0 → 1.1.0) | EAS Update | Auto-update |
+| `feat!:` or `BREAKING CHANGE:` | MAJOR (1.0.0 → 2.0.0) | EAS Build | Reinstall APK |
+| `docs:`, `chore:`, `style:`, etc. | None | None | None |
+
+### When to Use MAJOR (Breaking Change)
+Use `BREAKING CHANGE:` footer or `!` after type for:
+- Adding/removing native dependencies
+- Changing `app.json` (permissions, icons, splash)
+- Modifying ProGuard rules
+- Database schema changes requiring migration
+- Updating Expo SDK version
+- Any change requiring app reinstall
+
+### When to Use MINOR/PATCH (OTA Update)
+Safe for OTA updates:
+- JavaScript code changes
+- UI layouts, styles, colors
+- New screens/features (pure JS)
+- Bug fixes, performance improvements
+- Text/copy changes
+
+### Emergency Hotfix
+For urgent fixes bypassing CI:
+```bash
+npm run update:production  # OTA update live in ~30 seconds
+```
+
+### Manual Release
+To trigger release locally (requires `GITHUB_TOKEN` and `EXPO_TOKEN`):
+```bash
+npm run semantic-release
+```
+
+📖 **Full Documentation:** [docs/VERSIONING.md](docs/VERSIONING.md)  
+⚡ **Quick Reference:** [docs/COMMIT_GUIDE.md](docs/COMMIT_GUIDE.md)
 
 ---
 
