@@ -22,16 +22,36 @@ console.log(`   Release Type: ${releaseType}`);
 console.log(`   Version: ${version}\n`);
 
 /**
+ * Check if EAS CLI is available
+ */
+function checkEasCli() {
+  try {
+    execSync('npx eas --version', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.error('❌ EAS CLI not found. Installing...');
+    try {
+      execSync('npm install -g eas-cli', { stdio: 'inherit' });
+      return true;
+    } catch (installError) {
+      console.error('❌ Failed to install EAS CLI:', installError.message);
+      return false;
+    }
+  }
+}
+
+/**
  * Execute command and handle errors
  */
 function execute(command, description) {
   console.log(`📦 ${description}...`);
   try {
-    execSync(command, { stdio: 'inherit' });
+    execSync(command, { stdio: 'inherit', env: { ...process.env } });
     console.log(`✅ ${description} completed\n`);
     return true;
   } catch (error) {
     console.error(`❌ ${description} failed:`, error.message);
+    console.error('Error details:', error.stderr?.toString() || error.stdout?.toString());
     return false;
   }
 }
@@ -41,12 +61,12 @@ function execute(command, description) {
  */
 async function deploy() {
   if (releaseType === 'major') {
-    // MAJOR: Breaking changes - requires full rebuild
-    console.log('🔨 MAJOR release detected - Triggering EAS Build');
-    console.log('⚠️  Users will need to reinstall the APK\n');
+    // MAJOR: Breaking changes - rebuild APK
+    console.log('⚠️  Breaking changes detected - Triggering EAS Build');
+    console.log('📱 A new APK will be generated for users to install\n');
     
     const buildSuccess = execute(
-      'eas build --platform android --profile production --non-interactive',
+      'npx eas build --platform android --profile production --non-interactive',
       'Building production APK'
     );
     
@@ -65,7 +85,7 @@ async function deploy() {
     console.log('✅ Users will receive update automatically\n');
     
     const updateSuccess = execute(
-      `eas update --branch production --message "v${version}: ${releaseType} release"`,
+      `npx eas update --branch production --message "v${version}: ${releaseType} release" --non-interactive`,
       'Publishing OTA update'
     );
     
@@ -80,8 +100,29 @@ async function deploy() {
   }
 }
 
+/**
+ * Main execution
+ */
+if (!releaseType) {
+  console.error('❌ Release type not provided');
+  console.error('Usage: node deploy.js [major|minor|patch]');
+  process.exit(1);
+}
+
+const EXPO_TOKEN = process.env.EXPO_TOKEN;
+if (!EXPO_TOKEN) {
+  console.error('❌ EXPO_TOKEN environment variable is required');
+  process.exit(1);
+}
+
+// Check EAS CLI availability
+if (!checkEasCli()) {
+  console.error('❌ Cannot proceed without EAS CLI');
+  process.exit(1);
+}
+
 // Run deployment
-deploy().catch(error => {
+deploy(releaseType).catch(error => {
   console.error('❌ Deployment failed:', error);
   process.exit(1);
 });

@@ -73,12 +73,11 @@ module.exports = {
       }
     ],
     
-    // Sync version to app.json and trigger appropriate deployment
+    // Sync version to app.json
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'npm run version:sync ${nextRelease.version}',
-        publishCmd: 'node scripts/deploy.js ${nextRelease.type}'
+        prepareCmd: 'npm run version:sync ${nextRelease.version}'
       }
     ],
     
@@ -101,6 +100,14 @@ module.exports = {
             label: 'Changelog'
           }
         ]
+      }
+    ],
+    
+    // Deploy via EAS Update/Build (runs after GitHub release)
+    [
+      '@semantic-release/exec',
+      {
+        publishCmd: 'node scripts/deploy.js ${nextRelease.type}'
       }
     ]
   ]
