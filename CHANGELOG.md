@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.1.2](https://github.com/gauciv/triji-app/compare/v1.1.1...v1.1.2) (2025-11-14)
+
+
+### 🐛 Bug Fixes
+
+* ensure semantic-release deployment triggers after GitHub release creation ([dc26280](https://github.com/gauciv/triji-app/commit/dc2628073f1944d54aa83532ad2fb10f2f2873da))
+
 ## [1.1.1](https://github.com/gauciv/triji-app/compare/v1.1.0...v1.1.1) (2025-11-14)
 
 
