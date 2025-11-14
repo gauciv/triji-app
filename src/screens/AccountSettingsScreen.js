@@ -37,6 +37,7 @@ import {
 } from '../utils/notifications';
 import { stopAllListeners } from '../utils/firestoreListeners';
 import { showErrorAlert, logError } from '../utils/errorHandler';
+import { version as appVersion } from '../../package.json';
 
 export default function AccountSettingsScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -49,6 +50,8 @@ export default function AccountSettingsScreen({ navigation }) {
   const [tasksNotifications, setTasksNotifications] = useState(true);
   const [announcementsNotifications, setAnnouncementsNotifications] = useState(true);
   const [freedomWallNotifications, setFreedomWallNotifications] = useState(true);
+  const [latestVersion, setLatestVersion] = useState(null);
+  const [loadingVersion, setLoadingVersion] = useState(true);
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -60,7 +63,22 @@ export default function AccountSettingsScreen({ navigation }) {
     fetchUserData();
     loadNotificationPreferences();
     requestNotificationPermissions();
+    fetchLatestVersion();
   }, []);
+
+  const fetchLatestVersion = async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/gauciv/triji-app/releases/latest');
+      if (response.ok) {
+        const data = await response.json();
+        setLatestVersion(data.tag_name.replace('v', '')); // Remove 'v' prefix
+      }
+    } catch (error) {
+      logError(error, 'Fetch Latest Version');
+    } finally {
+      setLoadingVersion(false);
+    }
+  };
 
   const fetchUserData = async () => {
     try {
@@ -332,6 +350,39 @@ export default function AccountSettingsScreen({ navigation }) {
             />
           </View>
         </View>
+
+        {/* Version Info */}
+        <View style={styles.versionContainer}>
+          <View style={styles.versionRow}>
+            <Text style={styles.versionLabel}>Current Version</Text>
+            <Text style={styles.versionText}>v{appVersion}</Text>
+          </View>
+          <View style={styles.versionRow}>
+            <Text style={styles.versionLabel}>Latest Release</Text>
+            {loadingVersion ? (
+              <ActivityIndicator size="small" color="#22e584" />
+            ) : (
+              <Text style={styles.versionText}>v{latestVersion || appVersion}</Text>
+            )}
+          </View>
+          {!loadingVersion && latestVersion && latestVersion !== appVersion && (
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={() => Linking.openURL('https://github.com/gauciv/triji-app/releases/latest')}
+            >
+              <Feather name="download" size={16} color="#FFFFFF" />
+              <Text style={styles.updateButtonText}>Update Available</Text>
+            </TouchableOpacity>
+          )}
+          {!loadingVersion && latestVersion && latestVersion === appVersion && (
+            <View style={styles.upToDateBadge}>
+              <Feather name="check-circle" size={16} color="#22e584" />
+              <Text style={styles.upToDateText}>Up to date</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.copyright}>© 2025 Triji. All rights reserved.</Text>
       </ScrollView>
 
       <Modal
@@ -662,5 +713,70 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 4,
+  },
+  versionContainer: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  versionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  versionLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  versionText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  updateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#22e584',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 8,
+    gap: 8,
+  },
+  updateButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  upToDateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(34, 229, 132, 0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    gap: 6,
+  },
+  upToDateText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22e584',
+  },
+  copyright: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.3)',
+    textAlign: 'center',
+    marginBottom: 32,
   },
 });
