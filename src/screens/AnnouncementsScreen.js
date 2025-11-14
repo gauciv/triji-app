@@ -66,26 +66,50 @@ export default function AnnouncementsScreen({ navigation }) {
         querySnapshot => {
           const announcementsList = [];
           const now = new Date();
+
+          console.log('Firebase query snapshot received, docs count:', querySnapshot.size);
+
           querySnapshot.forEach(doc => {
             const data = doc.data();
-            // Filter out expired announcements on the client side
-            const expiresAt = data.expiresAt?.toDate
-              ? data.expiresAt.toDate()
-              : new Date(data.expiresAt);
-            if (expiresAt > now) {
-              announcementsList.push({
-                id: doc.id,
-                ...data,
-              });
+            console.log('Processing announcement:', doc.id, data);
+
+            // Only filter out expired announcements if expiresAt exists
+            if (data.expiresAt) {
+              const expiresAt = data.expiresAt?.toDate
+                ? data.expiresAt.toDate()
+                : new Date(data.expiresAt);
+              if (expiresAt <= now) {
+                console.log('Skipping expired announcement:', doc.id);
+                return; // Skip expired announcements
+              }
             }
+
+            announcementsList.push({
+              id: doc.id,
+              ...data,
+            });
           });
+
+          console.log('Final announcements list:', announcementsList.length, announcementsList);
           setAnnouncements(announcementsList);
           setLoading(false);
           setInitialLoad(false);
         },
         error => {
-          console.log('Error fetching announcements:', error);
-          setError('Could not load announcements. Please check your internet connection.');
+          console.error('Firebase error fetching announcements:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+
+          let errorMessage = 'Could not load announcements.';
+          if (error.code === 'permission-denied') {
+            errorMessage = 'Access denied. Please check your authentication status.';
+          } else if (error.code === 'unavailable') {
+            errorMessage = 'Service temporarily unavailable. Please try again later.';
+          } else {
+            errorMessage = 'Could not load announcements. Please check your internet connection.';
+          }
+
+          setError(errorMessage);
           setLoading(false);
           setInitialLoad(false);
         }
@@ -103,22 +127,30 @@ export default function AnnouncementsScreen({ navigation }) {
     let unsubscribe;
 
     // Wait for auth state before fetching
-    const unsubscribeAuth = onAuthStateChanged(auth, user => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async user => {
       if (user) {
         setIsAuthenticated(true);
-        fetchData().then(unsub => {
+        try {
+          const unsub = await fetchData();
           unsubscribe = unsub;
-        });
+        } catch (error) {
+          console.log('Error in auth state change handler:', error);
+          setError('Failed to load announcements');
+          setLoading(false);
+        }
       } else {
         setIsAuthenticated(false);
         setLoading(false);
         setError('Please log in to view announcements');
+        setAnnouncements([]);
       }
     });
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribe) unsubscribe();
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
     };
   }, []);
 
@@ -167,8 +199,10 @@ export default function AnnouncementsScreen({ navigation }) {
   };
 
   // Filter announcements based on search query
-  const filteredAnnouncements = announcements.filter(announcement =>
-    announcement.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAnnouncements = announcements.filter(
+    announcement =>
+      announcement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      announcement.content?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Pagination
@@ -180,10 +214,22 @@ export default function AnnouncementsScreen({ navigation }) {
   const onRefresh = async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    // Data will refresh automatically through onSnapshot listener
+
+    // Force a re-fetch by restarting the listener
+    try {
+      const newUnsubscribe = await fetchData();
+      if (newUnsubscribe && typeof newUnsubscribe === 'function') {
+        // The listener will automatically update the data
+        console.log('Refresh triggered, new listener created');
+      }
+    } catch (error) {
+      console.log('Error during refresh:', error);
+    }
+
+    // Give some time for the data to load
     setTimeout(() => {
       setRefreshing(false);
-    }, 800);
+    }, 1000);
   };
 
   // Reset to page 1 when search changes
@@ -206,10 +252,12 @@ export default function AnnouncementsScreen({ navigation }) {
             <View style={styles.cardHeaderModernPolished}>
               <View style={styles.authorPictureModernPolished}>
                 <Text style={styles.authorInitialModernPolished}>
-                  {item.authorName ? item.authorName.charAt(0).toUpperCase() : 'A'}
+                  {(item.authorName || item.author || 'Admin').charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.authorNameModernPolished}>{item.authorName || 'Anonymous'}</Text>
+              <Text style={styles.authorNameModernPolished}>
+                {item.authorName || item.author || 'Admin'}
+              </Text>
             </View>
             <Text style={styles.titleModernPolished}>{item.title}</Text>
             <View style={styles.cardMetaModernPolished}>
@@ -293,7 +341,7 @@ export default function AnnouncementsScreen({ navigation }) {
             />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search announcements..."
+              placeholder="Search for news..."
               placeholderTextColor="rgba(255,255,255,0.4)"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -333,7 +381,10 @@ export default function AnnouncementsScreen({ navigation }) {
           </View>
         ) : (
           <>
-            <ScrollView
+            <FlatList
+              data={paginatedAnnouncements}
+              renderItem={renderAnnouncement}
+              keyExtractor={item => item.id}
               style={styles.announcementsScroll}
               contentContainerStyle={styles.listContainerModern}
               showsVerticalScrollIndicator={false}
@@ -341,18 +392,25 @@ export default function AnnouncementsScreen({ navigation }) {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor="#FFFFFF"
+                  tintColor="#22e584"
                   colors={['#22e584', '#FFFFFF']}
-                  progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                  progressBackgroundColor="rgba(34, 229, 132, 0.1)"
                   titleColor="#FFFFFF"
-                  title="Refreshing..."
+                  title="Pull to refresh..."
                 />
               }
-            >
-              {paginatedAnnouncements.map(item => (
-                <View key={item.id}>{renderAnnouncement({ item })}</View>
-              ))}
-            </ScrollView>
+              ListEmptyComponent={() => (
+                <View style={styles.emptyContainerModern}>
+                  <Feather name="bell" size={64} color="#8E8E93" />
+                  <Text style={styles.emptyTitleModern}>
+                    {searchQuery ? 'No matching announcements' : 'No announcements yet'}
+                  </Text>
+                  <Text style={styles.emptyMessageModern}>
+                    {searchQuery ? 'Try a different search term' : 'Check back soon!'}
+                  </Text>
+                </View>
+              )}
+            />
 
             {totalPages > 1 && (
               <View style={styles.paginationControls}>
@@ -460,7 +518,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255, 255, 255, 0.6)',
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 0,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -469,7 +534,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    marginBottom: 10,
   },
   searchIcon: {
     marginRight: 8,

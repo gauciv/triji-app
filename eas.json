@@ -28,9 +28,6 @@
       },
       "ios": {
         "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_NO_DOTENV": "1"
       }
     }
   },

@@ -17,6 +17,14 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Debug: Log Firebase config (without sensitive keys)
+console.log('Firebase Config Status:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  hasAppId: !!firebaseConfig.appId,
+});
+
 // Initialize Firebase (only if not already initialized)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
