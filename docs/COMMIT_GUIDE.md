@@ -1,5 +1,7 @@
 # Quick Reference: Commits & Releases
 
+> **Note:** Commits that don't follow the conventional format (no `feat:`, `fix:`, etc.) will not trigger a release, even if CI passes successfully.
+
 ## 🚀 Common Commit Examples
 
 ### Bug Fixes (Patch: 1.0.0 → 1.0.1)
