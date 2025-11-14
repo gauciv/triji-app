@@ -239,45 +239,44 @@ export default function AnnouncementsScreen({ navigation }) {
 
   const renderAnnouncement = ({ item }) => {
     const typeColor = getTypeColor(item.type);
-    const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
+    const authorName = item.authorName || item.author || 'Admin';
+    // Dynamically adjust font size based on author name length
+    const authorFontSize = authorName.length > 20 ? 11 : authorName.length > 15 ? 12 : 13;
+
     return (
       <TouchableOpacity
-        style={[styles.announcementCardModernPolished, { borderLeftColor: typeColor, boxShadow }]}
+        style={[styles.announcementCardCompact, { borderLeftColor: typeColor }]}
         activeOpacity={0.92}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
-        <View style={styles.cardMainModernPolished}>
-          <View style={styles.cardAccentBar} />
-          <View style={styles.cardContentModernPolished}>
-            <View style={styles.cardHeaderModernPolished}>
-              <View style={styles.authorPictureModernPolished}>
-                <Text style={styles.authorInitialModernPolished}>
-                  {(item.authorName || item.author || 'Admin').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <Text style={styles.authorNameModernPolished}>
-                {item.authorName || item.author || 'Admin'}
-              </Text>
-            </View>
-            <Text style={styles.titleModernPolished}>{item.title}</Text>
-            <View style={styles.cardMetaModernPolished}>
-              <View
-                style={[
-                  styles.typeChipModernPolished,
-                  { backgroundColor: getTypeColor(item.type) + '22' },
-                ]}
+        <View style={styles.cardContentCompact}>
+          <View style={styles.cardHeaderCompact}>
+            <View style={styles.authorSection}>
+              <Text style={styles.authorLabel}>By:</Text>
+              <Text
+                style={[styles.authorNameCompact, { fontSize: authorFontSize }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
-                <Text
-                  style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}
-                >
-                  {item.type || 'General'}
-                </Text>
-              </View>
-              <Text style={styles.timestampModernPolished}>{formatTimestamp(item.createdAt)}</Text>
-              <Text style={styles.expiryTextModernPolished}>
-                {getTimeRemaining(item.expiresAt)}
+                {authorName}
               </Text>
             </View>
+            <Text style={styles.timestampCompact}>{formatTimestamp(item.createdAt)}</Text>
+          </View>
+          <Text style={styles.titleCompact} numberOfLines={2} ellipsizeMode="tail">
+            {item.title}
+          </Text>
+          <View style={styles.cardMetaCompact}>
+            <View
+              style={[styles.typeChipCompact, { backgroundColor: getTypeColor(item.type) + '22' }]}
+            >
+              <Text style={[styles.typeChipTextCompact, { color: getTypeColor(item.type) }]}>
+                {item.type || 'General'}
+              </Text>
+            </View>
+            {item.expiresAt && (
+              <Text style={styles.expiryTextCompact}>{getTimeRemaining(item.expiresAt)}</Text>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -608,11 +607,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContainerModern: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 100,
     alignItems: 'stretch',
-    gap: 12,
+    gap: 8,
   },
   announcementCardModern: {
     backgroundColor: 'rgba(30, 32, 40, 0.55)',
@@ -1332,5 +1331,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
     color: '#FFFFFF',
+  },
+  // Compact card styles (matching dashboard)
+  announcementCardCompact: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderLeftWidth: 4,
+    marginBottom: 0,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cardContentCompact: {
+    flex: 1,
+    gap: 6,
+  },
+  cardHeaderCompact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  authorSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  authorLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginRight: 4,
+  },
+  authorNameCompact: {
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  timestampCompact: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.5)',
+    flexShrink: 0,
+  },
+  titleCompact: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  cardMetaCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  typeChipCompact: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  typeChipTextCompact: {
+    fontSize: 10,
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  expiryTextCompact: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#FF9500',
+    opacity: 0.8,
   },
 });
