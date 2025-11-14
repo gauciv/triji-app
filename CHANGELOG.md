@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.3.0](https://github.com/gauciv/triji-app/compare/v1.2.0...v1.3.0) (2025-11-14)
+
+
+### ✨ Features
+
+* add haptic feedback and improve animations ([11536c4](https://github.com/gauciv/triji-app/commit/11536c41c1cabdd87ff87eec86027955b644077e))
+
 ## [1.2.0](https://github.com/gauciv/triji-app/compare/v1.1.2...v1.2.0) (2025-11-14)
 
 
