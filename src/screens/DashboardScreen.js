@@ -143,10 +143,16 @@ export default function DashboardScreen({ navigation }) {
         let activeCount = 0;
         snapshot.forEach(doc => {
           const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate
-            ? data.expiresAt.toDate()
-            : new Date(data.expiresAt);
-          if (expiresAt > now) {
+          // Only filter out if expiresAt exists AND is in the past
+          if (data.expiresAt) {
+            const expiresAt = data.expiresAt?.toDate
+              ? data.expiresAt.toDate()
+              : new Date(data.expiresAt);
+            if (expiresAt > now) {
+              activeCount++;
+            }
+          } else {
+            // No expiry date means it's always active
             activeCount++;
           }
         });

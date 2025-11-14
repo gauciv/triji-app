@@ -171,55 +171,62 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
           ]}
         >
           <View style={styles.cardAccentBar} />
-          <View style={styles.cardContentModernPolished}>
-            <View style={styles.cardHeaderModernPolished}>
-              <View style={styles.authorPictureModernPolished}>
-                <Text style={styles.authorInitialModernPolished}>
-                  {announcement.authorName ? announcement.authorName.charAt(0).toUpperCase() : 'A'}
+          <View style={styles.cardContentCompact}>
+            {/* Header with author and delete button */}
+            <View style={styles.cardHeaderCompact}>
+              <View style={styles.authorSection}>
+                <Text style={styles.authorLabel}>By:</Text>
+                <Text style={styles.authorNameCompact} numberOfLines={1}>
+                  {announcement.authorName || announcement.author || 'Admin'}
                 </Text>
               </View>
-              <Text style={styles.authorNameModernPolished}>
-                {announcement.authorName || 'Anonymous'}
-              </Text>
               {auth.currentUser && announcement.authorId === auth.currentUser.uid && (
-                <TouchableOpacity style={styles.deleteButtonModern} onPress={handleDelete}>
-                  <Feather name="trash-2" size={20} color="#FF3B30" />
+                <TouchableOpacity style={styles.deleteButtonCompact} onPress={handleDelete}>
+                  <Feather name="trash-2" size={18} color="#FF3B30" />
                 </TouchableOpacity>
               )}
             </View>
-            {/* Title styled like the list */}
-            <Text style={styles.titleModernPolished}>{announcement.title}</Text>
-            <View style={styles.cardMetaModernPolished}>
-              <View
-                style={[
-                  styles.typeChipModernPolished,
-                  {
-                    backgroundColor: getTypeColor(announcement.type) + '22',
-                    borderColor: getTypeColor(announcement.type) + '55',
-                  },
-                ]}
+
+            {/* Type Badge */}
+            <View
+              style={[
+                styles.typeChipCompact,
+                {
+                  backgroundColor: getTypeColor(announcement.type) + '22',
+                  borderColor: getTypeColor(announcement.type) + '55',
+                },
+              ]}
+            >
+              <Text
+                style={[styles.typeChipTextCompact, { color: getTypeColor(announcement.type) }]}
               >
-                <Text
-                  style={[
-                    styles.typeChipTextModernPolished,
-                    { color: getTypeColor(announcement.type) },
-                  ]}
-                >
-                  {announcement.type || 'General'}
-                </Text>
-              </View>
-              <Text style={styles.timestampModernPolished}>
-                {formatTimestamp(announcement.createdAt)}
-              </Text>
-              <Text style={styles.expiryTextModernPolished}>
-                Expires{' '}
-                {announcement.expiresAt &&
-                  (announcement.expiresAt.toDate
-                    ? announcement.expiresAt.toDate().toLocaleDateString()
-                    : new Date(announcement.expiresAt).toLocaleDateString())}
+                {announcement.type || 'General'}
               </Text>
             </View>
-            <Text style={styles.contentModernPolished}>{announcement.content}</Text>
+
+            {/* Title */}
+            <Text style={styles.titleCompact}>{announcement.title}</Text>
+
+            {/* Metadata */}
+            <View style={styles.metaRowCompact}>
+              <Text style={styles.timestampCompact}>
+                📅 {formatTimestamp(announcement.createdAt)}
+              </Text>
+              {announcement.expiresAt && (
+                <Text style={styles.expiryTextCompact}>
+                  ⏰ Expires{' '}
+                  {announcement.expiresAt.toDate
+                    ? announcement.expiresAt.toDate().toLocaleDateString()
+                    : new Date(announcement.expiresAt).toLocaleDateString()}
+                </Text>
+              )}
+            </View>
+
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            {/* Content */}
+            <Text style={styles.contentCompact}>{announcement.content}</Text>
           </View>
         </View>
       </ScrollView>
@@ -658,5 +665,88 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
     paddingTop: 10,
+  },
+  // Compact styles
+  cardContentCompact: {
+    flex: 1,
+    padding: 16,
+  },
+  cardHeaderCompact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  authorSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  authorLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginRight: 6,
+  },
+  authorNameCompact: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  deleteButtonCompact: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  },
+  typeChipCompact: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+  },
+  typeChipTextCompact: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  titleCompact: {
+    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    lineHeight: 28,
+  },
+  metaRowCompact: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  timestampCompact: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  expiryTextCompact: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#FF9500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 16,
+  },
+  contentCompact: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.95)',
+    lineHeight: 24,
   },
 });
