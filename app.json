@@ -49,21 +49,14 @@
           "android": {
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRuleFiles": [
-              "android/app/proguard-rules.pro"
-            ]
+            "extraProguardRuleFiles": ["android/app/proguard-rules.pro"]
           }
         }
       ]
     ],
-    "assetBundlePatterns": [
-      "assets/**/*"
-    ],
+    "assetBundlePatterns": ["assets/**/*"],
     "packagerOpts": {
-      "assetExts": [
-        "png",
-        "jpg"
-      ]
+      "assetExts": ["png", "jpg"]
     },
     "updates": {
       "fallbackToCacheTimeout": 0,

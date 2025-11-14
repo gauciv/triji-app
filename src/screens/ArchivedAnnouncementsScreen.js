@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
@@ -29,21 +34,25 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
         where('expiresAt', '<=', new Date()),
         orderBy('expiresAt', 'desc')
       );
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const announcementsList = [];
-        querySnapshot.forEach((doc) => {
-          announcementsList.push({
-            id: doc.id,
-            ...doc.data(),
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const announcementsList = [];
+          querySnapshot.forEach(doc => {
+            announcementsList.push({
+              id: doc.id,
+              ...doc.data(),
+            });
           });
-        });
-        setAnnouncements(announcementsList);
-        setLoading(false);
-      }, (error) => {
-        logError(error, 'Fetch Archived Announcements');
-        setError('Could not load archived announcements. Please check your internet connection.');
-        setLoading(false);
-      });
+          setAnnouncements(announcementsList);
+          setLoading(false);
+        },
+        error => {
+          logError(error, 'Fetch Archived Announcements');
+          setError('Could not load archived announcements. Please check your internet connection.');
+          setLoading(false);
+        }
+      );
       return unsubscribe;
     } catch (error) {
       logError(error, 'Setup Archived Announcements Listener');
@@ -54,7 +63,7 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribe;
-    fetchData().then((unsub) => {
+    fetchData().then(unsub => {
       unsubscribe = unsub;
     });
     return () => {
@@ -62,16 +71,20 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
     };
   }, []);
 
-  const getTypeColor = (type) => {
+  const getTypeColor = type => {
     switch (type) {
-      case 'Critical': return '#FF3B30';
-      case 'Event': return '#AF52DE';
-      case 'Reminder': return '#FF9500';
-      default: return '#007AFF';
+      case 'Critical':
+        return '#FF3B30';
+      case 'Event':
+        return '#AF52DE';
+      case 'Reminder':
+        return '#FF9500';
+      default:
+        return '#007AFF';
     }
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const now = new Date();
     const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -90,10 +103,7 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
     const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
     return (
       <TouchableOpacity
-        style={[
-          styles.announcementCardModernPolished,
-          { borderLeftColor: typeColor, boxShadow },
-        ]}
+        style={[styles.announcementCardModernPolished, { borderLeftColor: typeColor, boxShadow }]}
         activeOpacity={0.92}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
@@ -110,8 +120,17 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
             </View>
             <Text style={styles.titleModernPolished}>{item.title}</Text>
             <View style={styles.cardMetaModernPolished}>
-              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(item.type) + '22' }]}> 
-                <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}>{item.type || 'General'}</Text>
+              <View
+                style={[
+                  styles.typeChipModernPolished,
+                  { backgroundColor: getTypeColor(item.type) + '22' },
+                ]}
+              >
+                <Text
+                  style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}
+                >
+                  {item.type || 'General'}
+                </Text>
               </View>
               <Text style={styles.timestampModernPolished}>{formatTimestamp(item.createdAt)}</Text>
               <Text style={styles.expiryTextModernPolished}>Expired</Text>
@@ -150,7 +169,7 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
@@ -167,7 +186,9 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
           </View>
         </View>
         <Text style={styles.headerTitleModernCard}>Archived Announcements</Text>
-        <Text style={styles.headerSubtextCard}>Expired announcements are kept here for your reference.</Text>
+        <Text style={styles.headerSubtextCard}>
+          Expired announcements are kept here for your reference.
+        </Text>
         <View style={styles.announcementsContent}>
           {loading ? (
             <View style={styles.listContainerModern}>
@@ -187,7 +208,7 @@ export default function ArchivedAnnouncementsScreen({ navigation }) {
               contentContainerStyle={styles.listContainerModern}
               showsVerticalScrollIndicator={false}
             >
-              {announcements.map((item) => renderAnnouncement({ item }))}
+              {announcements.map(item => renderAnnouncement({ item }))}
             </ScrollView>
           )}
         </View>
@@ -244,7 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 32,
     elevation: 12,
     maxWidth: 600,

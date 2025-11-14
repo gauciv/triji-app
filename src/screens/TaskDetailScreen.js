@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
@@ -9,7 +22,7 @@ import { showErrorAlert } from '../utils/errorHandler';
 
 export default function TaskDetailScreen({ route, navigation }) {
   const { task } = route.params || {};
-  
+
   const [countdown, setCountdown] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
   const [isTogglingCompletion, setIsTogglingCompletion] = useState(false);
@@ -32,35 +45,37 @@ export default function TaskDetailScreen({ route, navigation }) {
     // Calculate countdown to deadline
     const calculateCountdown = () => {
       if (!task?.deadline) return;
-      
+
       const now = new Date();
       const deadline = new Date(task.deadline);
       const timeDiff = deadline.getTime() - now.getTime();
-      
+
       if (timeDiff <= 0) {
         setCountdown('This task is overdue');
         return;
       }
-      
+
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      
+
       if (days > 0) {
-        setCountdown(`Due in ${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`);
+        setCountdown(
+          `Due in ${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`
+        );
       } else {
         setCountdown(`Due in ${hours} hour${hours !== 1 ? 's' : ''}`);
       }
     };
-    
+
     calculateCountdown();
     const interval = setInterval(calculateCountdown, 60000); // Update every minute
-    
+
     return () => clearInterval(interval);
   }, [task]);
 
-  const formatDate = (deadline) => {
+  const formatDate = deadline => {
     if (!deadline) return 'No deadline';
-    
+
     let date;
     // Handle Firestore Timestamp object
     if (deadline.toDate && typeof deadline.toDate === 'function') {
@@ -74,29 +89,29 @@ export default function TaskDetailScreen({ route, navigation }) {
     else {
       date = new Date(deadline);
     }
-    
+
     if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const getSubjectFontSize = (text) => {
+  const getSubjectFontSize = text => {
     if (!text) return 16;
     const length = text.length;
-    if (length <= 6) return 16;  // Short acronyms like "CS101"
+    if (length <= 6) return 16; // Short acronyms like "CS101"
     if (length <= 12) return 14; // Medium length
     if (length <= 20) return 12; // Longer names
     return 11; // Very long subject names
   };
 
-  const isOverdue = (deadline) => {
+  const isOverdue = deadline => {
     if (!deadline) return false;
-    
+
     let date;
     // Handle Firestore Timestamp object
     if (deadline.toDate && typeof deadline.toDate === 'function') {
@@ -110,28 +125,28 @@ export default function TaskDetailScreen({ route, navigation }) {
     else {
       date = new Date(deadline);
     }
-    
+
     const today = new Date();
     return date < today;
   };
 
   const toggleTaskCompletion = async () => {
     if (!auth.currentUser || !task?.id) return;
-    
+
     setIsTogglingCompletion(true);
     try {
       const taskRef = doc(db, 'tasks', task.id);
-      
+
       if (isCompleted) {
         // Remove user from completedBy array
         await updateDoc(taskRef, {
-          completedBy: arrayRemove(auth.currentUser.uid)
+          completedBy: arrayRemove(auth.currentUser.uid),
         });
         setIsCompleted(false);
       } else {
         // Add user to completedBy array
         await updateDoc(taskRef, {
-          completedBy: arrayUnion(auth.currentUser.uid)
+          completedBy: arrayUnion(auth.currentUser.uid),
         });
         setIsCompleted(true);
       }
@@ -146,7 +161,7 @@ export default function TaskDetailScreen({ route, navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#1B2845", "#23243a", "#22305a"]}
+          colors={['#1B2845', '#23243a', '#22305a']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.backgroundGradient}
@@ -163,21 +178,18 @@ export default function TaskDetailScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backgroundGradient}
       />
 
       {/* Back Button */}
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Feather name="arrow-left" size={24} color="#FFFFFF" />
       </TouchableOpacity>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -191,22 +203,33 @@ export default function TaskDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.taskInfo}>
               <View style={styles.subjectRow}>
-                <Text style={[styles.taskSubject, { fontSize: getSubjectFontSize(task.subjectCode || task.subject) }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={[
+                    styles.taskSubject,
+                    { fontSize: getSubjectFontSize(task.subjectCode || task.subject) },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {task.subjectCode || task.subject || 'Subject'}
                 </Text>
-                <View style={[
-                  styles.statusBadgeDisplay,
-                  isCompleted ? styles.statusBadgeCompleted : styles.statusBadgePending
-                ]}>
-                  <Feather 
-                    name={isCompleted ? "check-circle" : "circle"} 
-                    size={14} 
-                    color={isCompleted ? "#22e584" : "#FFB800"} 
+                <View
+                  style={[
+                    styles.statusBadgeDisplay,
+                    isCompleted ? styles.statusBadgeCompleted : styles.statusBadgePending,
+                  ]}
+                >
+                  <Feather
+                    name={isCompleted ? 'check-circle' : 'circle'}
+                    size={14}
+                    color={isCompleted ? '#22e584' : '#FFB800'}
                   />
-                  <Text style={[
-                    styles.statusBadgeText,
-                    isCompleted ? styles.statusBadgeTextCompleted : styles.statusBadgeTextPending
-                  ]}>
+                  <Text
+                    style={[
+                      styles.statusBadgeText,
+                      isCompleted ? styles.statusBadgeTextCompleted : styles.statusBadgeTextPending,
+                    ]}
+                  >
                     {isCompleted ? 'Done' : 'Pending'}
                   </Text>
                 </View>
@@ -240,21 +263,20 @@ export default function TaskDetailScreen({ route, navigation }) {
             style={[
               styles.markDoneButton,
               isCompleted && styles.markDoneButtonCompleted,
-              isTogglingCompletion && styles.markDoneButtonDisabled
+              isTogglingCompletion && styles.markDoneButtonDisabled,
             ]}
             onPress={toggleTaskCompletion}
             disabled={isTogglingCompletion}
             activeOpacity={0.7}
           >
-            <Feather 
-              name={isCompleted ? "check-circle" : "circle"} 
-              size={20} 
-              color={isCompleted ? "#22e584" : "#FFB800"} 
+            <Feather
+              name={isCompleted ? 'check-circle' : 'circle'}
+              size={20}
+              color={isCompleted ? '#22e584' : '#FFB800'}
             />
-            <Text style={[
-              styles.markDoneButtonText,
-              isCompleted && styles.markDoneButtonTextCompleted
-            ]}>
+            <Text
+              style={[styles.markDoneButtonText, isCompleted && styles.markDoneButtonTextCompleted]}
+            >
               {isCompleted ? 'Completed' : 'Mark as Done'}
             </Text>
           </TouchableOpacity>

@@ -6,14 +6,8 @@ export default function ProfileSection({ title, children }) {
   return (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <BlurView 
-        intensity={120} 
-        tint="dark" 
-        style={styles.sectionCard}
-      >
-        <View style={styles.sectionContent}>
-          {children}
-        </View>
+      <BlurView intensity={120} tint="dark" style={styles.sectionCard}>
+        <View style={styles.sectionContent}>{children}</View>
       </BlurView>
     </View>
   );

@@ -1,21 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Dimensions, Image } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Dimensions,
+  Image,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { useFocusEffect } from '@react-navigation/native';
-
-// Prevent zooming on web
-if (Platform.OS === 'web') {
-  const meta = document.createElement('meta');
-  meta.name = 'viewport';
-  meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-  document.getElementsByTagName('head')[0].appendChild(meta);
-}
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { ProfileSection, InfoRow } from '../components';
+
+// Prevent zooming on web
+/* eslint-disable no-undef */
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const meta = document.createElement('meta');
+  meta.name = 'viewport';
+  meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+  document.getElementsByTagName('head')[0].appendChild(meta);
+}
+/* eslint-enable no-undef */
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,7 +50,7 @@ export default function ProfileScreen({ navigation }) {
     address: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
-    achievements: []
+    achievements: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +74,12 @@ export default function ProfileScreen({ navigation }) {
             firstName: data.firstName || '',
             lastName: data.lastName || '',
             email: data.email || user.email,
-            studentId: data.studentId || 'ST' + Math.floor(Math.random() * 100000).toString().padStart(5, '0'),
+            studentId:
+              data.studentId ||
+              'ST' +
+                Math.floor(Math.random() * 100000)
+                  .toString()
+                  .padStart(5, '0'),
             program: data.program || 'Computer Science',
             yearLevel: data.yearLevel || '3rd Year',
             enrollmentStatus: data.enrollmentStatus || 'Active',
@@ -66,7 +88,11 @@ export default function ProfileScreen({ navigation }) {
             address: data.address || 'Manila, Philippines',
             emergencyContactName: data.emergencyContactName || 'Parent/Guardian',
             emergencyContactPhone: data.emergencyContactPhone || '+63 912 345 6790',
-            achievements: data.achievements || ['Dean\'s List - Fall 2023', 'Programming Competition - 2nd Place', 'Academic Excellence Award']
+            achievements: data.achievements || [
+              "Dean's List - Fall 2023",
+              'Programming Competition - 2nd Place',
+              'Academic Excellence Award',
+            ],
           });
         }
       }
@@ -94,7 +120,7 @@ export default function ProfileScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+          colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -110,24 +136,21 @@ export default function ProfileScreen({ navigation }) {
     <View style={styles.container}>
       {/* Enhanced gradient background */}
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Background elements removed */}
-      
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Student Profile</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingsButton}
           onPress={() => navigation.navigate('EditProfile')}
         >
@@ -135,17 +158,13 @@ export default function ProfileScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Profile Header Card */}
-        <BlurView 
-          intensity={120} 
-          tint="dark" 
-          style={styles.profileHeaderCard}
-        >
+        <BlurView intensity={120} tint="dark" style={styles.profileHeaderCard}>
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <LinearGradient
@@ -179,33 +198,23 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Personal Information */}
         <ProfileSection title="Personal Information">
-          <InfoRow 
-            icon="user" 
-            label="Full Name" 
+          <InfoRow
+            icon="user"
+            label="Full Name"
             value={`${userData.firstName} ${userData.lastName}`}
             iconColor="#FF9500"
           />
-          <InfoRow 
-            icon="mail" 
-            label="Email Address" 
-            value={userData.email}
-            iconColor="#007AFF"
-          />
-          <InfoRow 
-            icon="phone" 
-            label="Phone Number" 
-            value={userData.phone}
-            iconColor="#34C759"
-          />
-          <InfoRow 
-            icon="calendar" 
-            label="Date of Birth" 
+          <InfoRow icon="mail" label="Email Address" value={userData.email} iconColor="#007AFF" />
+          <InfoRow icon="phone" label="Phone Number" value={userData.phone} iconColor="#34C759" />
+          <InfoRow
+            icon="calendar"
+            label="Date of Birth"
             value={userData.dateOfBirth}
             iconColor="#AF52DE"
           />
-          <InfoRow 
-            icon="map-pin" 
-            label="Address" 
+          <InfoRow
+            icon="map-pin"
+            label="Address"
             value={userData.address}
             iconColor="#FF6B35"
             showDivider={false}
@@ -214,21 +223,16 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Academic Information */}
         <ProfileSection title="Academic Information">
-          <InfoRow 
-            icon="credit-card" 
-            label="Student ID" 
+          <InfoRow
+            icon="credit-card"
+            label="Student ID"
             value={userData.studentId}
             iconColor="#22e584"
           />
-          <InfoRow 
-            icon="book" 
-            label="Program" 
-            value={userData.program}
-            iconColor="#007AFF"
-          />
-          <InfoRow 
-            icon="layers" 
-            label="Year Level" 
+          <InfoRow icon="book" label="Program" value={userData.program} iconColor="#007AFF" />
+          <InfoRow
+            icon="layers"
+            label="Year Level"
             value={userData.yearLevel}
             iconColor="#AF52DE"
             showDivider={false}
@@ -237,15 +241,15 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Emergency Contact */}
         <ProfileSection title="Emergency Contact">
-          <InfoRow 
-            icon="user-plus" 
-            label="Contact Name" 
+          <InfoRow
+            icon="user-plus"
+            label="Contact Name"
             value={userData.emergencyContactName}
             iconColor="#FF6B35"
           />
-          <InfoRow 
-            icon="phone-call" 
-            label="Contact Phone" 
+          <InfoRow
+            icon="phone-call"
+            label="Contact Phone"
             value={userData.emergencyContactPhone}
             iconColor="#34C759"
             showDivider={false}
@@ -255,10 +259,13 @@ export default function ProfileScreen({ navigation }) {
         {/* Achievements */}
         <ProfileSection title="Achievements & Awards">
           {userData.achievements.map((achievement, index) => (
-            <View key={index} style={[
-              styles.achievementItem, 
-              index === userData.achievements.length - 1 && styles.lastAchievementItem
-            ]}>
+            <View
+              key={index}
+              style={[
+                styles.achievementItem,
+                index === userData.achievements.length - 1 && styles.lastAchievementItem,
+              ]}
+            >
               <View style={styles.achievementIcon}>
                 <Feather name="award" size={16} color="#FFD23F" />
               </View>

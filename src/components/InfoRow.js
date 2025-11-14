@@ -2,14 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-export default function InfoRow({ 
-  icon, 
-  label, 
-  value, 
-  onPress, 
-  isEditable = false, 
+export default function InfoRow({
+  icon,
+  label,
+  value,
+  onPress,
+  isEditable = false,
   showDivider = true,
-  iconColor = '#22e584'
+  iconColor = '#22e584',
 }) {
   const Content = (
     <View style={[styles.row, !showDivider && styles.noDivider]}>
@@ -22,9 +22,7 @@ export default function InfoRow({
           <Text style={styles.value}>{value || 'Not set'}</Text>
         </View>
       </View>
-      {isEditable && (
-        <Feather name="chevron-right" size={20} color="#8E8E93" />
-      )}
+      {isEditable && <Feather name="chevron-right" size={20} color="#8E8E93" />}
     </View>
   );
 

@@ -1,9 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Platform, Image, KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Image,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
@@ -23,11 +43,11 @@ export default function RegisterScreen({ navigation }) {
   const [error, setError] = useState('');
   const [agree, setAgree] = useState(false);
 
-  const validateName = (name) => {
+  const validateName = name => {
     return name.trim().length > 0 && !/\d/.test(name);
   };
 
-  const validateEmail = (email) => {
+  const validateEmail = email => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -49,7 +69,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       // Create user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         firstName: firstName.trim(),
@@ -57,10 +77,10 @@ export default function RegisterScreen({ navigation }) {
         email: email.trim(),
         createdAt: new Date().toISOString(),
       });
-      
+
       // Send email verification
       await sendEmailVerification(user);
-      
+
       // No need to manually store session - Firebase Auth with AsyncStorage persistence handles this
       console.log('Registration successful:', user.email);
       navigation.navigate('Verification');
@@ -92,8 +112,8 @@ export default function RegisterScreen({ navigation }) {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
@@ -105,131 +125,155 @@ export default function RegisterScreen({ navigation }) {
         locations={[0, 0.5, 1]}
       />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <BlurView intensity={80} tint="dark" style={styles.glassCard}>
-        <Text style={styles.greeting}>Welcome!,</Text>
-        <Text style={styles.headline}>Let's Get You Started.</Text>
-        <View style={styles.inputContainer}>
-          <View style={styles.inputGroup}>
-            <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              placeholderTextColor="#8E8E93"
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
-              selectionColor="#22e584"
-              underlineColorAndroid="transparent"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              placeholderTextColor="#8E8E93"
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-              selectionColor="#22e584"
-              underlineColorAndroid="transparent"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Feather name="mail" size={18} color="#8E8E93" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#8E8E93"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              selectionColor="#22e584"
-              underlineColorAndroid="transparent"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#8E8E93"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-              selectionColor="#22e584"
-              underlineColorAndroid="transparent"
-            />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
+            <Text style={styles.greeting}>Welcome!,</Text>
+            <Text style={styles.headline}>Let's Get You Started.</Text>
+            <View style={styles.inputContainer}>
+              <View style={styles.inputGroup}>
+                <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="First Name"
+                  placeholderTextColor="#8E8E93"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                  selectionColor="#22e584"
+                  underlineColorAndroid="transparent"
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <FontAwesome name="user-o" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Last Name"
+                  placeholderTextColor="#8E8E93"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                  selectionColor="#22e584"
+                  underlineColorAndroid="transparent"
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Feather name="mail" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#8E8E93"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  selectionColor="#22e584"
+                  underlineColorAndroid="transparent"
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#8E8E93"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  autoCapitalize="none"
+                  selectionColor="#22e584"
+                  underlineColorAndroid="transparent"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.inputGroup}>
+                <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#8E8E93"
+                  secureTextEntry={!showConfirmPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  autoCapitalize="none"
+                  selectionColor="#22e584"
+                  underlineColorAndroid="transparent"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Feather
+                    name={showConfirmPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    color="#8E8E93"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.termsRow}>
+              <Checkbox
+                value={agree}
+                onValueChange={setAgree}
+                color={agree ? '#007AFF' : undefined}
+                style={styles.checkbox}
+              />
+              <Text style={styles.termsText}>
+                By creating an account, you agree to our{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL('https://yourapp.com/terms')}
+                >
+                  Conditions of Use
+                </Text>{' '}
+                and{' '}
+                <Text
+                  style={styles.link}
+                  onPress={() => Linking.openURL('https://yourapp.com/privacy')}
+                >
+                  Privacy Notice
+                </Text>
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.registerButton,
+                (!isFormValid() || loading) && styles.registerButtonDisabled,
+              ]}
+              disabled={!isFormValid() || loading}
+              onPress={handleRegister}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.registerButtonText}>Register</Text>
+              )}
             </TouchableOpacity>
-          </View>
-          <View style={styles.inputGroup}>
-            <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor="#8E8E93"
-              secureTextEntry={!showConfirmPassword}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              autoCapitalize="none"
-              selectionColor="#22e584"
-              underlineColorAndroid="transparent"
-            />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <Feather name={showConfirmPassword ? 'eye-off' : 'eye'} size={18} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.termsRow}>
-          <Checkbox
-            value={agree}
-            onValueChange={setAgree}
-            color={agree ? '#007AFF' : undefined}
-            style={styles.checkbox}
-          />
-          <Text style={styles.termsText}>
-            By creating an account, you agree to our{' '}
-            <Text style={styles.link} onPress={() => Linking.openURL('https://yourapp.com/terms')}>Conditions of Use</Text> and{' '}
-            <Text style={styles.link} onPress={() => Linking.openURL('https://yourapp.com/privacy')}>Privacy Notice</Text>
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.registerButton, (!isFormValid() || loading) && styles.registerButtonDisabled]}
-          disabled={!isFormValid() || loading}
-          onPress={handleRegister}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text style={styles.registerButtonText}>Register</Text>
-          )}
-        </TouchableOpacity>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <View style={styles.bottomSection}>
-          <View style={styles.logoBottom}>
-            <Image 
-              source={require('../../assets/icon.png')} 
-              style={styles.logoImageBottom}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.loginContainer}>
-            <Text style={styles.linkText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.link}>Login</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </BlurView>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <View style={styles.bottomSection}>
+              <View style={styles.logoBottom}>
+                <Image
+                  source={require('../../assets/icon.png')}
+                  style={styles.logoImageBottom}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.loginContainer}>
+                <Text style={styles.linkText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.link}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

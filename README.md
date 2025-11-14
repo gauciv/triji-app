@@ -48,19 +48,22 @@ Triji is a comprehensive mobile application designed to streamline the education
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/gauciv/triji-app.git
    cd triji-app
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables:**
-   
+
    Create a `.env` file in the root directory:
+
    ```env
    EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
    EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -85,6 +88,7 @@ Triji is a comprehensive mobile application designed to streamline the education
 ### Running the App
 
 #### Development Mode
+
 ```bash
 # Start Expo dev server
 npm start
@@ -97,6 +101,7 @@ npm run ios
 ```
 
 #### Tunnel Mode (for testing on physical devices)
+
 ```bash
 npx expo start --tunnel
 ```
@@ -106,6 +111,7 @@ npx expo start --tunnel
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - **React Native** 0.81.5 - Cross-platform mobile framework
 - **Expo SDK** 54 - Managed workflow and development tools
 - **React Navigation** 6.x - Screen navigation (Stack + Bottom Tabs)
@@ -114,20 +120,24 @@ npx expo start --tunnel
 - **Inter Font Family** - Clean, modern typography
 
 ### Backend
+
 - **Firebase Authentication** - User authentication and management
 - **Cloud Firestore** - Real-time NoSQL database
 - **Firebase Storage** - Future file storage (planned)
 
 ### State Management
+
 - **React Hooks** - useState, useEffect, useContext
 - **Context API** - Global state (NetworkContext)
 - **AsyncStorage** - Local persistence
 
 ### Notifications
+
 - **Expo Notifications** - Local push notifications
 - **Android Notification Channels** - Organized notification categories
 
 ### Build & Deployment
+
 - **EAS Build** - Cloud-based builds for Android/iOS
 - **EAS Update** - Over-the-air (OTA) JavaScript updates
 - **ProGuard** - Code shrinking and obfuscation (reduces APK by 60%)
@@ -198,6 +208,7 @@ triji-app/
 ## 🔥 Firebase Collections
 
 ### `users`
+
 ```javascript
 {
   uid: string,                // Firebase Auth UID
@@ -214,6 +225,7 @@ triji-app/
 ```
 
 ### `tasks`
+
 ```javascript
 {
   id: string,
@@ -230,6 +242,7 @@ triji-app/
 ```
 
 ### `announcements`
+
 ```javascript
 {
   id: string,
@@ -246,6 +259,7 @@ triji-app/
 ```
 
 ### `freedomWallPosts`
+
 ```javascript
 {
   id: string,
@@ -265,6 +279,7 @@ triji-app/
 ## 🛠️ Available Scripts
 
 ### Development
+
 ```bash
 npm start              # Start Expo dev server
 npm run android        # Run on Android emulator/device
@@ -273,6 +288,7 @@ npm run web            # Run in web browser
 ```
 
 ### Building
+
 ```bash
 npm run build:android:prod     # Build production Android APK
 npm run build:ios:prod         # Build production iOS IPA
@@ -280,24 +296,28 @@ npm run build:production       # Build for all platforms
 ```
 
 ### Updates (OTA)
+
 ```bash
 npm run update:production      # Publish OTA update to production
 npm run update:preview         # Publish OTA update to preview
 ```
 
 ### Automated Releases
+
 ```bash
 npm run semantic-release       # Run semantic-release locally
 npm run version:sync           # Sync version to app.json
 ```
 
 ### EAS Workflows
+
 ```bash
 eas workflow:run create-production-builds  # Build APK + publish update
 eas workflow:run publish-update            # Fast OTA update only
 ```
 
 ### Other
+
 ```bash
 npm run lint           # Run linter (not configured yet)
 npm run test           # Run tests (not configured yet)
@@ -314,6 +334,7 @@ npm run test           # Run tests (not configured yet)
 This project uses **semantic-release** for fully automated versioning, changelog generation, and deployments based on [Conventional Commits](https://www.conventionalcommits.org/).
 
 **How it works:**
+
 1. Commit with conventional format: `feat: add feature` or `fix: bug fix`
 2. Push to `main` branch
 3. GitHub Actions automatically:
@@ -324,6 +345,7 @@ This project uses **semantic-release** for fully automated versioning, changelog
    - Deploys via EAS Update (OTA) or EAS Build (APK)
 
 **Version Bump Rules:**
+
 - `fix:`, `perf:`, `revert:` → **PATCH** (1.0.0 → 1.0.1) → EAS Update
 - `feat:` → **MINOR** (1.0.0 → 1.1.0) → EAS Update
 - `feat!:` or `BREAKING CHANGE:` → **MAJOR** (1.0.0 → 2.0.0) → EAS Build
@@ -352,6 +374,7 @@ npm run build:android:prod
 ### What Can Be Updated via OTA?
 
 ✅ **Yes (OTA - PATCH/MINOR):**
+
 - JavaScript code changes
 - UI layouts, styles, colors
 - Business logic, Firebase queries
@@ -359,6 +382,7 @@ npm run build:android:prod
 - Bug fixes
 
 ❌ **No (Requires Rebuild - MAJOR):**
+
 - Native dependencies (new npm packages)
 - `app.json` changes (permissions, icons)
 - ProGuard rules
@@ -369,22 +393,26 @@ npm run build:android:prod
 ## 🔐 Security
 
 ### Authentication
+
 - Firebase Authentication with email/password
 - Native Firebase Auth persistence (no manual session management)
 - Secure password reset via email
 
 ### Data Protection
+
 - Firestore Security Rules enforce user permissions
 - Admin role required for creating announcements/tasks
 - Users can only read their own user documents
 - Freedom Wall posts tied to user UID for moderation
 
 ### Code Obfuscation
+
 - ProGuard enabled in production builds
 - Custom rules protect Firebase and Expo modules
 - Source code obfuscated to prevent reverse engineering
 
 ### Environment Variables
+
 - All Firebase credentials stored in `.env` (gitignored)
 - EAS uses Expo secrets for production builds
 - Never commit API keys to version control
@@ -394,6 +422,7 @@ npm run build:android:prod
 ## 🎨 Design System
 
 ### Color Palette
+
 ```css
 Primary Background:   #1B2845 (Midnight Blue)
 Secondary Background: #274060 (Steel Blue)
@@ -405,6 +434,7 @@ Border:              #3D5A7F
 ```
 
 ### Typography
+
 ```
 Font Family: Inter (400, 500, 600)
 Heading:  24px, SemiBold
@@ -414,6 +444,7 @@ Caption:  12px, Regular
 ```
 
 ### Spacing
+
 ```
 Padding:       16px (standard), 12px (compact)
 Margin:        16px (standard), 8px (tight)
@@ -442,6 +473,7 @@ Border Radius: 12px (cards), 8px (buttons)
 ### Testing on Devices
 
 **Android:**
+
 ```bash
 # Install via ADB
 adb install path/to/app.apk
@@ -451,6 +483,7 @@ adb logcat | grep ReactNative
 ```
 
 **iOS (macOS only):**
+
 ```bash
 # Install on simulator
 npx expo run:ios
@@ -463,25 +496,30 @@ npx expo run:ios
 ### Common Issues
 
 **1. "Firebase not initialized"**
+
 - Ensure `.env` file exists with all Firebase credentials
 - Restart Expo dev server: `npx expo start --clear`
 
 **2. "Build failed on EAS"**
+
 - Check EAS Build logs at https://expo.dev/accounts/gauciv/projects/triji-app/builds
 - Verify `eas.json` configuration is valid
 - Ensure `expo-build-properties` is installed
 
 **3. "Notifications not working"**
+
 - Notifications only work when app is open or in background (not fully closed)
 - Check Android notification permissions are granted
 - For closed-app notifications, Firebase Cloud Functions backend is required (future)
 
 **4. "App crashes after ProGuard build"**
+
 - Check `android/app/proguard-rules.pro` has correct rules
 - Verify all Firebase and Expo modules are kept
 - Review crash logs from device
 
 **5. "OTA updates not received"**
+
 - Ensure app was built with `channel: "production"` in `eas.json`
 - Check updates are published to correct branch: `eas update:list`
 - Users on v1.0.0 or earlier may not have channel configuration (rebuild required)
@@ -519,7 +557,7 @@ firebase projects:list
 ✅ **Offline Persistence** - Firestore caching enabled  
 ✅ **Safe Area Insets** - Proper Android button navigation support  
 ✅ **Lazy Loading** - Components load on demand  
-✅ **Image Optimization** - Compressed assets  
+✅ **Image Optimization** - Compressed assets
 
 ### Performance Targets
 
@@ -534,6 +572,7 @@ firebase projects:list
 ## 🛣️ Roadmap
 
 ### Current Version (v1.0.1)
+
 - ✅ Core features: Tasks, Announcements, Freedom Wall
 - ✅ Real-time synchronization
 - ✅ Push notifications (local)
@@ -544,24 +583,28 @@ firebase projects:list
 ### Planned Features
 
 **v1.1.0 - Backend Enhancement**
+
 - [ ] Firebase Cloud Functions for closed-app notifications
 - [ ] Scheduled announcement expiration
 - [ ] Automated task reminders
 - [ ] Content moderation for Freedom Wall
 
 **v1.2.0 - Social Features**
+
 - [ ] Comment system for Freedom Wall posts
 - [ ] User reputation/karma system
 - [ ] Direct messaging between users
 - [ ] Group study rooms
 
 **v1.3.0 - Productivity**
+
 - [ ] File attachments for tasks/announcements
 - [ ] Task completion tracking and progress
 - [ ] Calendar view for deadlines
 - [ ] Study timer (Pomodoro)
 
 **v2.0.0 - Platform Expansion**
+
 - [ ] iOS release on App Store
 - [ ] Web version (responsive)
 - [ ] Admin dashboard (web)
@@ -583,6 +626,7 @@ If you're working on this project:
    - Utils: `camelCase`
 
 2. **Always unsubscribe from Firestore listeners:**
+
    ```javascript
    useEffect(() => {
      const unsubscribe = onSnapshot(query, callback);
@@ -591,6 +635,7 @@ If you're working on this project:
    ```
 
 3. **Check auth state before queries:**
+
    ```javascript
    if (!auth.currentUser) {
      return;
@@ -598,6 +643,7 @@ If you're working on this project:
    ```
 
 4. **Handle date formats gracefully:**
+
    ```javascript
    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
    ```

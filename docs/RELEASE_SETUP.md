@@ -3,6 +3,7 @@
 ## ✅ What Was Implemented
 
 ### 1. Semantic Versioning with semantic-release
+
 - ✅ Automated version bumping based on commit messages
 - ✅ Automatic CHANGELOG.md generation
 - ✅ Git tag creation
@@ -10,22 +11,26 @@
 - ✅ Integration with EAS Update and EAS Build
 
 ### 2. Conventional Commits Enforcement
+
 - ✅ commitlint configuration
 - ✅ Commit message validation in CI
 - ✅ Comprehensive documentation and examples
 
 ### 3. Intelligent Deployment Strategy
+
 - ✅ **PATCH** (bug fixes) → EAS Update (OTA)
 - ✅ **MINOR** (features) → EAS Update (OTA)
 - ✅ **MAJOR** (breaking) → EAS Build (APK rebuild)
 
 ### 4. GitHub Actions Workflow
+
 - ✅ Automatic release on push to main
 - ✅ Commit validation
 - ✅ Version syncing to app.json
 - ✅ Artifact uploading
 
 ### 5. Documentation
+
 - ✅ Complete versioning guide
 - ✅ Quick reference commit guide
 - ✅ GitHub issue templates
@@ -37,6 +42,7 @@
 ## 📦 Files Created/Modified
 
 ### New Files
+
 ```
 .releaserc.js                           # semantic-release config
 .commitlintrc.js                        # Commit message validation
@@ -51,6 +57,7 @@ CHANGELOG.md                            # Auto-generated changelog
 ```
 
 ### Modified Files
+
 ```
 package.json                            # Added semantic-release dependencies
 README.md                               # Added versioning section
@@ -62,11 +69,13 @@ CONTEXT.md                              # Added automated release process
 ## 🔧 Required Setup
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 This installs:
+
 - `semantic-release` - Core automation
 - `@semantic-release/*` plugins - Changelog, Git, GitHub, etc.
 - `@commitlint/*` - Commit message validation
@@ -79,10 +88,12 @@ Go to: **GitHub Repository → Settings → Secrets and variables → Actions**
 Add these secrets:
 
 #### `GITHUB_TOKEN` (automatically available)
+
 - ✅ Already available in GitHub Actions
 - Used for creating releases and pushing tags
 
 #### `EXPO_TOKEN` (required)
+
 1. Go to https://expo.dev/accounts/gauciv/settings/access-tokens
 2. Click "Create Token"
 3. Name it: "GitHub Actions"
@@ -96,6 +107,7 @@ Add these secrets:
 Go to: **GitHub Repository → Settings → Branches → Branch protection rules**
 
 Add rule for `main`:
+
 - ✅ Require pull request reviews
 - ✅ Require status checks to pass
 - ✅ Require conversation resolution before merging
@@ -110,6 +122,7 @@ This ensures all commits follow Conventional Commits format.
 ### Making Changes
 
 **1. Create a branch:**
+
 ```bash
 git checkout -b feat/new-feature
 ```
@@ -117,18 +130,21 @@ git checkout -b feat/new-feature
 **2. Make your changes and commit with conventional format:**
 
 **Bug fix (Patch: 1.0.0 → 1.0.1):**
+
 ```bash
 git add .
 git commit -m "fix: resolve notification crash on Android 11"
 ```
 
 **New feature (Minor: 1.0.0 → 1.1.0):**
+
 ```bash
 git add .
 git commit -m "feat: add dark mode toggle"
 ```
 
 **Breaking change (Major: 1.0.0 → 2.0.0):**
+
 ```bash
 git add .
 git commit -m "feat!: migrate to new Firebase API
@@ -137,16 +153,19 @@ BREAKING CHANGE: Users must update to Firebase v12+. Requires app reinstall."
 ```
 
 **3. Push to GitHub:**
+
 ```bash
 git push origin feat/new-feature
 ```
 
 **4. Create Pull Request**
+
 - Fill out the PR template
 - Ensure CI passes (commit validation)
 - Get review and merge
 
 **5. Automatic Release**
+
 - When merged to `main`, GitHub Actions triggers
 - semantic-release analyzes commits
 - Version is bumped
@@ -163,6 +182,7 @@ git push origin feat/new-feature
 ### Example 1: Multiple Commits
 
 **Commits in PR:**
+
 ```bash
 fix: resolve login crash
 feat: add profile customization
@@ -170,6 +190,7 @@ docs: update README
 ```
 
 **Result:**
+
 - Highest type: `feat` (minor)
 - Version: 1.0.5 → **1.1.0**
 - Deployment: EAS Update
@@ -178,6 +199,7 @@ docs: update README
 ### Example 2: Breaking Change
 
 **Commit:**
+
 ```bash
 refactor!: restructure task data model
 
@@ -185,6 +207,7 @@ BREAKING CHANGE: Tasks now use new schema. Users must reinstall app.
 ```
 
 **Result:**
+
 - Type: Breaking
 - Version: 1.1.0 → **2.0.0**
 - Deployment: EAS Build
@@ -193,11 +216,13 @@ BREAKING CHANGE: Tasks now use new schema. Users must reinstall app.
 ### Example 3: Only Documentation
 
 **Commit:**
+
 ```bash
 docs: add API documentation
 ```
 
 **Result:**
+
 - Type: docs
 - Version: No change
 - Deployment: None
@@ -208,6 +233,7 @@ docs: add API documentation
 ## 🧪 Testing the System
 
 ### 1. Validate Commit Message Locally
+
 ```bash
 # Valid commit
 echo "feat: add new feature" | npx commitlint
@@ -218,6 +244,7 @@ echo "add new feature" | npx commitlint
 ```
 
 ### 2. Dry Run semantic-release
+
 ```bash
 # See what would happen without making changes
 npm run semantic-release -- --dry-run
@@ -230,6 +257,7 @@ npm run semantic-release -- --dry-run
 ```
 
 ### 3. Test Deployment Script
+
 ```bash
 # Simulate patch release
 node scripts/deploy.js patch
@@ -289,6 +317,7 @@ feat: Add new feature       # Description starts with uppercase
 ### Issue: CI fails with "Commit does not follow Conventional Commits"
 
 **Solution:** Fix your commit message:
+
 ```bash
 # If last commit is wrong
 git commit --amend -m "feat: correct message"
@@ -300,6 +329,7 @@ git push --force-with-lease
 **Cause:** No commits with release triggers (feat, fix, etc.)
 
 **Solution:** Ensure at least one commit has:
+
 - `feat:` (minor)
 - `fix:` (patch)
 - `perf:` (patch)
@@ -308,6 +338,7 @@ git push --force-with-lease
 ### Issue: EAS Update/Build failed
 
 **Solution:**
+
 1. Check `EXPO_TOKEN` is set in GitHub secrets
 2. View build logs: https://expo.dev/accounts/gauciv/projects/triji-app/builds
 3. Check EAS configuration in `eas.json`
@@ -315,6 +346,7 @@ git push --force-with-lease
 ### Issue: Version in app.json not updated
 
 **Solution:**
+
 ```bash
 # Manually sync version
 npm run version:sync 1.2.3
@@ -372,7 +404,7 @@ git push
 ✅ **Intelligent deployments** - OTA for patches/features, APK for breaking changes  
 ✅ **Enforced standards** - Conventional Commits validated in CI  
 ✅ **Faster releases** - No manual steps, push and done  
-✅ **Better collaboration** - Clear commit messages and release notes  
+✅ **Better collaboration** - Clear commit messages and release notes
 
 ---
 

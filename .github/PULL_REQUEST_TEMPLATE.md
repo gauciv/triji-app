@@ -1,7 +1,9 @@
 ## Description
+
 <!-- Describe your changes in detail -->
 
 ## Type of Change
+
 <!-- Check the relevant option(s) -->
 
 - [ ] 🐛 Bug fix (patch)
@@ -15,11 +17,13 @@
 - [ ] 🔧 Chore/maintenance
 
 ## Commit Message Format
+
 <!-- Ensure your commit follows Conventional Commits -->
 
 **Format:** `<type>(<scope>): <description>`
 
 **Example commits for this PR:**
+
 ```bash
 # Your commit message should look like:
 feat: add dark mode toggle
@@ -34,11 +38,13 @@ feat!: migrate to new API (breaking)
 - [ ] **No Deployment** - Documentation/chore only
 
 ## Breaking Changes
+
 <!-- If this is a breaking change, explain the impact and migration steps -->
 
 **Is this a breaking change?** <!-- Yes/No -->
 
 **If yes, describe:**
+
 - What breaks?
 - Migration steps for users:
 - Why is this necessary?
@@ -53,12 +59,15 @@ feat!: migrate to new API (breaking)
 - [ ] Updated documentation (if needed)
 
 ## Screenshots/Videos
+
 <!-- If UI changes, add screenshots or screen recordings -->
 
 ## Related Issues
+
 <!-- Link related issues: Fixes #123, Closes #456 -->
 
 ## Additional Context
+
 <!-- Add any other context about the PR -->
 
 ---

@@ -1,7 +1,7 @@
 ---
-name: "General Issue Template"
-about: "Report or request anything related to the project"
-labels: ""
+name: 'General Issue Template'
+about: 'Report or request anything related to the project'
+labels: ''
 ---
 
 ## 🐞 Problem

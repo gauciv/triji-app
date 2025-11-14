@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Modal } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Platform,
+  Modal,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
@@ -12,7 +26,7 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Safety check
   useEffect(() => {
     if (!announcementId) {
@@ -30,12 +44,12 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Fetch announcement
       const docRef = doc(db, 'announcements', announcementId);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         setAnnouncement({
           id: docSnap.id,
@@ -56,19 +70,27 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
     fetchData();
   }, [announcementId]);
 
-  const getTypeColor = (type) => {
+  const getTypeColor = type => {
     switch (type) {
-      case 'Critical': return '#FF3B30';
-      case 'Event': return '#AF52DE';
-      case 'Reminder': return '#FF9500';
-      default: return '#007AFF';
+      case 'Critical':
+        return '#FF3B30';
+      case 'Event':
+        return '#AF52DE';
+      case 'Reminder':
+        return '#FF9500';
+      default:
+        return '#007AFF';
     }
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return postTime.toLocaleDateString() + ' at ' + postTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      postTime.toLocaleDateString() +
+      ' at ' +
+      postTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    );
   };
 
   const handleDelete = () => {
@@ -124,7 +146,7 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
@@ -136,10 +158,18 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContainerPolished}>
-        <View style={[
-          styles.cardModernPolished,
-          { borderLeftColor: getTypeColor(announcement.type), boxShadow: Platform.OS === 'web' ? `0px 8px 32px 0px ${getTypeColor(announcement.type)}22` : undefined },
-        ]}>
+        <View
+          style={[
+            styles.cardModernPolished,
+            {
+              borderLeftColor: getTypeColor(announcement.type),
+              boxShadow:
+                Platform.OS === 'web'
+                  ? `0px 8px 32px 0px ${getTypeColor(announcement.type)}22`
+                  : undefined,
+            },
+          ]}
+        >
           <View style={styles.cardAccentBar} />
           <View style={styles.cardContentModernPolished}>
             <View style={styles.cardHeaderModernPolished}>
@@ -148,7 +178,9 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
                   {announcement.authorName ? announcement.authorName.charAt(0).toUpperCase() : 'A'}
                 </Text>
               </View>
-              <Text style={styles.authorNameModernPolished}>{announcement.authorName || 'Anonymous'}</Text>
+              <Text style={styles.authorNameModernPolished}>
+                {announcement.authorName || 'Anonymous'}
+              </Text>
               {auth.currentUser && announcement.authorId === auth.currentUser.uid && (
                 <TouchableOpacity style={styles.deleteButtonModern} onPress={handleDelete}>
                   <Feather name="trash-2" size={20} color="#FF3B30" />
@@ -158,11 +190,34 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
             {/* Title styled like the list */}
             <Text style={styles.titleModernPolished}>{announcement.title}</Text>
             <View style={styles.cardMetaModernPolished}>
-              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(announcement.type) + '22', borderColor: getTypeColor(announcement.type) + '55' }]}> 
-                <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(announcement.type) }]}>{announcement.type || 'General'}</Text>
+              <View
+                style={[
+                  styles.typeChipModernPolished,
+                  {
+                    backgroundColor: getTypeColor(announcement.type) + '22',
+                    borderColor: getTypeColor(announcement.type) + '55',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.typeChipTextModernPolished,
+                    { color: getTypeColor(announcement.type) },
+                  ]}
+                >
+                  {announcement.type || 'General'}
+                </Text>
               </View>
-              <Text style={styles.timestampModernPolished}>{formatTimestamp(announcement.createdAt)}</Text>
-              <Text style={styles.expiryTextModernPolished}>Expires {announcement.expiresAt && (announcement.expiresAt.toDate ? announcement.expiresAt.toDate().toLocaleDateString() : new Date(announcement.expiresAt).toLocaleDateString())}</Text>
+              <Text style={styles.timestampModernPolished}>
+                {formatTimestamp(announcement.createdAt)}
+              </Text>
+              <Text style={styles.expiryTextModernPolished}>
+                Expires{' '}
+                {announcement.expiresAt &&
+                  (announcement.expiresAt.toDate
+                    ? announcement.expiresAt.toDate().toLocaleDateString()
+                    : new Date(announcement.expiresAt).toLocaleDateString())}
+              </Text>
             </View>
             <Text style={styles.contentModernPolished}>{announcement.content}</Text>
           </View>
@@ -178,18 +233,17 @@ export default function AnnouncementDetailScreen({ route, navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Delete Announcement</Text>
-            <Text style={styles.modalMessage}>Are you sure you want to delete this announcement?</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to delete this announcement?
+            </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShowDeleteModal(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.deleteConfirmButton}
-                onPress={confirmDelete}
-              >
+              <TouchableOpacity style={styles.deleteConfirmButton} onPress={confirmDelete}>
                 <Text style={styles.deleteConfirmButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>

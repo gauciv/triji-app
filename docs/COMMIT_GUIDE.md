@@ -5,36 +5,44 @@
 ## 🚀 Common Commit Examples
 
 ### Bug Fixes (Patch: 1.0.0 → 1.0.1)
+
 ```bash
 git commit -m "fix: resolve notification crash"
 git commit -m "fix(auth): handle expired tokens"
 git commit -m "fix(ui): correct button alignment"
 ```
+
 **Result:** EAS Update (OTA) - users auto-update
 
 ### New Features (Minor: 1.0.0 → 1.1.0)
+
 ```bash
 git commit -m "feat: add dark mode toggle"
 git commit -m "feat(dashboard): show activity stats"
 git commit -m "feat(tasks): add completion tracking"
 ```
+
 **Result:** EAS Update (OTA) - users auto-update
 
 ### Breaking Changes (Major: 1.0.0 → 2.0.0)
+
 ```bash
 git commit -m "feat!: migrate to new API
 
 BREAKING CHANGE: Users must reinstall app"
 ```
+
 **Result:** EAS Build (APK) - users must reinstall
 
 ### No Release
+
 ```bash
 git commit -m "docs: update README"
 git commit -m "chore: update dependencies"
 git commit -m "style: format code"
 git commit -m "test: add unit tests"
 ```
+
 **Result:** No version bump, no deployment
 
 ---
@@ -50,6 +58,7 @@ git commit -m "test: add unit tests"
 ```
 
 ### Required Types
+
 - `feat` - New feature → MINOR bump
 - `fix` - Bug fix → PATCH bump
 - `perf` - Performance → PATCH bump
@@ -63,6 +72,7 @@ git commit -m "test: add unit tests"
 - `revert` - Revert commit → PATCH bump
 
 ### Breaking Change Markers
+
 ```bash
 # Method 1: Add ! after type
 feat!: breaking change description
@@ -72,6 +82,7 @@ feat: some change
 
 BREAKING CHANGE: explanation of breaking change
 ```
+
 **Result:** MAJOR version bump + EAS Build
 
 ---
@@ -117,6 +128,7 @@ git push origin main → CI runs automatically
 ## 🔴 Common Mistakes to Avoid
 
 ### ❌ Wrong
+
 ```bash
 "Add new feature"                    # No type
 "added: new feature"                 # Invalid type
@@ -127,6 +139,7 @@ git push origin main → CI runs automatically
 ```
 
 ### ✅ Correct
+
 ```bash
 "feat: add new feature"
 "fix: resolve login bug"
@@ -138,18 +151,19 @@ git push origin main → CI runs automatically
 
 ## 📊 When Will My Release Deploy?
 
-| Commit Type | Version Bump | Deployment | Time to Users |
-|-------------|--------------|------------|---------------|
-| `fix:`      | Patch        | EAS Update | ~5 minutes    |
-| `feat:`     | Minor        | EAS Update | ~5 minutes    |
-| `feat!:`    | Major        | EAS Build  | Manual install|
-| `docs:`     | None         | None       | N/A           |
+| Commit Type | Version Bump | Deployment | Time to Users  |
+| ----------- | ------------ | ---------- | -------------- |
+| `fix:`      | Patch        | EAS Update | ~5 minutes     |
+| `feat:`     | Minor        | EAS Update | ~5 minutes     |
+| `feat!:`    | Major        | EAS Build  | Manual install |
+| `docs:`     | None         | None       | N/A            |
 
 ---
 
 ## 🆘 Emergency Fixes
 
 ### Option 1: Hotfix with semantic-release
+
 ```bash
 # Make urgent fix
 git add .
@@ -159,6 +173,7 @@ git push origin main
 ```
 
 ### Option 2: Manual EAS Update
+
 ```bash
 # Skip CI, deploy immediately
 npm run update:production
@@ -166,6 +181,7 @@ npm run update:production
 ```
 
 ### Option 3: Manual Build (Breaking)
+
 ```bash
 # For critical native issues
 npm run build:android:prod

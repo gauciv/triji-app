@@ -21,7 +21,7 @@ export async function registerForPushNotifications() {
   try {
     // Check if running in Expo Go (which doesn't support push notifications in SDK 53+)
     const isExpoGo = typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
-    
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -61,7 +61,7 @@ export async function registerForPushNotifications() {
       enableVibrate: true,
       showBadge: true,
     });
-    
+
     await Notifications.setNotificationChannelAsync('announcements', {
       name: 'Announcements',
       importance: Notifications.AndroidImportance.HIGH,
@@ -71,7 +71,7 @@ export async function registerForPushNotifications() {
       enableVibrate: true,
       showBadge: true,
     });
-    
+
     await Notifications.setNotificationChannelAsync('freedomwall', {
       name: 'Freedom Wall',
       importance: Notifications.AndroidImportance.DEFAULT,
@@ -182,6 +182,6 @@ export function setupNotificationListeners(onNotificationReceived, onNotificatio
     remove: () => {
       Notifications.removeNotificationSubscription(notificationListener);
       Notifications.removeNotificationSubscription(responseListener);
-    }
+    },
   };
 }

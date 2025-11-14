@@ -76,12 +76,12 @@ export default function SplashScreen({ loadingMessage = 'Loading...' }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       />
-      
+
       {/* Animated floating particles */}
       <View style={styles.particlesContainer}>
         {[...Array(8)].map((_, i) => (
@@ -109,27 +109,17 @@ export default function SplashScreen({ loadingMessage = 'Loading...' }) {
         ]}
       >
         {/* Logo with pulse effect */}
-        <Animated.View
-          style={[
-            styles.logoContainer,
-            { transform: [{ scale: pulseAnim }] },
-          ]}
-        >
+        <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
           <View style={styles.logo}>
-            <Image 
-              source={require('../../assets/icon.png')} 
+            <Image
+              source={require('../../assets/icon.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
-          
+
           {/* Rotating spinner around logo */}
-          <Animated.View
-            style={[
-              styles.spinnerRing,
-              { transform: [{ rotate: spin }] },
-            ]}
-          >
+          <Animated.View style={[styles.spinnerRing, { transform: [{ rotate: spin }] }]}>
             <View style={styles.spinnerDot} />
           </Animated.View>
         </Animated.View>
@@ -139,12 +129,7 @@ export default function SplashScreen({ loadingMessage = 'Loading...' }) {
 
         {/* Progress bar */}
         <View style={styles.progressBarContainer}>
-          <Animated.View
-            style={[
-              styles.progressBar,
-              { width: progressWidth },
-            ]}
-          />
+          <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
         </View>
 
         {/* Loading message */}

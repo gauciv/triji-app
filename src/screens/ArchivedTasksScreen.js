@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
@@ -22,32 +27,33 @@ export default function ArchivedTasksScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribeTasks = null;
-    
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const q = query(
-          collection(db, 'tasks'),
-          orderBy('deadline', 'desc')
-        );
 
-        unsubscribeTasks = onSnapshot(q, (querySnapshot) => {
-          const tasksList = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // Only show tasks that current user has completed
-            if (data.completedBy && data.completedBy.includes(user.uid)) {
-              tasksList.push({
-                id: doc.id,
-                ...data,
-              });
-            }
-          });
-          setTasks(tasksList);
-          setLoading(false);
-        }, (error) => {
-          logError(error, 'Fetch Archived Tasks');
-          setLoading(false);
-        });
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
+      if (user) {
+        const q = query(collection(db, 'tasks'), orderBy('deadline', 'desc'));
+
+        unsubscribeTasks = onSnapshot(
+          q,
+          querySnapshot => {
+            const tasksList = [];
+            querySnapshot.forEach(doc => {
+              const data = doc.data();
+              // Only show tasks that current user has completed
+              if (data.completedBy && data.completedBy.includes(user.uid)) {
+                tasksList.push({
+                  id: doc.id,
+                  ...data,
+                });
+              }
+            });
+            setTasks(tasksList);
+            setLoading(false);
+          },
+          error => {
+            logError(error, 'Fetch Archived Tasks');
+            setLoading(false);
+          }
+        );
       } else {
         // User logged out, cleanup listener
         if (unsubscribeTasks) {
@@ -74,9 +80,9 @@ export default function ArchivedTasksScreen({ navigation }) {
     }, 800);
   };
 
-  const formatDate = (deadline) => {
+  const formatDate = deadline => {
     if (!deadline) return 'No deadline';
-    
+
     let date;
     // Handle Firestore Timestamp object
     if (deadline.toDate && typeof deadline.toDate === 'function') {
@@ -90,12 +96,12 @@ export default function ArchivedTasksScreen({ navigation }) {
     else {
       date = new Date(deadline);
     }
-    
+
     if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -106,7 +112,7 @@ export default function ArchivedTasksScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backgroundGradient}
@@ -114,15 +120,14 @@ export default function ArchivedTasksScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerTextContainer}>
           <Text style={styles.headerTitle}>Completed Tasks</Text>
-          <Text style={styles.headerSubtext}>{tasks.length} completed task{tasks.length !== 1 ? 's' : ''}</Text>
+          <Text style={styles.headerSubtext}>
+            {tasks.length} completed task{tasks.length !== 1 ? 's' : ''}
+          </Text>
         </View>
       </View>
 
@@ -152,7 +157,7 @@ export default function ArchivedTasksScreen({ navigation }) {
             <Text style={styles.emptyMessage}>Tasks you mark as done will appear here</Text>
           </View>
         ) : (
-          tasks.map((task) => (
+          tasks.map(task => (
             <TouchableOpacity
               key={task.id}
               style={styles.taskCard}

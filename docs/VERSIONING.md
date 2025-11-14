@@ -48,19 +48,19 @@ All commits **must** follow the Conventional Commits specification:
 
 ### Commit Types
 
-| Type       | Description                           | Version Bump | Deployment     |
-|------------|---------------------------------------|--------------|----------------|
-| `feat`     | New feature                           | MINOR (0.x.0)| EAS Update     |
-| `fix`      | Bug fix                               | PATCH (0.0.x)| EAS Update     |
-| `perf`     | Performance improvement               | PATCH (0.0.x)| EAS Update     |
-| `revert`   | Revert previous commit                | PATCH (0.0.x)| EAS Update     |
-| `docs`     | Documentation only                    | None         | None           |
-| `style`    | Code style (formatting, whitespace)   | None         | None           |
-| `refactor` | Code refactoring (no behavior change) | None         | None           |
-| `test`     | Adding/updating tests                 | None         | None           |
-| `chore`    | Maintenance tasks                     | None         | None           |
-| `build`    | Build system changes                  | None         | None           |
-| `ci`       | CI/CD changes                         | None         | None           |
+| Type       | Description                           | Version Bump  | Deployment |
+| ---------- | ------------------------------------- | ------------- | ---------- |
+| `feat`     | New feature                           | MINOR (0.x.0) | EAS Update |
+| `fix`      | Bug fix                               | PATCH (0.0.x) | EAS Update |
+| `perf`     | Performance improvement               | PATCH (0.0.x) | EAS Update |
+| `revert`   | Revert previous commit                | PATCH (0.0.x) | EAS Update |
+| `docs`     | Documentation only                    | None          | None       |
+| `style`    | Code style (formatting, whitespace)   | None          | None       |
+| `refactor` | Code refactoring (no behavior change) | None          | None       |
+| `test`     | Adding/updating tests                 | None          | None       |
+| `chore`    | Maintenance tasks                     | None          | None       |
+| `build`    | Build system changes                  | None          | None       |
+| `ci`       | CI/CD changes                         | None          | None       |
 
 ### Breaking Changes
 
@@ -73,6 +73,7 @@ BREAKING CHANGE: Users must update Firebase SDK to v11+
 ```
 
 This triggers:
+
 - **MAJOR version bump** (x.0.0)
 - **EAS Build** (full APK rebuild)
 - GitHub Release marked as breaking change
@@ -82,9 +83,11 @@ This triggers:
 ## 🔢 Version Bump Rules
 
 ### PATCH (0.0.x) - Bug Fixes & Improvements
+
 **Triggers:** `fix:`, `perf:`, `revert:`
 
 **Examples:**
+
 ```bash
 fix: resolve login crash on Android
 fix(auth): handle expired tokens correctly
@@ -93,14 +96,17 @@ revert: revert "feat: add new feature"
 ```
 
 **Result:**
+
 - Version: `1.0.0` → `1.0.1`
 - Deployment: **EAS Update (OTA)**
 - Users receive update automatically
 
 ### MINOR (0.x.0) - New Features
+
 **Triggers:** `feat:`
 
 **Examples:**
+
 ```bash
 feat: add dark mode toggle
 feat(dashboard): implement unified activity feed
@@ -108,14 +114,17 @@ feat(tasks): add task completion tracking
 ```
 
 **Result:**
+
 - Version: `1.0.0` → `1.1.0`
 - Deployment: **EAS Update (OTA)**
 - Users receive update automatically
 
 ### MAJOR (x.0.0) - Breaking Changes
+
 **Triggers:** `BREAKING CHANGE:` footer or `!` after type
 
 **Examples:**
+
 ```bash
 feat!: migrate to new authentication system
 
@@ -129,6 +138,7 @@ BREAKING CHANGE: Requires full app reinstall
 ```
 
 **Result:**
+
 - Version: `1.0.0` → `2.0.0`
 - Deployment: **EAS Build (APK)**
 - Users must manually reinstall
@@ -139,11 +149,11 @@ BREAKING CHANGE: Requires full app reinstall
 
 ### Automatic Deployment (via semantic-release)
 
-| Release Type | Version Change | Action              | User Impact               |
-|--------------|----------------|---------------------|---------------------------|
-| **PATCH**    | 1.0.0 → 1.0.1  | EAS Update (OTA)    | Auto-update (~5 min)      |
-| **MINOR**    | 1.0.0 → 1.1.0  | EAS Update (OTA)    | Auto-update (~5 min)      |
-| **MAJOR**    | 1.0.0 → 2.0.0  | EAS Build (APK)     | Manual reinstall required |
+| Release Type | Version Change | Action           | User Impact               |
+| ------------ | -------------- | ---------------- | ------------------------- |
+| **PATCH**    | 1.0.0 → 1.0.1  | EAS Update (OTA) | Auto-update (~5 min)      |
+| **MINOR**    | 1.0.0 → 1.1.0  | EAS Update (OTA) | Auto-update (~5 min)      |
+| **MAJOR**    | 1.0.0 → 2.0.0  | EAS Build (APK)  | Manual reinstall required |
 
 ### What Requires a MAJOR Release (APK Rebuild)?
 
@@ -178,6 +188,7 @@ git push origin main
 ```
 
 **Result:**
+
 ```
 ✅ Version bumped: 1.0.5 → 1.0.6
 ✅ CHANGELOG updated
@@ -195,6 +206,7 @@ git push origin main
 ```
 
 **Result:**
+
 ```
 ✅ Version bumped: 1.0.6 → 1.1.0
 ✅ CHANGELOG updated
@@ -214,6 +226,7 @@ git push origin main
 ```
 
 **Result:**
+
 ```
 ✅ Version bumped: 1.1.0 → 2.0.0
 ✅ CHANGELOG updated
@@ -239,6 +252,7 @@ git push origin main
 ```
 
 **Result:**
+
 ```
 ✅ Version bumped: 1.1.0 → 1.2.0 (highest: minor)
 ✅ CHANGELOG includes both commits
@@ -254,6 +268,7 @@ git push origin main
 ```
 
 **Result:**
+
 ```
 ℹ️  No version bump
 ℹ️  No release created
@@ -275,6 +290,7 @@ npm run semantic-release
 ```
 
 **Prerequisites:**
+
 - `GITHUB_TOKEN` environment variable set
 - `EXPO_TOKEN` environment variable set
 - On `main` branch
@@ -364,6 +380,7 @@ npm run semantic-release -- --dry-run
 **Cause:** `scripts/sync-version.js` failed
 
 **Solution:**
+
 ```bash
 # Manually sync version
 npm run version:sync 1.2.3
@@ -374,6 +391,7 @@ npm run version:sync 1.2.3
 **Cause:** Missing `EXPO_TOKEN` in GitHub secrets
 
 **Solution:**
+
 1. Go to https://expo.dev/accounts/gauciv/settings/access-tokens
 2. Create new token
 3. Add to GitHub: Settings → Secrets → Actions → New secret
@@ -384,6 +402,7 @@ npm run version:sync 1.2.3
 **Cause:** Pushing multiple commits rapidly
 
 **Solution:** semantic-release handles this automatically, but you can:
+
 - Squash commits before pushing
 - Wait for CI to complete before pushing again
 
@@ -392,6 +411,7 @@ npm run version:sync 1.2.3
 **Cause:** Incorrect commit message format
 
 **Solution:**
+
 - Review commit message guidelines above
 - Use `git commit --amend` to fix last commit
 - Force push if needed: `git push --force-with-lease`
@@ -401,6 +421,7 @@ npm run version:sync 1.2.3
 ## 📊 Release History
 
 View all releases:
+
 - **GitHub:** https://github.com/gauciv/triji-app/releases
 - **CHANGELOG:** [CHANGELOG.md](../CHANGELOG.md)
 - **Git tags:** `git tag -l`

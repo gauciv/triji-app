@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform, Dimensions, ScrollView, TextInput, RefreshControl } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Dimensions,
+  ScrollView,
+  TextInput,
+  RefreshControl,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, query, orderBy, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
@@ -40,37 +56,40 @@ export default function AnnouncementsScreen({ navigation }) {
 
     setLoading(true);
     setError(null);
-    
+
     try {
       // Set up announcements listener
-      const q = query(
-        collection(db, 'announcements'),
-        orderBy('createdAt', 'desc')
-      );
+      const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const announcementsList = [];
-        const now = new Date();
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Filter out expired announcements on the client side
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-          if (expiresAt > now) {
-            announcementsList.push({
-              id: doc.id,
-              ...data,
-            });
-          }
-        });
-        setAnnouncements(announcementsList);
-        setLoading(false);
-        setInitialLoad(false);
-      }, (error) => {
-        console.log('Error fetching announcements:', error);
-        setError('Could not load announcements. Please check your internet connection.');
-        setLoading(false);
-        setInitialLoad(false);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const announcementsList = [];
+          const now = new Date();
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            // Filter out expired announcements on the client side
+            const expiresAt = data.expiresAt?.toDate
+              ? data.expiresAt.toDate()
+              : new Date(data.expiresAt);
+            if (expiresAt > now) {
+              announcementsList.push({
+                id: doc.id,
+                ...data,
+              });
+            }
+          });
+          setAnnouncements(announcementsList);
+          setLoading(false);
+          setInitialLoad(false);
+        },
+        error => {
+          console.log('Error fetching announcements:', error);
+          setError('Could not load announcements. Please check your internet connection.');
+          setLoading(false);
+          setInitialLoad(false);
+        }
+      );
 
       return unsubscribe;
     } catch (error) {
@@ -82,12 +101,12 @@ export default function AnnouncementsScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribe;
-    
+
     // Wait for auth state before fetching
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
         setIsAuthenticated(true);
-        fetchData().then((unsub) => {
+        fetchData().then(unsub => {
           unsubscribe = unsub;
         });
       } else {
@@ -96,23 +115,27 @@ export default function AnnouncementsScreen({ navigation }) {
         setError('Please log in to view announcements');
       }
     });
-    
+
     return () => {
       unsubscribeAuth();
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  const getTypeColor = (type) => {
+  const getTypeColor = type => {
     switch (type) {
-      case 'Critical': return '#FF3B30';
-      case 'Event': return '#AF52DE';
-      case 'Reminder': return '#FF9500';
-      default: return '#007AFF';
+      case 'Critical':
+        return '#FF3B30';
+      case 'Event':
+        return '#AF52DE';
+      case 'Reminder':
+        return '#FF9500';
+      default:
+        return '#007AFF';
     }
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const now = new Date();
     const postTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -120,40 +143,40 @@ export default function AnnouncementsScreen({ navigation }) {
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
     if (diffMinutes > 0) return `${diffMinutes}m ago`;
     return 'Just now';
   };
 
-  const getTimeRemaining = (expiresAt) => {
+  const getTimeRemaining = expiresAt => {
     if (!expiresAt) return '';
     const now = new Date();
     const expiry = expiresAt.toDate ? expiresAt.toDate() : new Date(expiresAt);
     const diffMs = expiry - now;
-    
+
     if (diffMs <= 0) return 'Expired';
-    
+
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     if (diffDays > 0) return `${diffDays}d remaining`;
     if (diffHours > 0) return `${diffHours}h remaining`;
     return 'Expires soon';
   };
-  
+
   // Filter announcements based on search query
-  const filteredAnnouncements = announcements.filter(announcement => 
+  const filteredAnnouncements = announcements.filter(announcement =>
     announcement.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   // Pagination
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedAnnouncements = filteredAnnouncements.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
     setCurrentPage(1);
@@ -162,21 +185,18 @@ export default function AnnouncementsScreen({ navigation }) {
       setRefreshing(false);
     }, 800);
   };
-  
+
   // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-  
+
   const renderAnnouncement = ({ item }) => {
     const typeColor = getTypeColor(item.type);
     const boxShadow = Platform.OS === 'web' ? `0px 8px 32px 0px ${typeColor}22` : undefined;
     return (
-      <TouchableOpacity 
-        style={[
-          styles.announcementCardModernPolished,
-          { borderLeftColor: typeColor, boxShadow },
-        ]}
+      <TouchableOpacity
+        style={[styles.announcementCardModernPolished, { borderLeftColor: typeColor, boxShadow }]}
         activeOpacity={0.92}
         onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}
       >
@@ -193,11 +213,22 @@ export default function AnnouncementsScreen({ navigation }) {
             </View>
             <Text style={styles.titleModernPolished}>{item.title}</Text>
             <View style={styles.cardMetaModernPolished}>
-              <View style={[styles.typeChipModernPolished, { backgroundColor: getTypeColor(item.type) + '22' }]}> 
-                <Text style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}>{item.type || 'General'}</Text>
+              <View
+                style={[
+                  styles.typeChipModernPolished,
+                  { backgroundColor: getTypeColor(item.type) + '22' },
+                ]}
+              >
+                <Text
+                  style={[styles.typeChipTextModernPolished, { color: getTypeColor(item.type) }]}
+                >
+                  {item.type || 'General'}
+                </Text>
               </View>
               <Text style={styles.timestampModernPolished}>{formatTimestamp(item.createdAt)}</Text>
-              <Text style={styles.expiryTextModernPolished}>{getTimeRemaining(item.expiresAt)}</Text>
+              <Text style={styles.expiryTextModernPolished}>
+                {getTimeRemaining(item.expiresAt)}
+              </Text>
             </View>
           </View>
         </View>
@@ -234,12 +265,12 @@ export default function AnnouncementsScreen({ navigation }) {
     <View style={styles.container}>
       {/* Shining gradient background */}
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
       />
-      
+
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.iconCircle}>
@@ -250,11 +281,16 @@ export default function AnnouncementsScreen({ navigation }) {
             <Text style={styles.headerSubtext}>All important announcements in one place</Text>
           </View>
         </View>
-        
+
         {/* Search Bar and New Button */}
         <View style={styles.searchRow}>
           <View style={styles.searchContainer}>
-            <Feather name="search" size={18} color="rgba(255,255,255,0.5)" style={styles.searchIcon} />
+            <Feather
+              name="search"
+              size={18}
+              color="rgba(255,255,255,0.5)"
+              style={styles.searchIcon}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search announcements..."
@@ -268,7 +304,7 @@ export default function AnnouncementsScreen({ navigation }) {
               </TouchableOpacity>
             )}
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.newButton}
             onPress={() => navigation.navigate('CreateAnnouncement')}
           >
@@ -276,76 +312,101 @@ export default function AnnouncementsScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-        
+
       <View style={styles.announcementsContent}>
-          {initialLoad ? (
-            <View style={styles.listContainerModern}>
-              <AnnouncementCardSkeleton />
-              <AnnouncementCardSkeleton />
-              <AnnouncementCardSkeleton />
-              <AnnouncementCardSkeleton />
-            </View>
-          ) : filteredAnnouncements.length === 0 ? (
-            <View style={styles.emptyContainerModern}>
-              <Feather name="bell" size={64} color="#8E8E93" />
-              <Text style={styles.emptyTitleModern}>
-                {searchQuery ? 'No matching announcements' : 'No announcements yet'}
-              </Text>
-              <Text style={styles.emptyMessageModern}>
-                {searchQuery ? 'Try a different search term' : 'Check back soon!'}
-              </Text>
-            </View>
-          ) : (
-            <>
-              <ScrollView
-                style={styles.announcementsScroll}
-                contentContainerStyle={styles.listContainerModern}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor="#FFFFFF"
-                    colors={['#22e584', '#FFFFFF']}
-                    progressBackgroundColor="rgba(34, 229, 132, 0.3)"
-                    titleColor="#FFFFFF"
-                    title="Refreshing..."
+        {initialLoad ? (
+          <View style={styles.listContainerModern}>
+            <AnnouncementCardSkeleton />
+            <AnnouncementCardSkeleton />
+            <AnnouncementCardSkeleton />
+            <AnnouncementCardSkeleton />
+          </View>
+        ) : filteredAnnouncements.length === 0 ? (
+          <View style={styles.emptyContainerModern}>
+            <Feather name="bell" size={64} color="#8E8E93" />
+            <Text style={styles.emptyTitleModern}>
+              {searchQuery ? 'No matching announcements' : 'No announcements yet'}
+            </Text>
+            <Text style={styles.emptyMessageModern}>
+              {searchQuery ? 'Try a different search term' : 'Check back soon!'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <ScrollView
+              style={styles.announcementsScroll}
+              contentContainerStyle={styles.listContainerModern}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#FFFFFF"
+                  colors={['#22e584', '#FFFFFF']}
+                  progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                  titleColor="#FFFFFF"
+                  title="Refreshing..."
+                />
+              }
+            >
+              {paginatedAnnouncements.map(item => (
+                <View key={item.id}>{renderAnnouncement({ item })}</View>
+              ))}
+            </ScrollView>
+
+            {totalPages > 1 && (
+              <View style={styles.paginationControls}>
+                <TouchableOpacity
+                  style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Feather
+                    name="chevron-left"
+                    size={20}
+                    color={currentPage === 1 ? '#555' : '#22e584'}
                   />
-                }
-              >
-                {paginatedAnnouncements.map((item) => (
-                  <View key={item.id}>
-                    {renderAnnouncement({ item })}
-                  </View>
-                ))}
-              </ScrollView>
-              
-              {totalPages > 1 && (
-                <View style={styles.paginationControls}>
-                  <TouchableOpacity
-                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                    onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                  <Text
+                    style={[
+                      styles.pageButtonText,
+                      currentPage === 1 && styles.pageButtonTextDisabled,
+                    ]}
                   >
-                    <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
-                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
-                  </TouchableOpacity>
-                  
-                  <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
-                  
-                  <TouchableOpacity
-                    style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
-                    onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    Previous
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.pageIndicator}>
+                  {currentPage} / {totalPages}
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.pageButton,
+                    currentPage === totalPages && styles.pageButtonDisabled,
+                  ]}
+                  onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <Text
+                    style={[
+                      styles.pageButtonText,
+                      currentPage === totalPages && styles.pageButtonTextDisabled,
+                    ]}
                   >
-                    <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
-                    <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
-                  </TouchableOpacity>
-                </View>
-              )}
-            </>
-          )}
-        </View>
+                    Next
+                  </Text>
+                  <Feather
+                    name="chevron-right"
+                    size={20}
+                    color={currentPage === totalPages ? '#555' : '#22e584'}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 }
@@ -873,7 +934,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
     zIndex: 10,
@@ -963,7 +1024,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 32,
     elevation: 12,
     maxWidth: 420,
@@ -1012,7 +1073,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 6,
     zIndex: 10,

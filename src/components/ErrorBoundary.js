@@ -20,7 +20,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Log error details
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -30,28 +30,28 @@ class ErrorBoundary extends React.Component {
     // e.g., Sentry.captureException(error);
   }
 
-  handleReset = () => {
+  handleReset() {
     this.setState({
       hasError: false,
       error: null,
       errorInfo: null,
     });
-  };
+  }
 
   render() {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
           <LinearGradient
-            colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+            colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
             style={styles.gradient}
           />
-          
+
           <View style={styles.content}>
             <View style={styles.iconContainer}>
               <Feather name="alert-triangle" size={64} color="#FF3B30" />
             </View>
-            
+
             <Text style={styles.title}>Oops! Something went wrong</Text>
             <Text style={styles.message}>
               The app encountered an unexpected error. Don't worry, your data is safe.
@@ -60,28 +60,19 @@ class ErrorBoundary extends React.Component {
             {__DEV__ && this.state.error && (
               <ScrollView style={styles.errorDetails}>
                 <Text style={styles.errorTitle}>Error Details (Dev Mode):</Text>
-                <Text style={styles.errorText}>
-                  {this.state.error.toString()}
-                </Text>
+                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
                 {this.state.errorInfo && (
-                  <Text style={styles.errorText}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
+                  <Text style={styles.errorText}>{this.state.errorInfo.componentStack}</Text>
                 )}
               </ScrollView>
             )}
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={this.handleReset}
-            >
+            <TouchableOpacity style={styles.button} onPress={this.handleReset}>
               <Feather name="refresh-cw" size={20} color="#FFFFFF" />
               <Text style={styles.buttonText}>Try Again</Text>
             </TouchableOpacity>
 
-            <Text style={styles.helpText}>
-              If the problem persists, please contact support
-            </Text>
+            <Text style={styles.helpText}>If the problem persists, please contact support</Text>
           </View>
         </View>
       );

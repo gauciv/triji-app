@@ -13,7 +13,7 @@ const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -64,28 +64,20 @@ export default function TabNavigator() {
         animationEnabled: true,
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={DashboardScreen}
-        options={{ tabBarLabel: 'Home' }}
-      />
-      <Tab.Screen 
-        name="Tasks" 
-        component={TaskboardScreen}
-        options={{ tabBarLabel: 'Tasks' }}
-      />
-      <Tab.Screen 
-        name="Announcements" 
+      <Tab.Screen name="Home" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="Tasks" component={TaskboardScreen} options={{ tabBarLabel: 'Tasks' }} />
+      <Tab.Screen
+        name="Announcements"
         component={AnnouncementsScreen}
         options={{ tabBarLabel: 'Announce' }}
       />
-      <Tab.Screen 
-        name="FreedomWall" 
+      <Tab.Screen
+        name="FreedomWall"
         component={FreedomWallScreen}
         options={{ tabBarLabel: 'Wall' }}
       />
-      <Tab.Screen 
-        name="Calculator" 
+      <Tab.Screen
+        name="Calculator"
         component={GradeCalculatorScreen}
         options={{ tabBarLabel: 'Calc' }}
       />

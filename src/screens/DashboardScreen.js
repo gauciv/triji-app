@@ -1,10 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Dimensions, RefreshControl } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Dimensions,
+  RefreshControl,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../config/firebaseConfig';
-import { collection, query, orderBy, limit, onSnapshot, where, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  where,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const { width, height } = Dimensions.get('window');
@@ -26,12 +49,12 @@ export default function DashboardScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribers = [];
-    
+
     // Wait for auth state before fetching data
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async user => {
       if (user) {
         setIsAuthenticated(true);
-        
+
         // Fetch user's first name from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -46,7 +69,7 @@ export default function DashboardScreen({ navigation }) {
           console.error('Error fetching user data:', error);
           setUserName('User');
         }
-        
+
         unsubscribers = fetchRecentData();
       } else {
         // User logged out, cleanup all listeners
@@ -97,16 +120,15 @@ export default function DashboardScreen({ navigation }) {
         setRecentUpdates(combined.slice(0, 5));
         setLoading(false);
       };
-      
+
       // Fetch ALL tasks to get correct count
       const allTasksQuery = query(collection(db, 'tasks'));
-      const unsubAllTasks = onSnapshot(allTasksQuery, (snapshot) => {
+      const unsubAllTasks = onSnapshot(allTasksQuery, snapshot => {
         let pendingCount = 0;
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const isCompletedByCurrentUser = auth.currentUser && 
-                                          data.completedBy && 
-                                          data.completedBy.includes(auth.currentUser.uid);
+          const isCompletedByCurrentUser =
+            auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
           if (!isCompletedByCurrentUser) {
             pendingCount++;
           }
@@ -117,11 +139,13 @@ export default function DashboardScreen({ navigation }) {
 
       // Fetch ALL announcements to get correct count
       const allAnnouncementsQuery = query(collection(db, 'announcements'));
-      const unsubAllAnnouncements = onSnapshot(allAnnouncementsQuery, (snapshot) => {
+      const unsubAllAnnouncements = onSnapshot(allAnnouncementsQuery, snapshot => {
         let activeCount = 0;
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          const expiresAt = data.expiresAt?.toDate
+            ? data.expiresAt.toDate()
+            : new Date(data.expiresAt);
           if (expiresAt > now) {
             activeCount++;
           }
@@ -132,11 +156,13 @@ export default function DashboardScreen({ navigation }) {
 
       // Fetch ALL freedom wall posts to get correct count
       const allPostsQuery = query(collection(db, 'freedom-wall-posts'));
-      const unsubAllPosts = onSnapshot(allPostsQuery, (snapshot) => {
+      const unsubAllPosts = onSnapshot(allPostsQuery, snapshot => {
         let activeCount = 0;
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          const expiresAt = data.expiresAt?.toDate
+            ? data.expiresAt.toDate()
+            : new Date(data.expiresAt);
           if (expiresAt > now) {
             activeCount++;
           }
@@ -146,26 +172,21 @@ export default function DashboardScreen({ navigation }) {
       unsubscribers.push(unsubAllPosts);
 
       // Fetch recent tasks for feed
-      const tasksQuery = query(
-        collection(db, 'tasks'),
-        orderBy('createdAt', 'desc'),
-        limit(10)
-      );
-      
-      const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
+      const tasksQuery = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(10));
+
+      const unsubTasks = onSnapshot(tasksQuery, snapshot => {
         taskUpdates = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const isCompletedByCurrentUser = auth.currentUser && 
-                                          data.completedBy && 
-                                          data.completedBy.includes(auth.currentUser.uid);
-          
+          const isCompletedByCurrentUser =
+            auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
+
           if (!isCompletedByCurrentUser && data.createdAt) {
-            taskUpdates.push({ 
-              id: doc.id, 
-              ...data, 
+            taskUpdates.push({
+              id: doc.id,
+              ...data,
               type: 'task',
-              timestamp: data.createdAt
+              timestamp: data.createdAt,
             });
           }
         });
@@ -179,18 +200,20 @@ export default function DashboardScreen({ navigation }) {
         orderBy('createdAt', 'desc'),
         limit(10)
       );
-      
-      const unsubAnnouncements = onSnapshot(announcementsQuery, (snapshot) => {
+
+      const unsubAnnouncements = onSnapshot(announcementsQuery, snapshot => {
         announcementUpdates = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          const expiresAt = data.expiresAt?.toDate
+            ? data.expiresAt.toDate()
+            : new Date(data.expiresAt);
           if (expiresAt > now && data.createdAt) {
-            announcementUpdates.push({ 
-              id: doc.id, 
-              ...data, 
+            announcementUpdates.push({
+              id: doc.id,
+              ...data,
               type: 'announcement',
-              timestamp: data.createdAt
+              timestamp: data.createdAt,
             });
           }
         });
@@ -204,16 +227,18 @@ export default function DashboardScreen({ navigation }) {
         orderBy('createdAt', 'desc'),
         limit(10)
       );
-      
-      const unsubPosts = onSnapshot(postsQuery, (snapshot) => {
+
+      const unsubPosts = onSnapshot(postsQuery, snapshot => {
         postUpdates = [];
-        snapshot.forEach((doc) => {
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+          const expiresAt = data.expiresAt?.toDate
+            ? data.expiresAt.toDate()
+            : new Date(data.expiresAt);
           if (expiresAt > now && data.createdAt) {
-            postUpdates.push({ 
-              id: doc.id, 
-              ...data, 
+            postUpdates.push({
+              id: doc.id,
+              ...data,
               type: 'post',
               timestamp: data.createdAt,
               likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
@@ -225,7 +250,7 @@ export default function DashboardScreen({ navigation }) {
       unsubscribers.push(unsubPosts);
 
       setLoading(false);
-      
+
       return unsubscribers;
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -236,7 +261,7 @@ export default function DashboardScreen({ navigation }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    
+
     // Fetch user data again
     try {
       const user = auth.currentUser;
@@ -251,7 +276,7 @@ export default function DashboardScreen({ navigation }) {
     } catch (error) {
       console.error('Error refreshing user data:', error);
     }
-    
+
     // Data will refresh automatically through onSnapshot listeners
     // Just wait a moment for the UI to feel responsive
     setTimeout(() => {
@@ -266,13 +291,13 @@ export default function DashboardScreen({ navigation }) {
     return 'Good Evening';
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return 'Just now';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
@@ -281,7 +306,7 @@ export default function DashboardScreen({ navigation }) {
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
     if (diffMins > 0) return `${diffMins}m ago`;
@@ -289,12 +314,12 @@ export default function DashboardScreen({ navigation }) {
     return 'Just now';
   };
 
-  const renderUpdateItem = (item) => {
+  const renderUpdateItem = item => {
     if (!item) return null;
 
     let icon, iconColor, title, subtitle, onPress;
 
-    switch(item.type) {
+    switch (item.type) {
       case 'task':
         icon = 'clipboard';
         iconColor = '#22e584';
@@ -320,9 +345,9 @@ export default function DashboardScreen({ navigation }) {
       default:
         return null;
     }
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         key={item.id}
         style={styles.updateItem}
         activeOpacity={0.7}
@@ -332,16 +357,20 @@ export default function DashboardScreen({ navigation }) {
           <Feather name={icon} size={20} color={iconColor} />
         </View>
         <View style={styles.updateContent}>
-          <Text style={styles.updateTitle} numberOfLines={1}>{title}</Text>
-          <Text style={styles.updateSubtitle} numberOfLines={1}>{subtitle}</Text>
+          <Text style={styles.updateTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.updateSubtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
         </View>
         <Text style={styles.updateTime}>{formatTimestamp(item.timestamp)}</Text>
       </TouchableOpacity>
     );
   };
 
-  const getBadgeColors = (type) => {
-    switch(type) {
+  const getBadgeColors = type => {
+    switch (type) {
       case 'Critical':
         return { bg: 'rgba(239, 68, 68, 0.2)', text: '#EF4444' }; // Red
       case 'Event':
@@ -358,7 +387,7 @@ export default function DashboardScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+          colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -373,20 +402,22 @@ export default function DashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.greetingContainer}>
           <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
+          <Text style={styles.userName} numberOfLines={1}>
+            {userName}
+          </Text>
           <Text style={styles.subGreeting}>Here's what's new</Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingsButton}
           onPress={() => navigation.navigate('AccountSettings')}
         >
@@ -411,7 +442,7 @@ export default function DashboardScreen({ navigation }) {
       </View>
 
       {/* Recent Updates Feed */}
-      <ScrollView 
+      <ScrollView
         style={styles.feedContainer}
         contentContainerStyle={styles.feedContent}
         showsVerticalScrollIndicator={false}
@@ -428,9 +459,7 @@ export default function DashboardScreen({ navigation }) {
         {recentUpdates.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Updates</Text>
-            <View style={styles.updatesContainer}>
-              {recentUpdates.map(renderUpdateItem)}
-            </View>
+            <View style={styles.updatesContainer}>{recentUpdates.map(renderUpdateItem)}</View>
           </View>
         ) : (
           <View style={styles.emptyState}>

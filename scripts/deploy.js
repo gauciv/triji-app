@@ -3,7 +3,7 @@
 /**
  * Deploy script - Triggers EAS Update or EAS Build based on release type
  * Usage: node scripts/deploy.js <release-type>
- * 
+ *
  * Release Types:
  * - patch: EAS Update (OTA)
  * - minor: EAS Update (OTA)
@@ -64,12 +64,12 @@ async function deploy() {
     // MAJOR: Breaking changes - rebuild APK
     console.log('⚠️  Breaking changes detected - Triggering EAS Build');
     console.log('📱 A new APK will be generated for users to install\n');
-    
+
     const buildSuccess = execute(
       'npx eas build --platform android --profile production --non-interactive',
       'Building production APK'
     );
-    
+
     if (buildSuccess) {
       console.log('📝 Next steps:');
       console.log('   1. Wait for build to complete on EAS');
@@ -77,24 +77,22 @@ async function deploy() {
       console.log('   3. Upload to GitHub Releases (will be automated by semantic-release)');
       console.log('   4. Notify users to install new version');
     }
-    
   } else if (releaseType === 'minor' || releaseType === 'patch') {
     // MINOR/PATCH: No breaking changes - OTA update
     const updateType = releaseType === 'minor' ? '✨ Feature' : '🐛 Fix';
     console.log(`${updateType} release detected - Triggering EAS Update (OTA)`);
     console.log('✅ Users will receive update automatically\n');
-    
+
     const updateSuccess = execute(
       `npx eas update --branch production --message "v${version}: ${releaseType} release" --non-interactive`,
       'Publishing OTA update'
     );
-    
+
     if (updateSuccess) {
       console.log('📝 Update deployed successfully!');
       console.log('   Users will receive the update within ~5 minutes');
       console.log('   No reinstallation required');
     }
-    
   } else {
     console.log('ℹ️  No deployment needed for this release type');
   }

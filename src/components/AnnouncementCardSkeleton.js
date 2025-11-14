@@ -36,7 +36,7 @@ export default function AnnouncementCardSkeleton() {
         <View style={styles.cardLeft}>
           <Animated.View style={[styles.profileSkeleton, shimmerStyle]} />
         </View>
-        
+
         <View style={styles.cardRight}>
           <View style={styles.cardHeader}>
             <Animated.View style={[styles.authorSkeleton, shimmerStyle]} />
@@ -45,10 +45,10 @@ export default function AnnouncementCardSkeleton() {
               <Animated.View style={[styles.typeSkeleton, shimmerStyle]} />
             </View>
           </View>
-          
+
           <Animated.View style={[styles.titleSkeleton, shimmerStyle]} />
           <Animated.View style={[styles.titleSkeletonShort, shimmerStyle]} />
-          
+
           <Animated.View style={[styles.expirySkeleton, shimmerStyle]} />
         </View>
       </View>

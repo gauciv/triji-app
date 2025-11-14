@@ -1,10 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Platform,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db, auth } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { showErrorAlert, logError } from '../utils/errorHandler';
 
 export default function CreateTaskScreen({ navigation }) {
@@ -30,14 +52,11 @@ export default function CreateTaskScreen({ navigation }) {
 
   const fetchSubjects = () => {
     try {
-      const q = query(
-        collection(db, 'subjects'),
-        orderBy('subjectCode', 'asc')
-      );
+      const q = query(collection(db, 'subjects'), orderBy('subjectCode', 'asc'));
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const unsubscribe = onSnapshot(q, querySnapshot => {
         const subjectsList = [];
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach(doc => {
           subjectsList.push({
             id: doc.id,
             ...doc.data(),
@@ -64,11 +83,11 @@ export default function CreateTaskScreen({ navigation }) {
     setDeadline(currentDate);
   };
 
-  const formatDate = (date) => {
+  const formatDate = date => {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -98,11 +117,11 @@ export default function CreateTaskScreen({ navigation }) {
         status: 'To Do',
         userId: user.uid,
         completedBy: [],
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       Alert.alert('Success', 'Task created successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+        { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
       showErrorAlert(error, 'Create Task', 'Creation Failed');
@@ -125,10 +144,7 @@ export default function CreateTaskScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Task</Text>
@@ -155,11 +171,11 @@ export default function CreateTaskScreen({ navigation }) {
               onPress={() => setShowSubjectPicker(true)}
             >
               <Text style={styles.subjectButtonText}>
-                {selectedSubject ? 
-                  subjects.find(s => s.id === selectedSubject)?.subjectCode + ' - ' + 
-                  subjects.find(s => s.id === selectedSubject)?.subjectName 
-                  : 'Select a subject'
-                }
+                {selectedSubject
+                  ? subjects.find(s => s.id === selectedSubject)?.subjectCode +
+                    ' - ' +
+                    subjects.find(s => s.id === selectedSubject)?.subjectName
+                  : 'Select a subject'}
               </Text>
               <Feather name="chevron-down" size={20} color="#8E8E93" />
             </TouchableOpacity>
@@ -181,10 +197,7 @@ export default function CreateTaskScreen({ navigation }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Deadline</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker(true)}
-            >
+            <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
               <Text style={styles.dateButtonText}>{formatDate(deadline)}</Text>
               <Feather name="calendar" size={20} color="#8E8E93" />
             </TouchableOpacity>
@@ -221,7 +234,7 @@ export default function CreateTaskScreen({ navigation }) {
           <View style={styles.subjectModal}>
             <Text style={styles.modalTitle}>Select Subject</Text>
             <ScrollView style={styles.subjectList}>
-              {subjects.map((subject) => (
+              {subjects.map(subject => (
                 <TouchableOpacity
                   key={subject.id}
                   style={styles.subjectOption}

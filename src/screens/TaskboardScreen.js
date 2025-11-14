@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform, RefreshControl } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+  RefreshControl,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -41,37 +55,39 @@ export default function TaskboardScreen({ navigation }) {
     setError(null);
 
     try {
-      const q = query(
-        collection(db, 'tasks'),
-        orderBy('deadline', sortOrder)
-      );
+      const q = query(collection(db, 'tasks'), orderBy('deadline', sortOrder));
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const tasksList = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Only show tasks that current user has NOT completed
-          const isCompletedByCurrentUser = auth.currentUser && 
-                                          data.completedBy && 
-                                          data.completedBy.includes(auth.currentUser.uid);
-          
-          if (!isCompletedByCurrentUser) {
-            tasksList.push({
-              id: doc.id,
-              ...data,
-            });
-          }
-        });
-        
-        setTasks(tasksList);
-        setLoading(false);
-        setInitialLoad(false);
-      }, (error) => {
-        console.error('Error fetching tasks:', error);
-        setError('Could not load tasks. Please check your connection.');
-        setLoading(false);
-        setInitialLoad(false);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const tasksList = [];
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            // Only show tasks that current user has NOT completed
+            const isCompletedByCurrentUser =
+              auth.currentUser &&
+              data.completedBy &&
+              data.completedBy.includes(auth.currentUser.uid);
+
+            if (!isCompletedByCurrentUser) {
+              tasksList.push({
+                id: doc.id,
+                ...data,
+              });
+            }
+          });
+
+          setTasks(tasksList);
+          setLoading(false);
+          setInitialLoad(false);
+        },
+        error => {
+          console.error('Error fetching tasks:', error);
+          setError('Could not load tasks. Please check your connection.');
+          setLoading(false);
+          setInitialLoad(false);
+        }
+      );
 
       return unsubscribe;
     } catch (error) {
@@ -85,9 +101,9 @@ export default function TaskboardScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribeTasks = null;
-    
+
     // Wait for auth state before fetching
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
         setIsAuthenticated(true);
         unsubscribeTasks = fetchTasks();
@@ -121,14 +137,14 @@ export default function TaskboardScreen({ navigation }) {
     }, 800);
   };
 
-  const formatDate = (deadline) => {
+  const formatDate = deadline => {
     if (!deadline) return 'No deadline';
-    
+
     let date;
     // Handle Firestore Timestamp object
     if (deadline.toDate && typeof deadline.toDate === 'function') {
       date = deadline.toDate();
-    } 
+    }
     // Handle timestamp in seconds (Firestore format)
     else if (deadline.seconds) {
       date = new Date(deadline.seconds * 1000);
@@ -137,12 +153,12 @@ export default function TaskboardScreen({ navigation }) {
     else {
       date = new Date(deadline);
     }
-    
+
     if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -152,9 +168,9 @@ export default function TaskboardScreen({ navigation }) {
   const paginatedTasks = tasks.slice(startIndex, endIndex);
   const totalPages = Math.ceil(tasks.length / ITEMS_PER_PAGE);
 
-  const isOverdue = (deadline) => {
+  const isOverdue = deadline => {
     if (!deadline) return false;
-    
+
     let date;
     // Handle Firestore Timestamp object
     if (deadline.toDate && typeof deadline.toDate === 'function') {
@@ -168,18 +184,18 @@ export default function TaskboardScreen({ navigation }) {
     else {
       date = new Date(deadline);
     }
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date < today;
   };
 
-  const renderTaskCard = (task) => {
+  const renderTaskCard = task => {
     const overdue = isOverdue(task.deadline);
     const isCompleted = auth.currentUser && task.completedBy?.includes(auth.currentUser.uid);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         key={task.id}
         style={[styles.taskCard, isCompleted && styles.taskCardCompleted]}
         onPress={() => navigation.navigate('TaskDetail', { task })}
@@ -211,15 +227,15 @@ export default function TaskboardScreen({ navigation }) {
             )}
           </View>
         </View>
-        
+
         <Text style={styles.taskTitle}>{task.title || 'Untitled Task'}</Text>
-        
+
         {(task.description || task.details) && (
           <Text style={styles.taskDescription} numberOfLines={2}>
             {task.description || task.details}
           </Text>
         )}
-        
+
         <View style={styles.taskFooter}>
           <View style={styles.dateContainer}>
             <Feather name="calendar" size={14} color="#8E8E93" />
@@ -234,7 +250,7 @@ export default function TaskboardScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#0f1c2e", "#162447", "#121212"]}
+          colors={['#0f1c2e', '#162447', '#121212']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.backgroundGradient}
@@ -249,12 +265,12 @@ export default function TaskboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backgroundGradient}
       />
-      
+
       <View style={styles.header}>
         <View style={styles.iconCircle}>
           <MaterialCommunityIcons name="clipboard-list-outline" size={28} color="#22e584" />
@@ -264,18 +280,18 @@ export default function TaskboardScreen({ navigation }) {
           <Text style={styles.headerSubtext}>View all tasks and upcoming deadlines</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.sortButton}
             onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             activeOpacity={0.7}
           >
-            <Feather 
-              name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'} 
-              size={18} 
-              color="#22e584" 
+            <Feather
+              name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
+              size={18}
+              color="#22e584"
             />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.archiveButton}
             onPress={() => navigation.navigate('ArchivedTasks')}
             activeOpacity={0.7}
@@ -284,87 +300,114 @@ export default function TaskboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {!initialLoad && tasks.length > 0 && (
         <View style={styles.paginationInfo}>
           <Text style={styles.paginationText}>
-            Showing {startIndex + 1}-{Math.min(endIndex, tasks.length)} of {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+            Showing {startIndex + 1}-{Math.min(endIndex, tasks.length)} of {tasks.length}{' '}
+            {tasks.length === 1 ? 'task' : 'tasks'}
           </Text>
         </View>
       )}
-        
+
       <View style={styles.tasksContent}>
-          {initialLoad ? (
-            <View style={styles.listContainer}>
-              <TaskCardSkeleton />
-              <TaskCardSkeleton />
-              <TaskCardSkeleton />
-            </View>
-          ) : error ? (
-            <View style={styles.emptyContainer}>
-              <Feather name="wifi-off" size={64} color="#FF3B30" />
-              <Text style={styles.emptyTitle}>Connection Error</Text>
-              <Text style={styles.emptyMessage}>{error}</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={() => fetchTasks()}
-              >
-                <Text style={styles.retryButtonText}>Try Again</Text>
-              </TouchableOpacity>
-            </View>
-          ) : tasks.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Feather name="clipboard" size={64} color="#8E8E93" />
-              <Text style={styles.emptyTitle}>No tasks yet</Text>
-              <Text style={styles.emptyMessage}>Tasks will appear here once added by administrators</Text>
-            </View>
-          ) : (
-            <>
-              <ScrollView
-                style={styles.tasksScroll}
-                contentContainerStyle={styles.listContainer}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor="#FFFFFF"
-                    colors={['#22e584', '#FFFFFF']}
-                    progressBackgroundColor="rgba(34, 229, 132, 0.3)"
-                    titleColor="#FFFFFF"
-                    title="Refreshing..."
+        {initialLoad ? (
+          <View style={styles.listContainer}>
+            <TaskCardSkeleton />
+            <TaskCardSkeleton />
+            <TaskCardSkeleton />
+          </View>
+        ) : error ? (
+          <View style={styles.emptyContainer}>
+            <Feather name="wifi-off" size={64} color="#FF3B30" />
+            <Text style={styles.emptyTitle}>Connection Error</Text>
+            <Text style={styles.emptyMessage}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={() => fetchTasks()}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : tasks.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Feather name="clipboard" size={64} color="#8E8E93" />
+            <Text style={styles.emptyTitle}>No tasks yet</Text>
+            <Text style={styles.emptyMessage}>
+              Tasks will appear here once added by administrators
+            </Text>
+          </View>
+        ) : (
+          <>
+            <ScrollView
+              style={styles.tasksScroll}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#FFFFFF"
+                  colors={['#22e584', '#FFFFFF']}
+                  progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                  titleColor="#FFFFFF"
+                  title="Refreshing..."
+                />
+              }
+            >
+              {paginatedTasks.map(task => renderTaskCard(task))}
+            </ScrollView>
+
+            {totalPages > 1 && (
+              <View style={styles.paginationControls}>
+                <TouchableOpacity
+                  style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Feather
+                    name="chevron-left"
+                    size={20}
+                    color={currentPage === 1 ? '#555' : '#22e584'}
                   />
-                }
-              >
-                {paginatedTasks.map((task) => renderTaskCard(task))}
-              </ScrollView>
-              
-              {totalPages > 1 && (
-                <View style={styles.paginationControls}>
-                  <TouchableOpacity
-                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                    onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                  <Text
+                    style={[
+                      styles.pageButtonText,
+                      currentPage === 1 && styles.pageButtonTextDisabled,
+                    ]}
                   >
-                    <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
-                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
-                  </TouchableOpacity>
-                  
-                  <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
-                  
-                  <TouchableOpacity
-                    style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
-                    onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    Previous
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.pageIndicator}>
+                  {currentPage} / {totalPages}
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.pageButton,
+                    currentPage === totalPages && styles.pageButtonDisabled,
+                  ]}
+                  onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <Text
+                    style={[
+                      styles.pageButtonText,
+                      currentPage === totalPages && styles.pageButtonTextDisabled,
+                    ]}
                   >
-                    <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
-                    <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
-                  </TouchableOpacity>
-                </View>
-              )}
-            </>
-          )}
-        </View>
+                    Next
+                  </Text>
+                  <Feather
+                    name="chevron-right"
+                    size={20}
+                    color={currentPage === totalPages ? '#555' : '#22e584'}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 }

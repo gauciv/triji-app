@@ -1,10 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Dimensions, Alert, Image, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Modal,
+  Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Dimensions,
+  Alert,
+  Image,
+  ScrollView,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../config/firebaseConfig';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut, sendEmailVerification } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut,
+  sendEmailVerification,
+} from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,12 +56,12 @@ export default function LoginScreen({ navigation }) {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [lastResetTime, setLastResetTime] = useState(null);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // Load saved credentials on mount
   React.useEffect(() => {
     loadSavedCredentials();
   }, []);
-  
+
   const loadSavedCredentials = async () => {
     try {
       const savedRememberMe = await AsyncStorage.getItem('remember_me');
@@ -49,7 +76,7 @@ export default function LoginScreen({ navigation }) {
       console.log('Error loading saved credentials:', error);
     }
   };
-  
+
   const handleForgotPassword = async () => {
     // Validate email input
     if (!resetEmail || resetEmail.trim() === '') {
@@ -57,7 +84,7 @@ export default function LoginScreen({ navigation }) {
       setResetSuccess(false);
       return;
     }
-    
+
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(resetEmail)) {
@@ -65,16 +92,18 @@ export default function LoginScreen({ navigation }) {
       setResetSuccess(false);
       return;
     }
-    
+
     // Rate limiting - prevent requests within 60 seconds
     const now = Date.now();
-    if (lastResetTime && (now - lastResetTime) < 60000) {
+    if (lastResetTime && now - lastResetTime < 60000) {
       const remainingSeconds = Math.ceil((60000 - (now - lastResetTime)) / 1000);
-      setResetMessage(`Please wait ${remainingSeconds} seconds before requesting another reset email.`);
+      setResetMessage(
+        `Please wait ${remainingSeconds} seconds before requesting another reset email.`
+      );
       setResetSuccess(false);
       return;
     }
-    
+
     setResetLoading(true);
     setResetMessage('');
     setResetSuccess(false);
@@ -82,7 +111,9 @@ export default function LoginScreen({ navigation }) {
       await sendPasswordResetEmail(auth, resetEmail);
       setLastResetTime(Date.now());
       setResetSuccess(true);
-      setResetMessage('Password reset email sent successfully! Please check your inbox (and spam folder).');
+      setResetMessage(
+        'Password reset email sent successfully! Please check your inbox (and spam folder).'
+      );
       // Don't auto-close, let user close manually
     } catch (error) {
       console.log('Password reset error:', error.message);
@@ -112,12 +143,12 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       // Perform Firebase authentication (fast, cached locally)
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       // Check email verification first (no network call)
       if (!user.emailVerified) {
         // Email not verified, send new verification and log out
@@ -127,38 +158,42 @@ export default function LoginScreen({ navigation }) {
           console.log('Error sending verification email:', verificationError);
         }
         await signOut(auth);
-        setError('Please verify your email address before logging in. A new verification link has been sent.');
+        setError(
+          'Please verify your email address before logging in. A new verification link has been sent.'
+        );
         setLoading(false);
         return;
       }
-      
+
       // Save credentials in background (non-blocking)
       if (rememberMe) {
         AsyncStorage.multiSet([
           ['saved_email', email],
           ['saved_password', password],
-          ['remember_me', 'true']
+          ['remember_me', 'true'],
         ]).catch(err => console.log('Error saving credentials:', err));
       } else {
-        AsyncStorage.multiRemove(['saved_email', 'saved_password', 'remember_me'])
-          .catch(err => console.log('Error removing credentials:', err));
+        AsyncStorage.multiRemove(['saved_email', 'saved_password', 'remember_me']).catch(err =>
+          console.log('Error removing credentials:', err)
+        );
       }
-      
+
       // Verify user document exists in background (don't block navigation)
-      getDoc(doc(db, 'users', user.uid)).then(userDoc => {
-        if (!userDoc.exists()) {
-          console.warn('User document not found for:', user.uid);
-          // Could show a non-blocking warning or create the document
-        }
-      }).catch(err => console.log('Error checking user doc:', err));
-      
+      getDoc(doc(db, 'users', user.uid))
+        .then(userDoc => {
+          if (!userDoc.exists()) {
+            console.warn('User document not found for:', user.uid);
+            // Could show a non-blocking warning or create the document
+          }
+        })
+        .catch(err => console.log('Error checking user doc:', err));
+
       // Navigate immediately - don't wait for background tasks
       console.log('Login successful:', user.email);
       navigation.navigate('MainApp');
-      
     } catch (error) {
       console.log('Login error:', error.code, error.message);
-      
+
       // Handle specific Firebase auth errors
       switch (error.code) {
         case 'auth/invalid-email':
@@ -185,7 +220,7 @@ export default function LoginScreen({ navigation }) {
       setLoading(false);
     }
   };
-  
+
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -198,7 +233,10 @@ export default function LoginScreen({ navigation }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <LinearGradient
         colors={['#1B2845', '#23243a', '#22305a']}
         style={styles.container}
@@ -214,7 +252,7 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* Login Card Overlay */}
-        <ScrollView 
+        <ScrollView
           style={styles.loginCard}
           contentContainerStyle={styles.loginCardContent}
           showsVerticalScrollIndicator={false}
@@ -245,7 +283,12 @@ export default function LoginScreen({ navigation }) {
               autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="rgba(255,255,255,0.5)" style={styles.inputIcon} />
+              <Feather
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={20}
+                color="rgba(255,255,255,0.5)"
+                style={styles.inputIcon}
+              />
             </TouchableOpacity>
           </View>
           {/* Options Row */}
@@ -260,7 +303,7 @@ export default function LoginScreen({ navigation }) {
               </View>
               <Text style={styles.rememberMe}>Remember Me</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowForgotModal(true)}> 
+            <TouchableOpacity onPress={() => setShowForgotModal(true)}>
               <Text style={styles.needHelp}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
@@ -294,7 +337,7 @@ export default function LoginScreen({ navigation }) {
         >
           <TouchableWithoutFeedback onPress={handleCloseResetModal}>
             <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
                 <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>Reset Password</Text>
@@ -302,13 +345,18 @@ export default function LoginScreen({ navigation }) {
                       <Feather name="x" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
-                  
+
                   <Text style={styles.modalDescription}>
                     Enter your email address and we'll send you a link to reset your password.
                   </Text>
-                  
+
                   <View style={styles.modalInputContainer}>
-                    <Feather name="mail" size={20} color="rgba(255, 255, 255, 0.6)" style={styles.modalInputIcon} />
+                    <Feather
+                      name="mail"
+                      size={20}
+                      color="rgba(255, 255, 255, 0.6)"
+                      style={styles.modalInputIcon}
+                    />
                     <TextInput
                       style={styles.modalInput}
                       placeholder="Email Address"
@@ -320,13 +368,18 @@ export default function LoginScreen({ navigation }) {
                       autoCorrect={false}
                     />
                   </View>
-                  
+
                   {resetMessage ? (
-                    <Text style={[styles.resetMessage, resetSuccess ? styles.successMessage : styles.errorMessage]}>
+                    <Text
+                      style={[
+                        styles.resetMessage,
+                        resetSuccess ? styles.successMessage : styles.errorMessage,
+                      ]}
+                    >
                       {resetMessage}
                     </Text>
                   ) : null}
-                  
+
                   {resetSuccess ? (
                     <TouchableOpacity
                       style={styles.modalButton}
@@ -337,7 +390,10 @@ export default function LoginScreen({ navigation }) {
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.modalButton, (resetLoading || !resetEmail) && styles.modalButtonDisabled]}
+                      style={[
+                        styles.modalButton,
+                        (resetLoading || !resetEmail) && styles.modalButtonDisabled,
+                      ]}
                       onPress={handleForgotPassword}
                       disabled={resetLoading || !resetEmail}
                       activeOpacity={0.8}

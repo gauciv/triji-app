@@ -7,7 +7,7 @@ export const NetworkProvider = ({ children }) => {
   const netInfo = useNetInfo();
   const syncCallbackRef = useRef(null);
   const wasOfflineRef = useRef(false);
-  
+
   useEffect(() => {
     if (netInfo.isConnected === false) {
       wasOfflineRef.current = true;
@@ -19,16 +19,18 @@ export const NetworkProvider = ({ children }) => {
       }
     }
   }, [netInfo.isConnected]);
-  
-  const registerSyncCallback = (callback) => {
+
+  const registerSyncCallback = callback => {
     syncCallbackRef.current = callback;
   };
-  
+
   return (
-    <NetworkContext.Provider value={{ 
-      isConnected: netInfo.isConnected,
-      registerSyncCallback
-    }}>
+    <NetworkContext.Provider
+      value={{
+        isConnected: netInfo.isConnected,
+        registerSyncCallback,
+      }}
+    >
       {children}
     </NetworkContext.Provider>
   );

@@ -25,14 +25,14 @@ module.exports = {
           { type: 'test', release: false },
           { type: 'chore', release: false },
           { type: 'build', release: false },
-          { type: 'ci', release: false }
+          { type: 'ci', release: false },
         ],
         parserOpts: {
-          noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING']
-        }
-      }
+          noteKeywords: ['BREAKING CHANGE', 'BREAKING CHANGES', 'BREAKING'],
+        },
+      },
     ],
-    
+
     // Generate release notes
     [
       '@semantic-release/release-notes-generator',
@@ -50,46 +50,47 @@ module.exports = {
             { type: 'refactor', section: '♻️ Code Refactoring', hidden: true },
             { type: 'test', section: '✅ Tests', hidden: true },
             { type: 'build', section: '📦 Build System', hidden: true },
-            { type: 'ci', section: '👷 CI/CD', hidden: false }
-          ]
-        }
-      }
+            { type: 'ci', section: '👷 CI/CD', hidden: false },
+          ],
+        },
+      },
     ],
-    
+
     // Update CHANGELOG.md
     [
       '@semantic-release/changelog',
       {
         changelogFile: 'CHANGELOG.md',
-        changelogTitle: '# Changelog\n\nAll notable changes to Triji will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n<!-- semantic-release-insert-here -->'
-      }
+        changelogTitle:
+          '# Changelog\n\nAll notable changes to Triji will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n<!-- semantic-release-insert-here -->',
+      },
     ],
-    
+
     // Update package.json version (but don't publish to npm)
     [
       '@semantic-release/npm',
       {
-        npmPublish: false
-      }
+        npmPublish: false,
+      },
     ],
-    
+
     // Sync version to app.json
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'npm run version:sync ${nextRelease.version}'
-      }
+        prepareCmd: 'npm run version:sync ${nextRelease.version}',
+      },
     ],
-    
+
     // Commit updated files back to repo
     [
       '@semantic-release/git',
       {
         assets: ['package.json', 'package-lock.json', 'app.json', 'CHANGELOG.md'],
-        message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}'
-      }
+        message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
+      },
     ],
-    
+
     // Create GitHub release
     [
       '@semantic-release/github',
@@ -97,18 +98,18 @@ module.exports = {
         assets: [
           {
             path: 'CHANGELOG.md',
-            label: 'Changelog'
-          }
-        ]
-      }
+            label: 'Changelog',
+          },
+        ],
+      },
     ],
-    
+
     // Deploy via EAS Update/Build (runs after GitHub release)
     [
       '@semantic-release/exec',
       {
-        publishCmd: 'node scripts/deploy.js ${nextRelease.type}'
-      }
-    ]
-  ]
+        publishCmd: 'node scripts/deploy.js ${nextRelease.type}',
+      },
+    ],
+  ],
 };

@@ -16,7 +16,7 @@ export default function OfflineBanner() {
     } else if (isConnected === true && wasOffline) {
       setShowBackOnline(true);
       setWasOffline(false);
-      
+
       // Fade out after 3 seconds
       setTimeout(() => {
         Animated.timing(fadeAnim, {
@@ -46,10 +46,7 @@ export default function OfflineBanner() {
         <View style={[styles.banner, styles.offlineBanner]}>
           <Feather name="wifi-off" size={16} color="#FFFFFF" />
           <Text style={styles.offlineText}>No Internet Connection</Text>
-          <TouchableOpacity 
-            style={styles.infoButton}
-            onPress={() => setShowHelpModal(true)}
-          >
+          <TouchableOpacity style={styles.infoButton} onPress={() => setShowHelpModal(true)}>
             <Feather name="help-circle" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -60,7 +57,7 @@ export default function OfflineBanner() {
           animationType="fade"
           onRequestClose={() => setShowHelpModal(false)}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
             onPress={() => setShowHelpModal(false)}
@@ -103,10 +100,7 @@ export default function OfflineBanner() {
                 </Text>
               </View>
 
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowHelpModal(false)}
-              >
+              <TouchableOpacity style={styles.closeButton} onPress={() => setShowHelpModal(false)}>
                 <Text style={styles.closeButtonText}>Got it</Text>
               </TouchableOpacity>
             </View>

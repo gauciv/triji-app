@@ -20,15 +20,11 @@ export function startTasksListener() {
     return; // Already listening
   }
 
-  const tasksQuery = query(
-    collection(db, 'tasks'),
-    orderBy('createdAt', 'desc'),
-    limit(1)
-  );
+  const tasksQuery = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(1));
 
   let isFirstLoad = true;
 
-  tasksUnsubscribe = onSnapshot(tasksQuery, async (snapshot) => {
+  tasksUnsubscribe = onSnapshot(tasksQuery, async snapshot => {
     // Skip the first load to avoid notifying about existing tasks
     if (isFirstLoad) {
       isFirstLoad = false;
@@ -41,7 +37,7 @@ export function startTasksListener() {
       return;
     }
 
-    snapshot.docChanges().forEach((change) => {
+    snapshot.docChanges().forEach(change => {
       if (change.type === 'added') {
         const task = change.doc.data();
         const currentUser = auth.currentUser;
@@ -86,7 +82,7 @@ export function startAnnouncementsListener() {
 
   let isFirstLoad = true;
 
-  announcementsUnsubscribe = onSnapshot(announcementsQuery, async (snapshot) => {
+  announcementsUnsubscribe = onSnapshot(announcementsQuery, async snapshot => {
     // Skip the first load
     if (isFirstLoad) {
       isFirstLoad = false;
@@ -98,7 +94,7 @@ export function startAnnouncementsListener() {
       return;
     }
 
-    snapshot.docChanges().forEach((change) => {
+    snapshot.docChanges().forEach(change => {
       if (change.type === 'added') {
         const announcement = change.doc.data();
         const currentUser = auth.currentUser;
@@ -109,13 +105,21 @@ export function startAnnouncementsListener() {
 
         const announcementType = announcement.announcementType || announcement.type || 'General';
         let emoji = '📢';
-        switch(announcementType) {
-          case 'Critical': emoji = '🚨'; break;
-          case 'Event': emoji = '📅'; break;
-          case 'Reminder': emoji = '⏰'; break;
-          case 'General': emoji = '📢'; break;
+        switch (announcementType) {
+          case 'Critical':
+            emoji = '🚨';
+            break;
+          case 'Event':
+            emoji = '📅';
+            break;
+          case 'Reminder':
+            emoji = '⏰';
+            break;
+          case 'General':
+            emoji = '📢';
+            break;
         }
-        
+
         schedulePushNotification(
           `${emoji} ${announcementType} Announcement`,
           announcement.title || 'A new announcement has been posted',
@@ -149,7 +153,7 @@ export function startFreedomWallListener() {
 
   let isFirstLoad = true;
 
-  freedomWallUnsubscribe = onSnapshot(freedomWallQuery, async (snapshot) => {
+  freedomWallUnsubscribe = onSnapshot(freedomWallQuery, async snapshot => {
     // Skip the first load
     if (isFirstLoad) {
       isFirstLoad = false;
@@ -161,7 +165,7 @@ export function startFreedomWallListener() {
       return;
     }
 
-    snapshot.docChanges().forEach((change) => {
+    snapshot.docChanges().forEach(change => {
       if (change.type === 'added') {
         const post = change.doc.data();
         const currentUser = auth.currentUser;

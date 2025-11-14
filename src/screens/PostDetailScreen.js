@@ -1,10 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Share, Modal, TextInput, ScrollView } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Alert,
+  Share,
+  Modal,
+  TextInput,
+  ScrollView,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../config/firebaseConfig';
-import { doc, runTransaction, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  runTransaction,
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
 import { useNetwork } from '../context/NetworkContext';
@@ -13,7 +36,7 @@ import { showErrorAlert, logError } from '../utils/errorHandler';
 export default function PostDetailScreen({ route, navigation }) {
   const { post } = route.params || {};
   const { isConnected } = useNetwork();
-  
+
   // Safety check - if no post, go back
   useEffect(() => {
     if (!post) {
@@ -21,7 +44,7 @@ export default function PostDetailScreen({ route, navigation }) {
       navigation.goBack();
     }
   }, [post, navigation]);
-  
+
   const [countdown, setCountdown] = useState('');
   const [currentPost, setCurrentPost] = useState({
     ...post,
@@ -35,9 +58,12 @@ export default function PostDetailScreen({ route, navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const animatedValue = new Animated.Value(0);
 
-  const isLiked = Array.isArray(currentPost.likedBy) && auth.currentUser?.uid && currentPost.likedBy.includes(auth.currentUser.uid);
+  const isLiked =
+    Array.isArray(currentPost.likedBy) &&
+    auth.currentUser?.uid &&
+    currentPost.likedBy.includes(auth.currentUser.uid);
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
@@ -45,7 +71,7 @@ export default function PostDetailScreen({ route, navigation }) {
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays > 0) return `${diffDays}d ago`;
     if (diffHours > 0) return `${diffHours}h ago`;
     if (diffMins > 0) return `${diffMins}m ago`;
@@ -62,29 +88,29 @@ export default function PostDetailScreen({ route, navigation }) {
     // Countdown timer
     const calculateCountdown = () => {
       if (!post.expiresAt) return;
-      
+
       const now = new Date();
       const expiresAt = post.expiresAt.toDate ? post.expiresAt.toDate() : new Date(post.expiresAt);
       const timeDiff = expiresAt.getTime() - now.getTime();
-      
+
       if (timeDiff <= 0) {
         setCountdown('This note has expired');
         return;
       }
-      
+
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      
+
       if (days > 0) {
         setCountdown(`This note will disappear in ${days} days, ${hours} hours`);
       } else {
         setCountdown(`This note will disappear in ${hours} hours`);
       }
     };
-    
+
     calculateCountdown();
     const interval = setInterval(calculateCountdown, 1000);
-    
+
     // Background animation
     const animate = () => {
       Animated.loop(
@@ -102,9 +128,9 @@ export default function PostDetailScreen({ route, navigation }) {
         ])
       ).start();
     };
-    
+
     animate();
-    
+
     return () => clearInterval(interval);
   }, [post.expiresAt, post.id]);
 
@@ -119,18 +145,18 @@ export default function PostDetailScreen({ route, navigation }) {
 
     try {
       const postRef = doc(db, 'freedom-wall-posts', post.id);
-      
-      await runTransaction(db, async (transaction) => {
+
+      await runTransaction(db, async transaction => {
         const postDoc = await transaction.get(postRef);
         if (!postDoc.exists()) return;
-        
+
         const data = postDoc.data();
         const likedBy = data.likedBy || [];
         const currentLikeCount = data.likeCount || 0;
         const userHasLiked = likedBy.includes(user.uid);
-        
+
         let newLikedBy, newLikeCount;
-        
+
         if (userHasLiked) {
           // Unlike
           newLikeCount = Math.max(0, currentLikeCount - 1);
@@ -140,17 +166,17 @@ export default function PostDetailScreen({ route, navigation }) {
           newLikeCount = currentLikeCount + 1;
           newLikedBy = [...likedBy, user.uid];
         }
-        
+
         transaction.update(postRef, {
           likeCount: newLikeCount,
-          likedBy: newLikedBy
+          likedBy: newLikedBy,
         });
-        
+
         // Update local state
         setCurrentPost(prev => ({
           ...prev,
           likeCount: newLikeCount,
-          likedBy: newLikedBy
+          likedBy: newLikedBy,
         }));
       });
     } catch (error) {
@@ -173,7 +199,7 @@ export default function PostDetailScreen({ route, navigation }) {
     try {
       await Share.share({
         message: post.content,
-        title: 'Shared from Freedom Wall'
+        title: 'Shared from Freedom Wall',
       });
     } catch (error) {
       logError(error, 'Share Post');
@@ -199,28 +225,28 @@ export default function PostDetailScreen({ route, navigation }) {
         reason: selectedReason,
         description: description.trim(),
         reporterId: user.uid,
-        reportedAt: serverTimestamp()
+        reportedAt: serverTimestamp(),
       });
 
       // Update post with reportedBy array
       const postRef = doc(db, 'freedom-wall-posts', post.id);
       const reportedBy = post.reportedBy || [];
       const updatedReportedBy = [...reportedBy, user.uid];
-      
+
       await updateDoc(postRef, {
-        reportedBy: updatedReportedBy
+        reportedBy: updatedReportedBy,
       });
 
       // Update local state to reflect the change
       setCurrentPost(prev => ({
         ...prev,
-        reportedBy: updatedReportedBy
+        reportedBy: updatedReportedBy,
       }));
 
       setShowReportModal(false);
       setSelectedReason('');
       setDescription('');
-      
+
       Alert.alert(
         'Report Submitted',
         'Thank you for helping keep our community safe. The post has been reported for review.',
@@ -259,7 +285,7 @@ export default function PostDetailScreen({ route, navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+          colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.backgroundGradient}
@@ -272,16 +298,13 @@ export default function PostDetailScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backgroundGradient}
       />
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Note Details</Text>
@@ -289,13 +312,10 @@ export default function PostDetailScreen({ route, navigation }) {
           const user = auth.currentUser;
           const reportedBy = currentPost.reportedBy || [];
           const hasReported = user && Array.isArray(reportedBy) && reportedBy.includes(user.uid);
-          
+
           return (
-            <TouchableOpacity 
-              style={[
-                styles.moreButton,
-                hasReported && styles.reportedButton
-              ]}
+            <TouchableOpacity
+              style={[styles.moreButton, hasReported && styles.reportedButton]}
               onPress={() => {
                 if (hasReported) {
                   Alert.alert('Already Reported', 'You have already reported this post.');
@@ -305,10 +325,10 @@ export default function PostDetailScreen({ route, navigation }) {
               }}
               disabled={hasReported}
             >
-              <Feather 
-                name={hasReported ? "check" : "alert-triangle"} 
-                size={20} 
-                color={hasReported ? "#34C759" : "#FF3B30"} 
+              <Feather
+                name={hasReported ? 'check' : 'alert-triangle'}
+                size={20}
+                color={hasReported ? '#34C759' : '#FF3B30'}
               />
             </TouchableOpacity>
           );
@@ -320,17 +340,19 @@ export default function PostDetailScreen({ route, navigation }) {
           {/* Author Header */}
           <View style={styles.authorHeader}>
             <View style={styles.authorAvatar}>
-              <View style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]} />
+              <View
+                style={[styles.personaDot, { backgroundColor: post.personaColor || '#34C759' }]}
+              />
             </View>
             <View style={styles.authorInfo}>
               <Text style={styles.authorName}>{post.persona || 'Anonymous'}</Text>
               <Text style={styles.timestamp}>{formatTimestamp(post.createdAt)}</Text>
             </View>
           </View>
-          
+
           {/* Post Content */}
           <View style={[styles.postCard, { backgroundColor: post.noteColor || '#FFFACD' }]}>
-            <ScrollView 
+            <ScrollView
               style={styles.postTextContainer}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.postTextContent}
@@ -338,35 +360,30 @@ export default function PostDetailScreen({ route, navigation }) {
               <Text style={styles.postText}>{post.content}</Text>
             </ScrollView>
           </View>
-          
+
           {/* Interactions */}
           <View style={styles.interactionsBar}>
-            <TouchableOpacity 
-              style={styles.interactionButton}
-              onPress={handleLike}
-            >
+            <TouchableOpacity style={styles.interactionButton} onPress={handleLike}>
               <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
               <Text style={styles.interactionText}>{currentPost.likeCount || 0} Likes</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.interactionButton}
-              onPress={handleCopyText}
-            >
-              <Feather name={showCopied ? "check" : "copy"} size={18} color={showCopied ? "#34C759" : "rgba(255,255,255,0.7)"} />
+
+            <TouchableOpacity style={styles.interactionButton} onPress={handleCopyText}>
+              <Feather
+                name={showCopied ? 'check' : 'copy'}
+                size={18}
+                color={showCopied ? '#34C759' : 'rgba(255,255,255,0.7)'}
+              />
               <Text style={styles.interactionText}>{showCopied ? 'Copied!' : 'Copy'}</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.interactionButton}
-              onPress={handleShare}
-            >
+
+            <TouchableOpacity style={styles.interactionButton} onPress={handleShare}>
               <Feather name="share" size={18} color="rgba(255,255,255,0.7)" />
               <Text style={styles.interactionText}>Share</Text>
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Countdown Info */}
         {countdown && (
           <View style={styles.countdownCard}>
@@ -375,7 +392,7 @@ export default function PostDetailScreen({ route, navigation }) {
           </View>
         )}
       </View>
-      
+
       {/* Report Modal */}
       <Modal
         visible={showReportModal}
@@ -385,39 +402,41 @@ export default function PostDetailScreen({ route, navigation }) {
       >
         <View style={styles.reportModalContainer}>
           <View style={styles.reportHeader}>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowReportModal(false)}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowReportModal(false)}>
               <Feather name="x" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.reportTitle}>Report Post</Text>
           </View>
-          
+
           <ScrollView style={styles.reportContent}>
             <Text style={styles.sectionTitle}>Please select a reason:</Text>
-            
-            {['Spam', 'Harassment or Hate Speech', 'Personal Information', 'Inappropriate Content'].map((reason) => (
+
+            {[
+              'Spam',
+              'Harassment or Hate Speech',
+              'Personal Information',
+              'Inappropriate Content',
+            ].map(reason => (
               <TouchableOpacity
                 key={reason}
                 style={[
                   styles.reasonOption,
-                  selectedReason === reason && styles.reasonOptionSelected
+                  selectedReason === reason && styles.reasonOptionSelected,
                 ]}
                 onPress={() => setSelectedReason(reason)}
               >
-                <Text style={[
-                  styles.reasonText,
-                  selectedReason === reason && styles.reasonTextSelected
-                ]}>
+                <Text
+                  style={[
+                    styles.reasonText,
+                    selectedReason === reason && styles.reasonTextSelected,
+                  ]}
+                >
                   {reason}
                 </Text>
-                {selectedReason === reason && (
-                  <Feather name="check" size={16} color="#FF3B30" />
-                )}
+                {selectedReason === reason && <Feather name="check" size={16} color="#FF3B30" />}
               </TouchableOpacity>
             ))}
-            
+
             <Text style={styles.sectionTitle}>Additional Description (Optional):</Text>
             <TextInput
               style={styles.descriptionInput}
@@ -429,11 +448,11 @@ export default function PostDetailScreen({ route, navigation }) {
               textAlignVertical="top"
               maxLength={200}
             />
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
                 styles.submitButton,
-                (!selectedReason || submitting) && styles.submitButtonDisabled
+                (!selectedReason || submitting) && styles.submitButtonDisabled,
               ]}
               onPress={handleSubmitReport}
               disabled={!selectedReason || submitting}

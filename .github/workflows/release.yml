@@ -58,6 +58,17 @@ jobs:
           fi
           echo "✅ Commit follows Conventional Commits format"
 
+      - name: Run Quality Checks (non-blocking)
+        run: |
+          echo "Running linter..."
+          npm run lint || echo "⚠️ Linter warnings found"
+          
+          echo "Running tests..."
+          npm run test:ci || echo "⚠️ Some tests failed"
+          
+          echo "Quality checks complete"
+        continue-on-error: true
+
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}

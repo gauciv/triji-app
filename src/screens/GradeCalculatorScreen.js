@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Dimensions, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -33,11 +44,11 @@ export default function GradeCalculatorScreen({ navigation }) {
       // Validate all inputs first
       let hasValidInput = false;
       let hasInvalidInput = false;
-      
+
       for (const subj of subjects) {
         const units = parseFloat(subj.units);
         const grade = parseFloat(subj.grade);
-        
+
         // Check if both fields have values
         if (subj.units.trim() !== '' || subj.grade.trim() !== '') {
           // Validate numeric input
@@ -58,21 +69,21 @@ export default function GradeCalculatorScreen({ navigation }) {
           hasValidInput = true;
         }
       }
-      
+
       if (!hasValidInput) {
         Alert.alert('No Data', 'Please enter at least one subject with units and grade.');
         return;
       }
-      
+
       if (hasInvalidInput) {
         Alert.alert('Invalid Input', 'Please enter valid numbers for units and grades.');
         return;
       }
-      
+
       // Calculate GWA
       let totalUnits = 0;
       let weightedSum = 0;
-      
+
       for (const subj of subjects) {
         const units = parseFloat(subj.units);
         const grade = parseFloat(subj.grade);
@@ -81,7 +92,7 @@ export default function GradeCalculatorScreen({ navigation }) {
           weightedSum += units * grade;
         }
       }
-      
+
       if (totalUnits === 0) {
         setGwa('N/A');
       } else {
@@ -91,7 +102,10 @@ export default function GradeCalculatorScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Error calculating GWA:', error);
-      Alert.alert('Calculation Error', 'An error occurred while calculating your GWA. Please check your inputs.');
+      Alert.alert(
+        'Calculation Error',
+        'An error occurred while calculating your GWA. Please check your inputs.'
+      );
     }
   };
 
@@ -107,16 +121,13 @@ export default function GradeCalculatorScreen({ navigation }) {
 
       {/* Back Button - Fixed Position */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       {/* Scrollable Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -138,7 +149,7 @@ export default function GradeCalculatorScreen({ navigation }) {
                 <Text style={styles.resultValue}>{gwa}</Text>
               </View>
             )}
-            
+
             {/* Subjects List */}
             <View style={styles.subjectsContainer}>
               {subjects.map((subject, idx) => (
@@ -188,10 +199,7 @@ export default function GradeCalculatorScreen({ navigation }) {
               </TouchableOpacity>
 
               {selectedSubjectIdx !== null && subjects.length > 1 && (
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={deleteSubject}
-                >
+                <TouchableOpacity style={styles.deleteButton} onPress={deleteSubject}>
                   <Feather name="trash-2" size={20} color="#FF3B30" />
                   <Text style={styles.deleteButtonText}>Remove Selected</Text>
                 </TouchableOpacity>
@@ -388,4 +396,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-}); 
+});

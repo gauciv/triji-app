@@ -18,24 +18,24 @@ const FIREBASE_ERROR_MESSAGES = {
   'auth/invalid-credential': 'Invalid credentials. Please check your email and password.',
   'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
   'auth/network-request-failed': 'Network error. Please check your internet connection.',
-  
+
   // Firestore errors
-  'permission-denied': 'You don\'t have permission to perform this action.',
+  'permission-denied': "You don't have permission to perform this action.",
   'not-found': 'The requested data could not be found.',
   'already-exists': 'This item already exists.',
   'resource-exhausted': 'Too many requests. Please try again later.',
   'failed-precondition': 'Operation cannot be performed in the current state.',
-  'aborted': 'Operation was aborted. Please try again.',
+  aborted: 'Operation was aborted. Please try again.',
   'out-of-range': 'Operation was attempted past the valid range.',
-  'unimplemented': 'This feature is not yet available.',
-  'internal': 'Internal server error. Please try again later.',
-  'unavailable': 'Service is temporarily unavailable. Please try again.',
+  unimplemented: 'This feature is not yet available.',
+  internal: 'Internal server error. Please try again later.',
+  unavailable: 'Service is temporarily unavailable. Please try again.',
   'data-loss': 'Data loss or corruption detected.',
-  'unauthenticated': 'You must be logged in to perform this action.',
-  
+  unauthenticated: 'You must be logged in to perform this action.',
+
   // Network errors
-  'NETWORK_ERROR': 'No internet connection. Please check your network.',
-  'TIMEOUT': 'Request timed out. Please try again.',
+  NETWORK_ERROR: 'No internet connection. Please check your network.',
+  TIMEOUT: 'Request timed out. Please try again.',
 };
 
 /**
@@ -46,13 +46,13 @@ const FIREBASE_ERROR_MESSAGES = {
  */
 export function getUserMessage(error, defaultMessage = 'Something went wrong. Please try again.') {
   if (!error) return defaultMessage;
-  
+
   // Check for Firebase error codes
   if (error.code) {
     const message = FIREBASE_ERROR_MESSAGES[error.code];
     if (message) return message;
   }
-  
+
   // Check for network errors
   if (error.message) {
     const msg = error.message.toLowerCase();
@@ -63,7 +63,7 @@ export function getUserMessage(error, defaultMessage = 'Something went wrong. Pl
       return FIREBASE_ERROR_MESSAGES['TIMEOUT'];
     }
   }
-  
+
   return defaultMessage;
 }
 
@@ -95,7 +95,7 @@ export function logError(error, context = 'Unknown') {
     message: details.message,
     timestamp: details.timestamp,
   });
-  
+
   // In production, you could send this to error tracking service
   // e.g., Sentry, LogRocket, Firebase Crashlytics
 }
@@ -109,13 +109,8 @@ export function logError(error, context = 'Unknown') {
 export function showErrorAlert(error, context = 'Unknown', title = 'Error') {
   logError(error, context);
   const userMessage = getUserMessage(error);
-  
-  Alert.alert(
-    title,
-    userMessage,
-    [{ text: 'OK', style: 'default' }],
-    { cancelable: true }
-  );
+
+  Alert.alert(title, userMessage, [{ text: 'OK', style: 'default' }], { cancelable: true });
 }
 
 /**
@@ -145,10 +140,10 @@ export async function handleOperation(operation, context, successMessage = null)
  */
 export function isNetworkError(error) {
   if (!error) return false;
-  
+
   const code = error.code?.toLowerCase() || '';
   const message = error.message?.toLowerCase() || '';
-  
+
   return (
     code.includes('network') ||
     code === 'unavailable' ||

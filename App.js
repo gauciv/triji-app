@@ -17,13 +17,16 @@ import {
   CreateTaskScreen,
   TaskDetailScreen,
   ArchivedTasksScreen,
-  ProfileScreen
+  ProfileScreen,
 } from './src/screens';
 import TabNavigator from './src/navigation/TabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkProvider } from './src/context/NetworkContext';
 import { ErrorBoundary, OfflineBanner } from './src/components';
-import { setupNotificationListeners, registerForPushNotifications } from './src/utils/notifications';
+import {
+  setupNotificationListeners,
+  registerForPushNotifications,
+} from './src/utils/notifications';
 import { startAllListeners, stopAllListeners } from './src/utils/firestoreListeners';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './src/config/firebaseConfig';
@@ -41,12 +44,12 @@ export default function App() {
   useEffect(() => {
     let hasSetInitialRoute = false;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
         // User is signed in, start listeners
         console.log('User authenticated, starting listeners');
         startAllListeners();
-        
+
         // Set initial route if not already set
         if (!hasSetInitialRoute && !isReady) {
           setInitialRouteName('MainApp');
@@ -56,7 +59,7 @@ export default function App() {
         // User is signed out, stop listeners
         console.log('User logged out, stopping listeners');
         stopAllListeners();
-        
+
         // Set initial route if not already set
         if (!hasSetInitialRoute && !isReady) {
           setInitialRouteName('Login');
@@ -78,15 +81,15 @@ export default function App() {
 
       try {
         setLoadingMessage('Loading assets...');
-        
+
         // Preload any critical resources here
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         setLoadingMessage('Checking authentication...');
         // Wait for Firebase Auth to restore session (if any)
         // The onAuthStateChanged listener will set initialRouteName
         await new Promise(resolve => setTimeout(resolve, 800));
-        
+
         setLoadingMessage('Setting up notifications...');
         // Register for push notifications (will gracefully handle Expo Go limitations)
         try {
@@ -94,14 +97,14 @@ export default function App() {
         } catch (error) {
           console.log('Push notification setup skipped:', error.message);
         }
-        
+
         setLoadingMessage('Finalizing...');
         // Set up notification listeners
         const listeners = setupNotificationListeners(
-          (notification) => {
+          notification => {
             console.log('Received notification:', notification);
           },
-          (response) => {
+          response => {
             console.log('Notification tapped:', response);
             // TODO: Navigate to appropriate screen based on notification data
           }
@@ -110,12 +113,12 @@ export default function App() {
         // Ensure minimum display time for splash screen
         const elapsed = Date.now() - startTime;
         const remainingTime = Math.max(0, minDisplayTime - elapsed);
-        
+
         if (remainingTime > 0) {
           setLoadingMessage('Almost ready...');
           await new Promise(resolve => setTimeout(resolve, remainingTime));
         }
-        
+
         return () => {
           listeners.remove();
           stopAllListeners();
@@ -146,9 +149,9 @@ export default function App() {
         <View style={{ flex: 1, backgroundColor: '#1B2845' }}>
           <OfflineBanner />
           <NavigationContainer>
-            <Stack.Navigator 
+            <Stack.Navigator
               initialRouteName={initialRouteName}
-              screenOptions={{ 
+              screenOptions={{
                 headerShown: false,
                 cardStyle: { backgroundColor: '#1B2845' },
                 animationEnabled: true,
@@ -193,8 +196,8 @@ export default function App() {
               <Stack.Screen name="Register" component={RegisterScreen} />
               <Stack.Screen name="Verification" component={VerificationScreen} />
               <Stack.Screen name="MainApp" component={TabNavigator} />
-              <Stack.Screen 
-                name="CreateAnnouncement" 
+              <Stack.Screen
+                name="CreateAnnouncement"
                 component={CreateAnnouncementScreen}
                 options={{
                   cardStyleInterpolator: ({ current, layouts }) => ({
@@ -211,8 +214,8 @@ export default function App() {
                   }),
                 }}
               />
-              <Stack.Screen 
-                name="AnnouncementDetail" 
+              <Stack.Screen
+                name="AnnouncementDetail"
                 component={AnnouncementDetailScreen}
                 options={{
                   cardStyleInterpolator: ({ current }) => ({
@@ -233,8 +236,8 @@ export default function App() {
               <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
               <Stack.Screen name="EditProfile" component={EditProfileScreen} />
               <Stack.Screen name="GradeCalculator" component={GradeCalculatorScreen} />
-              <Stack.Screen 
-                name="PostDetail" 
+              <Stack.Screen
+                name="PostDetail"
                 component={PostDetailScreen}
                 options={{
                   cardStyleInterpolator: ({ current }) => ({
@@ -252,8 +255,8 @@ export default function App() {
                   }),
                 }}
               />
-              <Stack.Screen 
-                name="CreateTask" 
+              <Stack.Screen
+                name="CreateTask"
                 component={CreateTaskScreen}
                 options={{
                   cardStyleInterpolator: ({ current, layouts }) => ({
@@ -270,8 +273,8 @@ export default function App() {
                   }),
                 }}
               />
-              <Stack.Screen 
-                name="TaskDetail" 
+              <Stack.Screen
+                name="TaskDetail"
                 component={TaskDetailScreen}
                 options={{
                   cardStyleInterpolator: ({ current }) => ({

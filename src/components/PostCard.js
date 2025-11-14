@@ -3,9 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 
-export default function PostCard({ post, timestamp, rotation, onLike, isLiked, onPress, textColor }) {
+export default function PostCard({
+  post,
+  timestamp,
+  rotation,
+  onLike,
+  isLiked,
+  onPress,
+  textColor,
+}) {
   const [countdown, setCountdown] = useState('');
-  
+
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -14,29 +22,29 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
   useEffect(() => {
     const calculateCountdown = () => {
       if (!post.expiresAt) return;
-      
+
       const now = new Date();
       const expiresAt = post.expiresAt.toDate ? post.expiresAt.toDate() : new Date(post.expiresAt);
       const timeDiff = expiresAt.getTime() - now.getTime();
-      
+
       if (timeDiff <= 0) {
         setCountdown('expired');
         return;
       }
-      
+
       const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      
+
       if (days > 0) {
         setCountdown(`${days}d, ${hours}h`);
       } else {
         setCountdown(`${hours}h`);
       }
     };
-    
+
     calculateCountdown();
     const interval = setInterval(calculateCountdown, 1000);
-    
+
     return () => clearInterval(interval);
   }, [post.expiresAt]);
 
@@ -44,7 +52,7 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
     return null;
   }
 
-  const getTextColor = (backgroundColor) => {
+  const getTextColor = backgroundColor => {
     const hex = backgroundColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -56,14 +64,14 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
   const dynamicTextColor = textColor || getTextColor(post.noteColor || '#FFFACD');
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.card, 
-        { 
+        styles.card,
+        {
           transform: [{ rotate: rotation }],
           backgroundColor: post.noteColor || '#FFFACD',
-          opacity: post.status === 'pending' ? 0.7 : 1
-        }
+          opacity: post.status === 'pending' ? 0.7 : 1,
+        },
       ]}
       onPress={onPress}
       activeOpacity={0.8}
@@ -75,34 +83,44 @@ export default function PostCard({ post, timestamp, rotation, onLike, isLiked, o
             {post.persona || 'Anonymous'}
           </Text>
         </View>
-        
-        <Text style={[styles.postText, { color: textColor || '#2C2C2C' }]} numberOfLines={4} ellipsizeMode="tail">
+
+        <Text
+          style={[styles.postText, { color: textColor || '#2C2C2C' }]}
+          numberOfLines={4}
+          ellipsizeMode="tail"
+        >
           {post.content}
         </Text>
-        
+
         <View style={styles.cardFooter}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.likeButton}
-            onPress={(e) => {
+            onPress={e => {
               e.stopPropagation();
               onLike();
             }}
           >
             <Text style={[styles.heartIcon, isLiked && styles.heartLiked]}>♥</Text>
-            <Text style={[styles.likeCount, { color: dynamicTextColor, opacity: 0.7 }]}>{post.likeCount || 0}</Text>
+            <Text style={[styles.likeCount, { color: dynamicTextColor, opacity: 0.7 }]}>
+              {post.likeCount || 0}
+            </Text>
           </TouchableOpacity>
-          
+
           {post.status === 'pending' ? (
             <View style={styles.pendingIndicator}>
               <Feather name="clock" size={6} color="#FF9500" />
               <Text style={styles.pendingText}>Syncing...</Text>
             </View>
-          ) : countdown && (
-            <Text style={[styles.countdown, { color: dynamicTextColor, opacity: 0.6 }]}>{countdown}</Text>
+          ) : (
+            countdown && (
+              <Text style={[styles.countdown, { color: dynamicTextColor, opacity: 0.6 }]}>
+                {countdown}
+              </Text>
+            )
           )}
         </View>
       </View>
-      
+
       {/* Sticky note tape effect */}
       <View style={styles.tape} />
     </TouchableOpacity>
@@ -218,5 +236,4 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     fontStyle: 'italic',
   },
-
 });

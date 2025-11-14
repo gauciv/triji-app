@@ -3,7 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'rea
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { auth } from '../config/firebaseConfig';
 import { sendEmailVerification } from 'firebase/auth';
 import { useState } from 'react';
@@ -40,16 +45,15 @@ export default function VerificationScreen({ navigation }) {
         Alert.alert(
           'Authentication Error',
           'No user is currently logged in. Please log in again.',
-          [
-            { text: 'OK', onPress: () => navigation.navigate('Login') }
-          ]
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
       }
     } catch (error) {
       console.error('Error resending verification email:', error);
-      const errorMessage = error.code === 'auth/too-many-requests' 
-        ? 'Too many requests. Please try again later.'
-        : 'Failed to resend verification email. Please try again.';
+      const errorMessage =
+        error.code === 'auth/too-many-requests'
+          ? 'Too many requests. Please try again later.'
+          : 'Failed to resend verification email. Please try again.';
       setResendMessage(errorMessage);
       Alert.alert('Error', errorMessage);
     } finally {
@@ -72,7 +76,7 @@ export default function VerificationScreen({ navigation }) {
     <View style={styles.container}>
       {/* Multi-color gradient background */}
       <LinearGradient
-        colors={["#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -84,21 +88,25 @@ export default function VerificationScreen({ navigation }) {
       {/* Glassmorphic Card */}
       <BlurView intensity={110} tint="dark" style={styles.glassCard}>
         <View style={styles.iconWrapper}>
-          <MaterialIcons name="mark-email-read" size={54} color="#34C759" style={styles.iconShadow} />
+          <MaterialIcons
+            name="mark-email-read"
+            size={54}
+            color="#34C759"
+            style={styles.iconShadow}
+          />
         </View>
         <Text style={styles.headline}>Verify Your Email</Text>
         <Text style={styles.message}>
-          We’ve sent a verification link to your email address. Please check your inbox and click the link to verify your account.
+          We’ve sent a verification link to your email address. Please check your inbox and click
+          the link to verify your account.
         </Text>
         <Text style={styles.trustMessage}>
-          Didn’t receive the email? You can resend it below. Make sure to check your spam or promotions folder as well.
+          Didn’t receive the email? You can resend it below. Make sure to check your spam or
+          promotions folder as well.
         </Text>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.navigate('Login')}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Login')}>
           <LinearGradient
-            colors={["#3a5a8c", "#22305a"]}
+            colors={['#3a5a8c', '#22305a']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
@@ -116,9 +124,7 @@ export default function VerificationScreen({ navigation }) {
             {resendLoading ? 'Sending...' : 'Resend Verification Email'}
           </Text>
         </TouchableOpacity>
-        {resendMessage ? (
-          <Text style={styles.resendMessage}>{resendMessage}</Text>
-        ) : null}
+        {resendMessage ? <Text style={styles.resendMessage}>{resendMessage}</Text> : null}
       </BlurView>
     </View>
   );

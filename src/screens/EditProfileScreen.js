@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
@@ -38,39 +47,45 @@ export default function EditProfileScreen({ navigation }) {
     try {
       setSaving(true);
       const user = auth.currentUser;
-      
+
       // Trim inputs
       const trimmedFirst = firstName.trim();
       const trimmedLast = lastName.trim();
-      
+
       // Validate inputs
       if (!trimmedFirst || !trimmedLast) {
         Alert.alert('Error', 'Please fill in all required fields.');
         setSaving(false);
         return;
       }
-      
+
       // Validate name contains only letters, spaces, hyphens, and apostrophes
       const nameRegex = /^[a-zA-Z\s'-]+$/;
       if (!nameRegex.test(trimmedFirst)) {
-        Alert.alert('Invalid Name', 'First name can only contain letters, spaces, hyphens, and apostrophes.');
+        Alert.alert(
+          'Invalid Name',
+          'First name can only contain letters, spaces, hyphens, and apostrophes.'
+        );
         setSaving(false);
         return;
       }
-      
+
       if (!nameRegex.test(trimmedLast)) {
-        Alert.alert('Invalid Name', 'Last name can only contain letters, spaces, hyphens, and apostrophes.');
+        Alert.alert(
+          'Invalid Name',
+          'Last name can only contain letters, spaces, hyphens, and apostrophes.'
+        );
         setSaving(false);
         return;
       }
-      
+
       // Validate name length
       if (trimmedFirst.length < 2 || trimmedFirst.length > 50) {
         Alert.alert('Invalid Length', 'First name must be between 2 and 50 characters.');
         setSaving(false);
         return;
       }
-      
+
       if (trimmedLast.length < 2 || trimmedLast.length > 50) {
         Alert.alert('Invalid Length', 'Last name must be between 2 and 50 characters.');
         setSaving(false);
@@ -80,12 +95,12 @@ export default function EditProfileScreen({ navigation }) {
       if (user) {
         const updatedData = {
           firstName: trimmedFirst,
-          lastName: trimmedLast
+          lastName: trimmedLast,
         };
-        
+
         await updateDoc(doc(db, 'users', user.uid), updatedData);
         Alert.alert('Success', 'Name updated successfully!', [
-          { text: 'OK', onPress: () => navigation.goBack() }
+          { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       }
     } catch (error) {
@@ -99,7 +114,7 @@ export default function EditProfileScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+          colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
           style={styles.gradient}
         />
         <View style={styles.loadingContainer}>
@@ -113,21 +128,18 @@ export default function EditProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         style={styles.gradient}
       />
-      
+
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Name</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
@@ -157,7 +169,7 @@ export default function EditProfileScreen({ navigation }) {
             />
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.saveButton, saving && styles.saveButtonDisabled]}
             onPress={handleSave}
             disabled={saving}

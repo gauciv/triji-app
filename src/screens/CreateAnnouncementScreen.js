@@ -1,6 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  Alert,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -23,12 +38,16 @@ export default function CreateAnnouncementScreen({ navigation }) {
 
   const announcementTypes = ['General', 'Reminder', 'Event', 'Critical'];
 
-  const getTypeColor = (type) => {
+  const getTypeColor = type => {
     switch (type) {
-      case 'Critical': return '#FF3B30';
-      case 'Event': return '#AF52DE';
-      case 'Reminder': return '#FF9500';
-      default: return '#007AFF';
+      case 'Critical':
+        return '#FF3B30';
+      case 'Event':
+        return '#AF52DE';
+      case 'Reminder':
+        return '#FF9500';
+      default:
+        return '#007AFF';
     }
   };
 
@@ -43,12 +62,12 @@ export default function CreateAnnouncementScreen({ navigation }) {
       Alert.alert('Missing Title', 'Please provide a title for the announcement.');
       return;
     }
-    
+
     if (!content.trim()) {
       Alert.alert('Missing Content', 'Please provide content for the announcement.');
       return;
     }
-    
+
     const user = auth.currentUser;
     if (!user) {
       Alert.alert('Authentication Required', 'You must be logged in to create announcements.');
@@ -59,11 +78,11 @@ export default function CreateAnnouncementScreen({ navigation }) {
       Alert.alert('Offline', 'You need an internet connection to create announcements.');
       return;
     }
-    
+
     setLoading(true);
     try {
       let authorName = 'Anonymous';
-      
+
       // Fetch user's full name from profile
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -78,7 +97,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
         logError(userError, 'Fetch User Data');
         // Continue with 'Anonymous' as fallback
       }
-      
+
       const announcementData = {
         title: title.trim(),
         content: content.trim(),
@@ -89,9 +108,9 @@ export default function CreateAnnouncementScreen({ navigation }) {
         createdAt: new Date(),
         expiresAt: noExpiry ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : expiresAt, // 100 years if no expiry
       };
-      
+
       await addDoc(collection(db, 'announcements'), announcementData);
-      
+
       navigation.goBack();
     } catch (error) {
       showErrorAlert(error, 'Create Announcement', 'Creation Failed');
@@ -104,7 +123,7 @@ export default function CreateAnnouncementScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={["#0f1c2e", "#162447", "#121212"]}
+          colors={['#0f1c2e', '#162447', '#121212']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={styles.shiningGradient}
@@ -119,39 +138,58 @@ export default function CreateAnnouncementScreen({ navigation }) {
   return (
     <View style={styles.outerContainer}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.shiningGradient}
       />
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.floatingBackButton}
-        onPress={() => step === 1 ? navigation.goBack() : setStep(1)}
+        onPress={() => (step === 1 ? navigation.goBack() : setStep(1))}
       >
         <Feather name="arrow-left" size={24} color="#FFFFFF" />
       </TouchableOpacity>
       {step === 1 ? (
         <View style={styles.centerCardWrapper}>
-          <View style={[
-            styles.cardModernPolished,
-            { borderLeftColor: getTypeColor(selectedType), boxShadow: Platform.OS === 'web' ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22` : undefined, shadowColor: getTypeColor(selectedType) },
-            styles.cardWithMargin,
-          ]}>
+          <View
+            style={[
+              styles.cardModernPolished,
+              {
+                borderLeftColor: getTypeColor(selectedType),
+                boxShadow:
+                  Platform.OS === 'web'
+                    ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22`
+                    : undefined,
+                shadowColor: getTypeColor(selectedType),
+              },
+              styles.cardWithMargin,
+            ]}
+          >
             <View style={styles.iconTitleWrapperCard}>
-              <View style={[
-                styles.glowIconContainer,
-                {
-                  borderColor: getTypeColor(selectedType),
-                  shadowColor: getTypeColor(selectedType),
-                  boxShadow: Platform.OS === 'web' ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55` : undefined,
-                },
-              ]}>
-                <MaterialCommunityIcons name="bell-ring" size={32} color={getTypeColor(selectedType)} style={styles.bellIcon} />
+              <View
+                style={[
+                  styles.glowIconContainer,
+                  {
+                    borderColor: getTypeColor(selectedType),
+                    shadowColor: getTypeColor(selectedType),
+                    boxShadow:
+                      Platform.OS === 'web'
+                        ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55`
+                        : undefined,
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="bell-ring"
+                  size={32}
+                  color={getTypeColor(selectedType)}
+                  style={styles.bellIcon}
+                />
                 <Feather name="plus-circle" size={16} color="#fff" style={styles.plusIconOverlay} />
               </View>
               <Text style={styles.screenTitle}>New Announcement</Text>
             </View>
-            <ScrollView 
+            <ScrollView
               style={{ width: '100%' }}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
@@ -169,23 +207,29 @@ export default function CreateAnnouncementScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Type</Text>
                 <View style={styles.typeGrid}>
-                  {announcementTypes.map((type) => (
+                  {announcementTypes.map(type => (
                     <TouchableOpacity
                       key={type}
                       style={[
                         styles.typeCard,
                         {
-                          backgroundColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.03)',
-                          borderColor: selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.1)',
+                          backgroundColor:
+                            selectedType === type
+                              ? getTypeColor(type)
+                              : 'rgba(255, 255, 255, 0.03)',
+                          borderColor:
+                            selectedType === type ? getTypeColor(type) : 'rgba(255, 255, 255, 0.1)',
                         },
-                        selectedType === type && styles.typeCardSelected
+                        selectedType === type && styles.typeCardSelected,
                       ]}
                       onPress={() => setSelectedType(type)}
                     >
-                      <Text style={[
-                        styles.typeCardText,
-                        selectedType === type && styles.typeCardTextSelected
-                      ]}>
+                      <Text
+                        style={[
+                          styles.typeCardText,
+                          selectedType === type && styles.typeCardTextSelected,
+                        ]}
+                      >
                         {type}
                       </Text>
                     </TouchableOpacity>
@@ -194,21 +238,18 @@ export default function CreateAnnouncementScreen({ navigation }) {
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Expires On</Text>
-                <TouchableOpacity 
-                  style={styles.checkboxRow}
-                  onPress={() => setNoExpiry(!noExpiry)}
-                >
+                <TouchableOpacity style={styles.checkboxRow} onPress={() => setNoExpiry(!noExpiry)}>
                   <View style={[styles.checkbox, noExpiry && styles.checkboxChecked]}>
                     {noExpiry && <Feather name="check" size={16} color="#fff" />}
                   </View>
                   <Text style={styles.checkboxLabel}>No expiry date (indefinite)</Text>
                 </TouchableOpacity>
-                {!noExpiry && (
-                  Platform.OS === 'web' ? (
+                {!noExpiry &&
+                  (Platform.OS === 'web' ? (
                     <input
                       type="date"
                       value={expiresAt.toISOString().split('T')[0]}
-                      onChange={(e) => setExpiresAt(new Date(e.target.value))}
+                      onChange={e => setExpiresAt(new Date(e.target.value))}
                       min={new Date().toISOString().split('T')[0]}
                       style={{
                         height: '52px',
@@ -225,14 +266,12 @@ export default function CreateAnnouncementScreen({ navigation }) {
                     />
                   ) : (
                     <>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.dateButton}
                         onPress={() => setShowDatePicker(true)}
                       >
                         <Feather name="calendar" size={20} color="#8E8E93" />
-                        <Text style={styles.dateButtonText}>
-                          {expiresAt.toLocaleDateString()}
-                        </Text>
+                        <Text style={styles.dateButtonText}>{expiresAt.toLocaleDateString()}</Text>
                       </TouchableOpacity>
                       {showDatePicker && (
                         <DateTimePicker
@@ -249,14 +288,10 @@ export default function CreateAnnouncementScreen({ navigation }) {
                         />
                       )}
                     </>
-                  )
-                )}
+                  ))}
               </View>
-              <TouchableOpacity 
-                style={[
-                  styles.actionButtonGlow,
-                  !title.trim() && styles.actionButtonGlowDisabled
-                ]}
+              <TouchableOpacity
+                style={[styles.actionButtonGlow, !title.trim() && styles.actionButtonGlowDisabled]}
                 onPress={() => setStep(2)}
                 disabled={!title.trim()}
               >
@@ -268,31 +303,57 @@ export default function CreateAnnouncementScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.centerCardWrapper}>
-          <View style={[
-            styles.cardModernPolished,
-            styles.cardFinalizeStep,
-            { borderLeftColor: getTypeColor(selectedType), boxShadow: Platform.OS === 'web' ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22` : undefined, shadowColor: getTypeColor(selectedType) },
-            styles.cardWithMargin,
-          ]}>
+          <View
+            style={[
+              styles.cardModernPolished,
+              styles.cardFinalizeStep,
+              {
+                borderLeftColor: getTypeColor(selectedType),
+                boxShadow:
+                  Platform.OS === 'web'
+                    ? `0px 0px 32px 0px ${getTypeColor(selectedType)}55, 0px 8px 32px 0px ${getTypeColor(selectedType)}22`
+                    : undefined,
+                shadowColor: getTypeColor(selectedType),
+              },
+              styles.cardWithMargin,
+            ]}
+          >
             <View style={styles.iconTitleWrapperCard}>
-              <View style={[
-                styles.glowIconContainer,
-                {
-                  borderColor: getTypeColor(selectedType),
-                  shadowColor: getTypeColor(selectedType),
-                  boxShadow: Platform.OS === 'web' ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55` : undefined,
-                },
-              ]}>
-                <MaterialCommunityIcons name="bell-ring" size={32} color={getTypeColor(selectedType)} style={styles.bellIcon} />
+              <View
+                style={[
+                  styles.glowIconContainer,
+                  {
+                    borderColor: getTypeColor(selectedType),
+                    shadowColor: getTypeColor(selectedType),
+                    boxShadow:
+                      Platform.OS === 'web'
+                        ? `0 0 32px 0 ${getTypeColor(selectedType)}99, 0 0 12px 0 ${getTypeColor(selectedType)}55`
+                        : undefined,
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="bell-ring"
+                  size={32}
+                  color={getTypeColor(selectedType)}
+                  style={styles.bellIcon}
+                />
                 <Feather name="plus-circle" size={16} color="#fff" style={styles.plusIconOverlay} />
               </View>
               <Text style={styles.screenTitle}>New Announcement</Text>
             </View>
-            <View style={styles.twitterHeader}> 
+            <View style={styles.twitterHeader}>
               <Text style={styles.twitterTitle}>{title}</Text>
               <View style={styles.twitterMeta}>
-                <View style={[styles.twitterTypeChip, { backgroundColor: getTypeColor(selectedType) + '22' }]}> 
-                  <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>{selectedType}</Text>
+                <View
+                  style={[
+                    styles.twitterTypeChip,
+                    { backgroundColor: getTypeColor(selectedType) + '22' },
+                  ]}
+                >
+                  <Text style={[styles.twitterTypeText, { color: getTypeColor(selectedType) }]}>
+                    {selectedType}
+                  </Text>
                 </View>
                 <Text style={styles.twitterExpiry}>
                   {noExpiry ? 'No expiry' : `Expires ${expiresAt.toLocaleDateString()}`}
@@ -309,10 +370,10 @@ export default function CreateAnnouncementScreen({ navigation }) {
               textAlignVertical="top"
               autoFocus
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
                 styles.actionButtonGlow,
-                (!content.trim() || loading) && styles.actionButtonGlowDisabled
+                (!content.trim() || loading) && styles.actionButtonGlowDisabled,
               ]}
               onPress={handleCreateAnnouncement}
               disabled={!content.trim() || loading}
@@ -645,7 +706,7 @@ const styles = StyleSheet.create({
     marginHorizontal: '4%',
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 8,
   },
@@ -708,7 +769,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 8,
     transition: 'all 0.2s',

@@ -1,14 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, StyleSheet, Alert, Switch, Linking, ActivityIndicator } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  TextInput,
+  StyleSheet,
+  Alert,
+  Switch,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebaseConfig';
-import { signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import {
+  signOut,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword,
+} from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import SettingsRow from '../components/SettingsRow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { registerForPushNotifications, setNotificationPreference, getNotificationPreference } from '../utils/notifications';
+import {
+  registerForPushNotifications,
+  setNotificationPreference,
+  getNotificationPreference,
+} from '../utils/notifications';
 import { stopAllListeners } from '../utils/firestoreListeners';
 import { showErrorAlert, logError } from '../utils/errorHandler';
 
@@ -40,7 +66,7 @@ export default function AccountSettingsScreen({ navigation }) {
     try {
       const user = auth.currentUser;
       if (!user) return;
-      
+
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         setUserData(userDoc.data());
@@ -59,7 +85,7 @@ export default function AccountSettingsScreen({ navigation }) {
       const tasks = await getNotificationPreference('tasks');
       const announcements = await getNotificationPreference('announcements');
       const freedomWall = await getNotificationPreference('freedom_wall');
-      
+
       setTasksNotifications(tasks);
       setAnnouncementsNotifications(announcements);
       setFreedomWallNotifications(freedomWall);
@@ -68,17 +94,17 @@ export default function AccountSettingsScreen({ navigation }) {
     }
   };
 
-  const toggleTasksNotifications = async (value) => {
+  const toggleTasksNotifications = async value => {
     setTasksNotifications(value);
     await setNotificationPreference('tasks', value);
   };
 
-  const toggleAnnouncementsNotifications = async (value) => {
+  const toggleAnnouncementsNotifications = async value => {
     setAnnouncementsNotifications(value);
     await setNotificationPreference('announcements', value);
   };
 
-  const toggleFreedomWallNotifications = async (value) => {
+  const toggleFreedomWallNotifications = async value => {
     setFreedomWallNotifications(value);
     await setNotificationPreference('freedom_wall', value);
   };
@@ -86,21 +112,21 @@ export default function AccountSettingsScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       setShowLogoutModal(true);
-      
+
       // Give user visual feedback that logout is happening
       await new Promise(resolve => setTimeout(resolve, 600));
-      
+
       // Stop all Firestore listeners before logging out
       stopAllListeners();
-      
+
       // Sign out from Firebase (this clears the auth session automatically)
       await signOut(auth);
-      
+
       // Additional delay to ensure logout is processed
       await new Promise(resolve => setTimeout(resolve, 400));
-      
+
       setShowLogoutModal(false);
-      
+
       // Navigate to login and reset navigation stack
       navigation.reset({
         index: 0,
@@ -128,36 +154,36 @@ export default function AccountSettingsScreen({ navigation }) {
       Alert.alert('Weak Password', 'New password must be at least 8 characters long.');
       return;
     }
-    
+
     // Check password strength
     const hasUpperCase = /[A-Z]/.test(newPassword);
     const hasLowerCase = /[a-z]/.test(newPassword);
     const hasNumber = /[0-9]/.test(newPassword);
-    
+
     if (!hasUpperCase || !hasLowerCase || !hasNumber) {
       Alert.alert(
         'Weak Password',
         'Password must contain at least one uppercase letter, one lowercase letter, and one number for better security.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Continue Anyway', onPress: () => proceedWithPasswordChange() }
+          { text: 'Continue Anyway', onPress: () => proceedWithPasswordChange() },
         ]
       );
       return;
     }
-    
+
     await proceedWithPasswordChange();
   };
-  
+
   const proceedWithPasswordChange = async () => {
     setLoading(true);
     try {
       const user = auth.currentUser;
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      
+
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
-      
+
       Alert.alert('Success', 'Password updated successfully!');
       setShowPasswordModal(false);
       setCurrentPassword('');
@@ -184,22 +210,19 @@ export default function AccountSettingsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backgroundGradient}
       />
-      
+
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
-      
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Info Card */}
         {userData && (
@@ -220,13 +243,13 @@ export default function AccountSettingsScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.group}>
-            <SettingsRow 
+            <SettingsRow
               icon="edit-3"
               title="Edit Name"
               subtitle="Update your display name"
               onPress={() => navigation.navigate('EditProfile')}
             />
-            <SettingsRow 
+            <SettingsRow
               icon="lock"
               title="Change Password"
               subtitle="Update your password"
@@ -256,7 +279,7 @@ export default function AccountSettingsScreen({ navigation }) {
                 thumbColor="#ffffff"
               />
             </View>
-            
+
             <View style={[styles.settingRow, styles.borderTop]}>
               <View style={styles.settingLeft}>
                 <View style={styles.iconCircle}>
@@ -274,7 +297,7 @@ export default function AccountSettingsScreen({ navigation }) {
                 thumbColor="#ffffff"
               />
             </View>
-            
+
             <View style={[styles.settingRow, styles.borderTop]}>
               <View style={styles.settingLeft}>
                 <View style={styles.iconCircle}>
@@ -294,12 +317,12 @@ export default function AccountSettingsScreen({ navigation }) {
             </View>
           </View>
         </View>
-        
+
         {/* Actions Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
           <View style={styles.group}>
-            <SettingsRow 
+            <SettingsRow
               icon="log-out"
               title="Log Out"
               subtitle="Sign out of your account"
@@ -310,7 +333,7 @@ export default function AccountSettingsScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
-      
+
       <Modal
         visible={showPasswordModal}
         transparent={true}
@@ -320,7 +343,7 @@ export default function AccountSettingsScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Change Password</Text>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Current Password</Text>
               <TextInput
@@ -332,7 +355,7 @@ export default function AccountSettingsScreen({ navigation }) {
                 secureTextEntry
               />
             </View>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>New Password</Text>
               <TextInput
@@ -344,7 +367,7 @@ export default function AccountSettingsScreen({ navigation }) {
                 secureTextEntry
               />
             </View>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Confirm New Password</Text>
               <TextInput
@@ -356,35 +379,29 @@ export default function AccountSettingsScreen({ navigation }) {
                 secureTextEntry
               />
             </View>
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShowPasswordModal(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[styles.saveButton, loading && styles.saveButtonDisabled]}
                 onPress={handleChangePassword}
                 disabled={loading}
               >
-                <Text style={styles.saveButtonText}>
-                  {loading ? 'Saving...' : 'Save'}
-                </Text>
+                <Text style={styles.saveButtonText}>{loading ? 'Saving...' : 'Save'}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-      
+
       {/* Logout Loading Modal */}
-      <Modal
-        visible={showLogoutModal}
-        transparent={true}
-        animationType="fade"
-      >
+      <Modal visible={showLogoutModal} transparent={true} animationType="fade">
         <View style={styles.logoutModalOverlay}>
           <View style={styles.logoutModalCard}>
             <View style={styles.logoutSpinner}>

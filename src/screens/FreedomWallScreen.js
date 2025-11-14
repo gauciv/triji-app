@@ -1,10 +1,39 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, ImageBackground, TouchableOpacity, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, ScrollView, Platform, RefreshControl } from 'react-native';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  RefreshControl,
+} from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db } from '../config/firebaseConfig';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, runTransaction, deleteDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  doc,
+  runTransaction,
+  deleteDoc,
+} from 'firebase/firestore';
 import { auth } from '../config/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import PostCard from '../components/PostCard';
@@ -40,13 +69,13 @@ export default function FreedomWallScreen({ navigation }) {
   const combinedPosts = useMemo(() => {
     return [...posts, ...pendingPosts];
   }, [posts, pendingPosts]);
-  
+
   // Pagination
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedPosts = combinedPosts.slice(startIndex, endIndex);
   const totalPages = Math.ceil(combinedPosts.length / ITEMS_PER_PAGE);
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
     setCurrentPage(1);
@@ -65,7 +94,7 @@ export default function FreedomWallScreen({ navigation }) {
     '#FFE6CC', // Peach
   ];
 
-  const getTextColor = (backgroundColor) => {
+  const getTextColor = backgroundColor => {
     const hex = backgroundColor.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -90,72 +119,63 @@ export default function FreedomWallScreen({ navigation }) {
 
     setLoading(true);
     setError(null);
-    
+
     try {
       let q;
-      
+
       switch (sortBy) {
         case 'Newest to Oldest':
-          q = query(
-            collection(db, 'freedom-wall-posts'),
-            orderBy('createdAt', 'desc')
-          );
+          q = query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'desc'));
           break;
         case 'Oldest to Newest':
-          q = query(
-            collection(db, 'freedom-wall-posts'),
-            orderBy('createdAt', 'asc')
-          );
+          q = query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'asc'));
           break;
         case 'Most Hearts':
-          q = query(
-            collection(db, 'freedom-wall-posts'),
-            orderBy('likeCount', 'desc')
-          );
+          q = query(collection(db, 'freedom-wall-posts'), orderBy('likeCount', 'desc'));
           break;
         case 'Fewest Hearts':
-          q = query(
-            collection(db, 'freedom-wall-posts'),
-            orderBy('likeCount', 'asc')
-          );
+          q = query(collection(db, 'freedom-wall-posts'), orderBy('likeCount', 'asc'));
           break;
         default:
-          q = query(
-            collection(db, 'freedom-wall-posts'),
-            orderBy('createdAt', 'asc')
-          );
+          q = query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'asc'));
       }
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const postsList = [];
-        const now = new Date();
-        querySnapshot.forEach((docSnapshot) => {
-          const data = docSnapshot.data();
-          // Filter out expired notes and delete them from Firebase
-          const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-          if (expiresAt > now) {
-            postsList.push({
-              id: docSnapshot.id,
-              ...data,
-              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
-              reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
-            });
-          } else {
-            // Delete expired post from Firebase
-            deleteDoc(doc(db, 'freedom-wall-posts', docSnapshot.id)).catch((error) => {
-              logError(error, 'Delete Expired Post');
-            });
-          }
-        });
-        setPosts(postsList);
-        setLoading(false);
-        setIsInitialLoading(false);
-      }, (error) => {
-        logError(error, 'Fetch Posts');
-        setError('Could not load the Freedom Wall');
-        setLoading(false);
-        setIsInitialLoading(false);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const postsList = [];
+          const now = new Date();
+          querySnapshot.forEach(docSnapshot => {
+            const data = docSnapshot.data();
+            // Filter out expired notes and delete them from Firebase
+            const expiresAt = data.expiresAt?.toDate
+              ? data.expiresAt.toDate()
+              : new Date(data.expiresAt);
+            if (expiresAt > now) {
+              postsList.push({
+                id: docSnapshot.id,
+                ...data,
+                likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+                reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
+              });
+            } else {
+              // Delete expired post from Firebase
+              deleteDoc(doc(db, 'freedom-wall-posts', docSnapshot.id)).catch(error => {
+                logError(error, 'Delete Expired Post');
+              });
+            }
+          });
+          setPosts(postsList);
+          setLoading(false);
+          setIsInitialLoading(false);
+        },
+        error => {
+          logError(error, 'Fetch Posts');
+          setError('Could not load the Freedom Wall');
+          setLoading(false);
+          setIsInitialLoading(false);
+        }
+      );
 
       return unsubscribe;
     } catch (error) {
@@ -168,9 +188,9 @@ export default function FreedomWallScreen({ navigation }) {
 
   useEffect(() => {
     let unsubscribePosts;
-    
+
     // Wait for auth state before fetching
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
         setIsAuthenticated(true);
         unsubscribePosts = fetchPosts();
@@ -180,7 +200,7 @@ export default function FreedomWallScreen({ navigation }) {
         setError('Please log in to view posts');
       }
     });
-    
+
     return () => {
       unsubscribeAuth();
       if (unsubscribePosts) unsubscribePosts();
@@ -202,12 +222,12 @@ export default function FreedomWallScreen({ navigation }) {
 
   const syncPendingPosts = async () => {
     if (pendingPosts.length === 0) return;
-    
+
     for (const pendingPost of pendingPosts) {
       try {
         const { id, status, ...postData } = pendingPost;
         await addDoc(collection(db, 'freedom-wall-posts'), postData);
-        
+
         // Remove from pending posts after successful sync
         setPendingPosts(prev => prev.filter(p => p.id !== pendingPost.id));
       } catch (error) {
@@ -246,7 +266,7 @@ export default function FreedomWallScreen({ navigation }) {
       if (lastPostTime) {
         const timeDiff = Date.now() - parseInt(lastPostTime);
         const cooldownTime = 90000; // 90 seconds
-        
+
         if (timeDiff < cooldownTime) {
           const remainingTime = Math.ceil((cooldownTime - timeDiff) / 1000);
           setIsOnCooldown(true);
@@ -264,41 +284,66 @@ export default function FreedomWallScreen({ navigation }) {
     }
   };
 
-  const formatCooldownTime = (seconds) => {
+  const formatCooldownTime = seconds => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const generatePersona = () => {
-    const adjectives = ['Brave', 'Wise', 'Swift', 'Bold', 'Calm', 'Bright', 'Cool', 'Wild', 'Free', 'Kind'];
+    const adjectives = [
+      'Brave',
+      'Wise',
+      'Swift',
+      'Bold',
+      'Calm',
+      'Bright',
+      'Cool',
+      'Wild',
+      'Free',
+      'Kind',
+    ];
     const animals = ['Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Owl', 'Hawk', 'Deer', 'Cat'];
-    const colors = ['#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#118AB2', '#073B4C', '#AF52DE', '#FF3B30', '#34C759', '#007AFF'];
-    
+    const colors = [
+      '#FF6B35',
+      '#F7931E',
+      '#FFD23F',
+      '#06FFA5',
+      '#118AB2',
+      '#073B4C',
+      '#AF52DE',
+      '#FF3B30',
+      '#34C759',
+      '#007AFF',
+    ];
+
     const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
     const animal = animals[Math.floor(Math.random() * animals.length)];
     const color = colors[Math.floor(Math.random() * colors.length)];
-    
+
     return { name: `${adjective} ${animal}`, color };
   };
 
   const handlePost = async () => {
     if (isOnCooldown) {
-      Alert.alert('Cooldown Active', 'Please wait for the cooldown to finish. This was implemented to avoid spam.');
+      Alert.alert(
+        'Cooldown Active',
+        'Please wait for the cooldown to finish. This was implemented to avoid spam.'
+      );
       return;
     }
-    
+
     if (!postContent.trim()) {
       Alert.alert('Error', 'Please write something before posting.');
       return;
@@ -306,17 +351,20 @@ export default function FreedomWallScreen({ navigation }) {
 
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert('Authentication Required', 'You must be logged in to post. Please sign in first.');
+      Alert.alert(
+        'Authentication Required',
+        'You must be logged in to post. Please sign in first.'
+      );
       return;
     }
 
     setPosting(true);
-    
+
     const persona = generatePersona();
     const finalPersona = customNickname.trim() || persona.name;
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
-    
+    const expiresAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
     const postData = {
       content: postContent.trim(),
       createdAt: now,
@@ -328,55 +376,55 @@ export default function FreedomWallScreen({ navigation }) {
       likeCount: 0,
       likedBy: [],
     };
-    
+
     if (!isConnected) {
       // Add to pending posts for offline
       const pendingPost = {
         ...postData,
         id: `pending_${Date.now()}`,
-        status: 'pending'
+        status: 'pending',
       };
       setPendingPosts(prev => [...prev, pendingPost]);
-      
+
       // Save timestamp for cooldown (offline posts)
       await AsyncStorage.setItem('lastPostTime', Date.now().toString());
-      
+
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
       setShowModal(false);
       setPosting(false);
-      Alert.alert('Posted Offline', 'Your post will be published when you\'re back online.');
+      Alert.alert('Posted Offline', "Your post will be published when you're back online.");
       return;
     }
-    
+
     try {
       const docRef = await addDoc(collection(db, 'freedom-wall-posts'), postData);
-      
+
       // Save timestamp for cooldown
       await AsyncStorage.setItem('lastPostTime', Date.now().toString());
-      
+
       setPostContent('');
       setCustomNickname('');
       setSelectedColor('#FFFACD');
       setShowModal(false);
     } catch (error) {
       logError(error, 'Create Post');
-      
+
       let errorMessage = 'Could not create post. Please try again.';
       if (error.code === 'permission-denied') {
         errorMessage = 'Permission denied. Please check your account permissions.';
       } else if (error.code === 'unavailable') {
         errorMessage = 'Network error. Please check your connection.';
       }
-      
+
       Alert.alert('Error', errorMessage);
     } finally {
       setPosting(false);
     }
   };
 
-  const handleLike = async (postId) => {
+  const handleLike = async postId => {
     const user = auth.currentUser;
     if (!user) return;
 
@@ -387,27 +435,27 @@ export default function FreedomWallScreen({ navigation }) {
 
     try {
       const postRef = doc(db, 'freedom-wall-posts', postId);
-      
-      await runTransaction(db, async (transaction) => {
+
+      await runTransaction(db, async transaction => {
         const postDoc = await transaction.get(postRef);
         if (!postDoc.exists()) return;
-        
+
         const data = postDoc.data();
         const likedBy = data.likedBy || [];
         const currentLikeCount = data.likeCount || 0;
         const userHasLiked = likedBy.includes(user.uid);
-        
+
         if (userHasLiked) {
           // Unlike
           transaction.update(postRef, {
             likeCount: Math.max(0, currentLikeCount - 1),
-            likedBy: likedBy.filter(id => id !== user.uid)
+            likedBy: likedBy.filter(id => id !== user.uid),
           });
         } else {
           // Like
           transaction.update(postRef, {
             likeCount: currentLikeCount + 1,
-            likedBy: [...likedBy, user.uid]
+            likedBy: [...likedBy, user.uid],
           });
         }
       });
@@ -417,19 +465,19 @@ export default function FreedomWallScreen({ navigation }) {
   };
 
   // Responsive columns based on card/container width
-  const handleCardLayout = (event) => {
+  const handleCardLayout = event => {
     const width = event.nativeEvent.layout.width;
     setCardWidth(width);
-    
+
     // Calculate optimal number of columns based on available width
     const cardWidth = 100; // PostCard width
     const cardMargin = 4; // PostCard margin
-    const totalCardWidth = cardWidth + (cardMargin * 2);
+    const totalCardWidth = cardWidth + cardMargin * 2;
     const availableWidth = width - 16; // Account for container padding
-    
+
     // Calculate how many cards can fit
     const maxColumns = Math.floor(availableWidth / totalCardWidth);
-    
+
     // Use 3 columns if possible, otherwise use the maximum that fits
     const optimalColumns = Math.max(2, Math.min(3, maxColumns));
     setNumColumns(optimalColumns);
@@ -448,12 +496,12 @@ export default function FreedomWallScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#1B2845", "#23243a", "#22305a", "#3a5a8c", "#23243a"]}
+        colors={['#1B2845', '#23243a', '#22305a', '#3a5a8c', '#23243a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <View style={styles.header}>
         <View style={styles.iconCircle}>
           <MaterialCommunityIcons name="message-text" size={28} color="#22e584" />
@@ -466,62 +514,67 @@ export default function FreedomWallScreen({ navigation }) {
           <Feather name="filter" size={20} color="#22e584" />
         </TouchableOpacity>
       </View>
-      
+
       {!isInitialLoading && combinedPosts.length > 0 && (
         <View style={styles.paginationInfo}>
           <Text style={styles.paginationText}>
-            Showing {startIndex + 1}-{Math.min(endIndex, combinedPosts.length)} of {combinedPosts.length} {combinedPosts.length === 1 ? 'post' : 'posts'}
+            Showing {startIndex + 1}-{Math.min(endIndex, combinedPosts.length)} of{' '}
+            {combinedPosts.length} {combinedPosts.length === 1 ? 'post' : 'posts'}
           </Text>
         </View>
       )}
-        
+
       <View style={styles.cardContent}>
-          {/* Posts list or empty state */}
-          {isInitialLoading ? (
-            <View style={styles.loadingContainer}>
-              <Feather name="message-circle" size={64} color="#8E8E93" />
-              <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
-            </View>
-          ) : combinedPosts.length === 0 ? (
-            <View style={styles.emptyContainerModern}>
-              <Feather name="message-circle" size={64} color="#8E8E93" />
-              <Text style={styles.emptyTitleModern}>
-                There are no sticky notes for today yet.{'\n'}Be the first!
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={paginatedPosts}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item, index }) => (
-                <PostCard 
-                  post={item} 
-                  timestamp={formatTimestamp(item.createdAt)}
-                  rotation={getRandomRotation(index)}
-                  onLike={() => handleLike(item.id)}
-                  isLiked={Array.isArray(item.likedBy) && auth.currentUser?.uid && item.likedBy.includes(auth.currentUser.uid)}
-                  onPress={() => navigation.navigate('PostDetail', { post: item })}
-                />
-              )}
-              numColumns={numColumns}
-              contentContainerStyle={styles.postsGridContainer}
-              showsVerticalScrollIndicator={false}
-              key={numColumns}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor="#FFFFFF"
-                  colors={['#22e584', '#FFFFFF']}
-                  progressBackgroundColor="rgba(34, 229, 132, 0.3)"
-                  titleColor="#FFFFFF"
-                  title="Refreshing..."
-                />
-              }
-            />
-          )}
+        {/* Posts list or empty state */}
+        {isInitialLoading ? (
+          <View style={styles.loadingContainer}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.loadingText}>Loading Freedom Wall...</Text>
+          </View>
+        ) : combinedPosts.length === 0 ? (
+          <View style={styles.emptyContainerModern}>
+            <Feather name="message-circle" size={64} color="#8E8E93" />
+            <Text style={styles.emptyTitleModern}>
+              There are no sticky notes for today yet.{'\n'}Be the first!
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={paginatedPosts}
+            keyExtractor={item => item.id}
+            renderItem={({ item, index }) => (
+              <PostCard
+                post={item}
+                timestamp={formatTimestamp(item.createdAt)}
+                rotation={getRandomRotation(index)}
+                onLike={() => handleLike(item.id)}
+                isLiked={
+                  Array.isArray(item.likedBy) &&
+                  auth.currentUser?.uid &&
+                  item.likedBy.includes(auth.currentUser.uid)
+                }
+                onPress={() => navigation.navigate('PostDetail', { post: item })}
+              />
+            )}
+            numColumns={numColumns}
+            contentContainerStyle={styles.postsGridContainer}
+            showsVerticalScrollIndicator={false}
+            key={numColumns}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#FFFFFF"
+                colors={['#22e584', '#FFFFFF']}
+                progressBackgroundColor="rgba(34, 229, 132, 0.3)"
+                titleColor="#FFFFFF"
+                title="Refreshing..."
+              />
+            }
+          />
+        )}
       </View>
-      
+
       {/* Pagination Controls */}
       {totalPages > 1 && !isInitialLoading && (
         <View style={styles.paginationControls}>
@@ -531,22 +584,39 @@ export default function FreedomWallScreen({ navigation }) {
             disabled={currentPage === 1}
           >
             <Feather name="chevron-left" size={20} color={currentPage === 1 ? '#555' : '#22e584'} />
-            <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Previous</Text>
+            <Text
+              style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}
+            >
+              Previous
+            </Text>
           </TouchableOpacity>
-          
-          <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
-          
+
+          <Text style={styles.pageIndicator}>
+            {currentPage} / {totalPages}
+          </Text>
+
           <TouchableOpacity
             style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
             onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
-            <Text style={[styles.pageButtonText, currentPage === totalPages && styles.pageButtonTextDisabled]}>Next</Text>
-            <Feather name="chevron-right" size={20} color={currentPage === totalPages ? '#555' : '#22e584'} />
+            <Text
+              style={[
+                styles.pageButtonText,
+                currentPage === totalPages && styles.pageButtonTextDisabled,
+              ]}
+            >
+              Next
+            </Text>
+            <Feather
+              name="chevron-right"
+              size={20}
+              color={currentPage === totalPages ? '#555' : '#22e584'}
+            />
           </TouchableOpacity>
         </View>
       )}
-      
+
       {/* Show FAB only when modal is not open */}
       {!showModal && (
         <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
@@ -555,12 +625,12 @@ export default function FreedomWallScreen({ navigation }) {
       )}
       {/* Modal for creating a new post, glassmorphic style */}
       <Modal visible={showModal} animationType="slide" transparent>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
           <BlurView intensity={110} tint="dark" style={styles.modalCard}>
-            <ScrollView 
+            <ScrollView
               contentContainerStyle={styles.modalScrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
@@ -573,118 +643,125 @@ export default function FreedomWallScreen({ navigation }) {
               </View>
               {/* Preview Area */}
               <View style={styles.previewArea}>
-              <Text style={styles.previewLabel}>Preview</Text>
-              <View style={styles.previewContainer}>
-                <PostCard 
-                  post={{
-                    content: postContent || "What's on your mind?",
-                    persona: customNickname || 'Anonymous',
-                    personaColor: '#34C759',
-                    noteColor: selectedColor,
-                    likeCount: 0,
-                    likedBy: []
-                  }}
-                  timestamp="Just now"
-                  rotation="2deg"
-                  onLike={() => {}}
-                  isLiked={false}
-                  textColor={getTextColor(selectedColor)}
-                />
-              </View>
-            </View>
-            {/* Form Area */}
-            <View style={styles.formArea}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nickname (optional)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={customNickname}
-                  onChangeText={setCustomNickname}
-                  placeholder="Enter your nickname"
-                  placeholderTextColor="#8E8E93"
-                  maxLength={15}
-                />
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Message</Text>
-                <TextInput
-                  style={styles.messageInput}
-                  value={postContent}
-                  onChangeText={setPostContent}
-                  placeholder="What's on your mind?"
-                  placeholderTextColor="#8E8E93"
-                  multiline
-                  textAlignVertical="top"
-                  maxLength={100}
-                />
-                <Text style={styles.characterCounter}>{postContent.length}/100</Text>
-              </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Color</Text>
-                <View style={styles.colorPalette}>
-                  {colorPalette.map((color) => (
-                    <TouchableOpacity
-                      key={color}
-                      style={[
-                        styles.colorCircle,
-                        { backgroundColor: color },
-                        selectedColor === color && styles.selectedColorCircle
-                      ]}
-                      onPress={() => setSelectedColor(color)}
-                    />
-                  ))}
+                <Text style={styles.previewLabel}>Preview</Text>
+                <View style={styles.previewContainer}>
+                  <PostCard
+                    post={{
+                      content: postContent || "What's on your mind?",
+                      persona: customNickname || 'Anonymous',
+                      personaColor: '#34C759',
+                      noteColor: selectedColor,
+                      likeCount: 0,
+                      likedBy: [],
+                    }}
+                    timestamp="Just now"
+                    rotation="2deg"
+                    onLike={() => {}}
+                    isLiked={false}
+                    textColor={getTextColor(selectedColor)}
+                  />
                 </View>
               </View>
-              <TouchableOpacity 
-                style={[
-                  styles.postButton, 
-                  (posting || isOnCooldown || !postContent.trim()) && styles.postButtonDisabled
-                ]}
-                onPress={handlePost}
-                disabled={posting || isOnCooldown || !postContent.trim()}
-              >
-                <Text style={[
-                  styles.postButtonText,
-                  isOnCooldown && styles.cooldownText
-                ]}>
-                  {posting ? 'Posting...' : isOnCooldown ? formatCooldownTime(cooldownSeconds) : 'Post It'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+              {/* Form Area */}
+              <View style={styles.formArea}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Nickname (optional)</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={customNickname}
+                    onChangeText={setCustomNickname}
+                    placeholder="Enter your nickname"
+                    placeholderTextColor="#8E8E93"
+                    maxLength={15}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Message</Text>
+                  <TextInput
+                    style={styles.messageInput}
+                    value={postContent}
+                    onChangeText={setPostContent}
+                    placeholder="What's on your mind?"
+                    placeholderTextColor="#8E8E93"
+                    multiline
+                    textAlignVertical="top"
+                    maxLength={100}
+                  />
+                  <Text style={styles.characterCounter}>{postContent.length}/100</Text>
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Color</Text>
+                  <View style={styles.colorPalette}>
+                    {colorPalette.map(color => (
+                      <TouchableOpacity
+                        key={color}
+                        style={[
+                          styles.colorCircle,
+                          { backgroundColor: color },
+                          selectedColor === color && styles.selectedColorCircle,
+                        ]}
+                        onPress={() => setSelectedColor(color)}
+                      />
+                    ))}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.postButton,
+                    (posting || isOnCooldown || !postContent.trim()) && styles.postButtonDisabled,
+                  ]}
+                  onPress={handlePost}
+                  disabled={posting || isOnCooldown || !postContent.trim()}
+                >
+                  <Text style={[styles.postButtonText, isOnCooldown && styles.cooldownText]}>
+                    {posting
+                      ? 'Posting...'
+                      : isOnCooldown
+                        ? formatCooldownTime(cooldownSeconds)
+                        : 'Post It'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           </BlurView>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Sort Modal */}
-      <Modal visible={showSortModal} animationType="fade" transparent onRequestClose={() => setShowSortModal(false)}>
-        <TouchableOpacity 
+      <Modal
+        visible={showSortModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity
           style={styles.sortModalOverlay}
           activeOpacity={1}
           onPress={() => setShowSortModal(false)}
         >
           <View style={styles.sortDropdown}>
-            {['Oldest to Newest', 'Newest to Oldest', 'Most Hearts', 'Fewest Hearts'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.sortOption,
-                  sortBy === option && styles.sortOptionSelected
-                ]}
-                onPress={() => {
-                  setSortBy(option);
-                  setShowSortModal(false);
-                }}
-              >
-                <Text style={[
-                  styles.sortOptionText,
-                  sortBy === option && styles.sortOptionTextSelected
-                ]}>
-                  {option}
-                </Text>
-                {sortBy === option && <Feather name="check" size={16} color="#34C759" />}
-              </TouchableOpacity>
-            ))}
+            {['Oldest to Newest', 'Newest to Oldest', 'Most Hearts', 'Fewest Hearts'].map(
+              option => (
+                <TouchableOpacity
+                  key={option}
+                  style={[styles.sortOption, sortBy === option && styles.sortOptionSelected]}
+                  onPress={() => {
+                    setSortBy(option);
+                    setShowSortModal(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.sortOptionText,
+                      sortBy === option && styles.sortOptionTextSelected,
+                    ]}
+                  >
+                    {option}
+                  </Text>
+                  {sortBy === option && <Feather name="check" size={16} color="#34C759" />}
+                </TouchableOpacity>
+              )
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -692,7 +769,7 @@ export default function FreedomWallScreen({ navigation }) {
   );
 }
 
-const getRandomRotation = (index) => {
+const getRandomRotation = index => {
   const rotations = ['-2deg', '-1deg', '0deg', '1deg', '2deg', '-1.5deg', '1.5deg'];
   return rotations[index % rotations.length];
 };
@@ -1040,7 +1117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     shadowColor: '#22e584',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 32,
     elevation: 12,
     maxWidth: 420,
