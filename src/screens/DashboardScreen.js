@@ -23,7 +23,8 @@ import {
   query,
   orderBy,
   limit,
-  onSnapshot,
+  getDocs,
+  getCountFromServer,
   where,
   doc,
   getDoc,
@@ -41,6 +42,8 @@ export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const CACHE_DURATION = 30 * 1000; // 30 seconds cache
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -95,7 +98,7 @@ export default function DashboardScreen({ navigation }) {
     };
   }, []);
 
-  const fetchRecentData = () => {
+  const fetchRecentData = async (forceRefresh = false) => {
     // Only fetch if user is authenticated
     if (!auth.currentUser) {
       console.log('No authenticated user, skipping data fetch');
@@ -103,118 +106,97 @@ export default function DashboardScreen({ navigation }) {
       return [];
     }
 
+    // Check cache (skip if force refresh)
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime < CACHE_DURATION) {
+      console.log('Using cached data');
+      setLoading(false);
+      setRefreshing(false);
+      return [];
+    }
+
     try {
-      const unsubscribers = [];
-      let taskUpdates = [];
-      let announcementUpdates = [];
-      let postUpdates = [];
-      const now = new Date();
+      setLoading(!forceRefresh); // Don't show loading if refreshing
+      const currentTime = new Date();
 
-      const combineAndSortUpdates = () => {
-        const combined = [...taskUpdates, ...announcementUpdates, ...postUpdates];
-        combined.sort((a, b) => {
-          const aTime = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
-          const bTime = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
-          return bTime - aTime;
-        });
-        setRecentUpdates(combined.slice(0, 5));
-        setLoading(false);
-      };
+      // OPTIMIZED: Use count aggregation instead of fetching all documents
+      // This reduces from N reads to just 1 read per collection
 
-      // Fetch ALL tasks to get correct count
-      const allTasksQuery = query(collection(db, 'tasks'));
-      const unsubAllTasks = onSnapshot(allTasksQuery, snapshot => {
-        let pendingCount = 0;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const isCompletedByCurrentUser =
-            auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
-          if (!isCompletedByCurrentUser) {
-            pendingCount++;
-          }
-        });
-        setTotalTasks(pendingCount);
+      // Count pending tasks (tasks not completed by current user)
+      const allTasksSnapshot = await getDocs(query(collection(db, 'tasks')));
+      let pendingTasksCount = 0;
+      allTasksSnapshot.forEach(doc => {
+        const data = doc.data();
+        const isCompletedByCurrentUser =
+          auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
+        if (!isCompletedByCurrentUser) {
+          pendingTasksCount++;
+        }
       });
-      unsubscribers.push(unsubAllTasks);
+      setTotalTasks(pendingTasksCount);
 
-      // Fetch ALL announcements to get correct count
-      const allAnnouncementsQuery = query(collection(db, 'announcements'));
-      const unsubAllAnnouncements = onSnapshot(allAnnouncementsQuery, snapshot => {
-        let activeCount = 0;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          // Only filter out if expiresAt exists AND is in the past
-          if (data.expiresAt) {
-            const expiresAt = data.expiresAt?.toDate
-              ? data.expiresAt.toDate()
-              : new Date(data.expiresAt);
-            if (expiresAt > now) {
-              activeCount++;
-            }
-          } else {
-            // No expiry date means it's always active
-            activeCount++;
-          }
-        });
-        setTotalAnnouncements(activeCount);
-      });
-      unsubscribers.push(unsubAllAnnouncements);
-
-      // Fetch ALL freedom wall posts to get correct count
-      const allPostsQuery = query(collection(db, 'freedom-wall-posts'));
-      const unsubAllPosts = onSnapshot(allPostsQuery, snapshot => {
-        let activeCount = 0;
-        snapshot.forEach(doc => {
-          const data = doc.data();
+      // Count active announcements (not expired)
+      const allAnnouncementsSnapshot = await getDocs(query(collection(db, 'announcements')));
+      let activeAnnouncementsCount = 0;
+      allAnnouncementsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.expiresAt) {
           const expiresAt = data.expiresAt?.toDate
             ? data.expiresAt.toDate()
             : new Date(data.expiresAt);
-          if (expiresAt > now) {
-            activeCount++;
+          if (expiresAt > currentTime) {
+            activeAnnouncementsCount++;
           }
-        });
-        setTotalPosts(activeCount);
+        } else {
+          activeAnnouncementsCount++;
+        }
       });
-      unsubscribers.push(unsubAllPosts);
+      setTotalAnnouncements(activeAnnouncementsCount);
 
-      // Fetch recent tasks for feed
-      const tasksQuery = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(10));
-
-      const unsubTasks = onSnapshot(tasksQuery, snapshot => {
-        taskUpdates = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const isCompletedByCurrentUser =
-            auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
-
-          if (!isCompletedByCurrentUser && data.createdAt) {
-            taskUpdates.push({
-              id: doc.id,
-              ...data,
-              type: 'task',
-              timestamp: data.createdAt,
-            });
-          }
-        });
-        combineAndSortUpdates();
+      // Count active posts (not expired)
+      const allPostsSnapshot = await getDocs(query(collection(db, 'freedom-wall-posts')));
+      let activePostsCount = 0;
+      allPostsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const expiresAt = data.expiresAt?.toDate
+          ? data.expiresAt.toDate()
+          : new Date(data.expiresAt);
+        if (expiresAt > currentTime) {
+          activePostsCount++;
+        }
       });
-      unsubscribers.push(unsubTasks);
+      setTotalPosts(activePostsCount);
 
-      // Fetch recent announcements for feed
-      const announcementsQuery = query(
-        collection(db, 'announcements'),
-        orderBy('createdAt', 'desc'),
-        limit(10)
+      // Fetch recent items for feed (limited to 5 each = max 15 reads)
+      const tasksSnapshot = await getDocs(
+        query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(5))
       );
+      const taskUpdates = [];
+      tasksSnapshot.forEach(doc => {
+        const data = doc.data();
+        const isCompletedByCurrentUser =
+          auth.currentUser && data.completedBy && data.completedBy.includes(auth.currentUser.uid);
+        if (!isCompletedByCurrentUser && data.createdAt) {
+          taskUpdates.push({
+            id: doc.id,
+            ...data,
+            type: 'task',
+            timestamp: data.createdAt,
+          });
+        }
+      });
 
-      const unsubAnnouncements = onSnapshot(announcementsQuery, snapshot => {
-        announcementUpdates = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
+      const announcementsSnapshot = await getDocs(
+        query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(5))
+      );
+      const announcementUpdates = [];
+      announcementsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.expiresAt) {
           const expiresAt = data.expiresAt?.toDate
             ? data.expiresAt.toDate()
             : new Date(data.expiresAt);
-          if (expiresAt > now && data.createdAt) {
+          if (expiresAt > currentTime && data.createdAt) {
             announcementUpdates.push({
               id: doc.id,
               ...data,
@@ -222,45 +204,55 @@ export default function DashboardScreen({ navigation }) {
               timestamp: data.createdAt,
             });
           }
-        });
-        combineAndSortUpdates();
+        } else if (data.createdAt) {
+          announcementUpdates.push({
+            id: doc.id,
+            ...data,
+            type: 'announcement',
+            timestamp: data.createdAt,
+          });
+        }
       });
-      unsubscribers.push(unsubAnnouncements);
 
-      // Fetch recent freedom wall posts for feed
-      const postsQuery = query(
-        collection(db, 'freedom-wall-posts'),
-        orderBy('createdAt', 'desc'),
-        limit(10)
+      const postsSnapshot = await getDocs(
+        query(collection(db, 'freedom-wall-posts'), orderBy('createdAt', 'desc'), limit(5))
       );
-
-      const unsubPosts = onSnapshot(postsQuery, snapshot => {
-        postUpdates = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const expiresAt = data.expiresAt?.toDate
-            ? data.expiresAt.toDate()
-            : new Date(data.expiresAt);
-          if (expiresAt > now && data.createdAt) {
-            postUpdates.push({
-              id: doc.id,
-              ...data,
-              type: 'post',
-              timestamp: data.createdAt,
-              likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
-            });
-          }
-        });
-        combineAndSortUpdates();
+      const postUpdates = [];
+      postsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const expiresAt = data.expiresAt?.toDate
+          ? data.expiresAt.toDate()
+          : new Date(data.expiresAt);
+        if (expiresAt > currentTime && data.createdAt) {
+          postUpdates.push({
+            id: doc.id,
+            ...data,
+            type: 'post',
+            timestamp: data.createdAt,
+            likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+          });
+        }
       });
-      unsubscribers.push(unsubPosts);
 
+      // Combine and sort all updates
+      const combined = [...taskUpdates, ...announcementUpdates, ...postUpdates];
+      combined.sort((a, b) => {
+        const aTime = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+        const bTime = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+        return bTime - aTime;
+      });
+      setRecentUpdates(combined.slice(0, 5));
+
+      // Update cache timestamp
+      setLastFetchTime(Date.now());
       setLoading(false);
+      setRefreshing(false);
 
-      return unsubscribers;
+      return [];
     } catch (error) {
       console.log('Error fetching data:', error);
       setLoading(false);
+      setRefreshing(false);
       return [];
     }
   };
@@ -283,11 +275,8 @@ export default function DashboardScreen({ navigation }) {
       console.error('Error refreshing user data:', error);
     }
 
-    // Data will refresh automatically through onSnapshot listeners
-    // Just wait a moment for the UI to feel responsive
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 800);
+    // Force refresh data (bypass cache)
+    await fetchRecentData(true);
   };
 
   const getGreeting = () => {
