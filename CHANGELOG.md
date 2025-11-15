@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.5.0](https://github.com/gauciv/triji-app/compare/v1.4.1...v1.5.0) (2025-11-15)
+
+
+### ✨ Features
+
+* reduce amount of listeners on dashboard screen and apply aggressive caching ([d4ac7b8](https://github.com/gauciv/triji-app/commit/d4ac7b866b95e191983e6a9d7b072d081faca563))
+
+
+### 🐛 Bug Fixes
+
+* enforce strict 24-hour lifespan for Freedom Wall posts ([ad7943a](https://github.com/gauciv/triji-app/commit/ad7943a10e2d5e99d6abe358a416e6d89bf21acf))
+
 ## [1.4.1](https://github.com/gauciv/triji-app/compare/v1.4.0...v1.4.1) (2025-11-14)
 
 
