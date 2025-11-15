@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- semantic-release-insert-here -->
 
+## [1.5.1](https://github.com/gauciv/triji-app/compare/v1.5.0...v1.5.1) (2025-11-15)
+
+
+### 🐛 Bug Fixes
+
+* improve notification reliability for Freedom Wall, Tasks, and Announcements ([8b11068](https://github.com/gauciv/triji-app/commit/8b110688c1575599159c84860648ade80a9b2650))
+* prevent random crashes with batch deletes, mounted checks, and global error handler ([71a24d7](https://github.com/gauciv/triji-app/commit/71a24d7080eb0f64da9191f22e1f277b69b660d1))
+* resolve immediate crash on app reopen with comprehensive error handling ([5d108fb](https://github.com/gauciv/triji-app/commit/5d108fb8a9d5db6bfeeacc508e66c971a976c254))
+
 ## [1.5.0](https://github.com/gauciv/triji-app/compare/v1.4.1...v1.5.0) (2025-11-15)
 
 
