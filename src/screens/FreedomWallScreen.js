@@ -145,13 +145,25 @@ export default function FreedomWallScreen({ navigation }) {
         querySnapshot => {
           const postsList = [];
           const now = new Date();
+          const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
           querySnapshot.forEach(docSnapshot => {
             const data = docSnapshot.data();
-            // Filter out expired notes and delete them from Firebase
+
+            // Get timestamps
             const expiresAt = data.expiresAt?.toDate
               ? data.expiresAt.toDate()
               : new Date(data.expiresAt);
-            if (expiresAt > now) {
+            const createdAt = data.createdAt?.toDate
+              ? data.createdAt.toDate()
+              : new Date(data.createdAt);
+
+            // STRICT: Delete if either:
+            // 1. expiresAt is in the past, OR
+            // 2. createdAt is more than 24 hours ago (backup check)
+            const isExpired = expiresAt <= now || createdAt < twentyFourHoursAgo;
+
+            if (!isExpired) {
               postsList.push({
                 id: docSnapshot.id,
                 ...data,

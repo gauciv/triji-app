@@ -98,13 +98,16 @@ export default function PostDetailScreen({ route, navigation }) {
         return;
       }
 
-      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
 
-      if (days > 0) {
-        setCountdown(`This note will disappear in ${days} days, ${hours} hours`);
+      if (hours > 0) {
+        setCountdown(`This note will disappear in ${hours}h ${minutes}m`);
+      } else if (minutes > 0) {
+        setCountdown(`This note will disappear in ${minutes} minutes`);
       } else {
-        setCountdown(`This note will disappear in ${hours} hours`);
+        const seconds = Math.floor(timeDiff / 1000);
+        setCountdown(`This note will disappear in ${seconds} seconds`);
       }
     };
 
