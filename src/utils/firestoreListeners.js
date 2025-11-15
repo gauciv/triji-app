@@ -20,44 +20,57 @@ export function startTasksListener() {
     return; // Already listening
   }
 
-  const tasksQuery = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(1));
+  // Track the timestamp when listener starts
+  const listenerStartTime = new Date();
 
-  let isFirstLoad = true;
+  const tasksQuery = query(collection(db, 'tasks'), orderBy('createdAt', 'desc'), limit(10));
 
-  tasksUnsubscribe = onSnapshot(tasksQuery, async snapshot => {
-    // Skip the first load to avoid notifying about existing tasks
-    if (isFirstLoad) {
-      isFirstLoad = false;
-      return;
-    }
-
-    // Check if user has enabled tasks notifications
-    const notificationsEnabled = await getNotificationPreference('tasks');
-    if (!notificationsEnabled) {
-      return;
-    }
-
-    snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        const task = change.doc.data();
-        const currentUser = auth.currentUser;
-
-        // Don't notify user about their own tasks
-        if (task.authorId === currentUser?.uid) {
-          return;
-        }
-
-        const subject = task.subjectCode || task.subject || 'Task';
-        const title = task.title || 'New assignment';
-        schedulePushNotification(
-          '📋 New Task Added',
-          `${subject} • ${title}`,
-          { type: 'task', taskId: change.doc.id },
-          'tasks'
-        );
+  tasksUnsubscribe = onSnapshot(
+    tasksQuery,
+    async snapshot => {
+      // Check if user has enabled tasks notifications
+      const notificationsEnabled = await getNotificationPreference('tasks');
+      if (!notificationsEnabled) {
+        return;
       }
-    });
-  });
+
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const task = change.doc.data();
+          const currentUser = auth.currentUser;
+
+          // Don't notify user about their own tasks
+          if (task.authorId === currentUser?.uid) {
+            return;
+          }
+
+          // Only notify about tasks created AFTER listener started
+          const taskCreatedAt = task.createdAt?.toDate
+            ? task.createdAt.toDate()
+            : new Date(task.createdAt);
+
+          if (taskCreatedAt <= listenerStartTime) {
+            return;
+          }
+
+          const subject = task.subjectCode || task.subject || 'Task';
+          const title = task.title || 'New assignment';
+
+          console.log('🔔 Sending Task notification:', { subject, title });
+
+          schedulePushNotification(
+            '📋 New Task Added',
+            `${subject} • ${title}`,
+            { type: 'task', taskId: change.doc.id },
+            'tasks'
+          );
+        }
+      });
+    },
+    error => {
+      console.error('Tasks listener error:', error);
+    }
+  );
 }
 
 /**
@@ -74,61 +87,76 @@ export function startAnnouncementsListener() {
     return; // Already listening
   }
 
+  // Track the timestamp when listener starts
+  const listenerStartTime = new Date();
+
   const announcementsQuery = query(
     collection(db, 'announcements'),
     orderBy('createdAt', 'desc'),
-    limit(1)
+    limit(10)
   );
 
-  let isFirstLoad = true;
-
-  announcementsUnsubscribe = onSnapshot(announcementsQuery, async snapshot => {
-    // Skip the first load
-    if (isFirstLoad) {
-      isFirstLoad = false;
-      return;
-    }
-
-    const notificationsEnabled = await getNotificationPreference('announcements');
-    if (!notificationsEnabled) {
-      return;
-    }
-
-    snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        const announcement = change.doc.data();
-        const currentUser = auth.currentUser;
-
-        if (announcement.authorId === currentUser?.uid) {
-          return;
-        }
-
-        const announcementType = announcement.announcementType || announcement.type || 'General';
-        let emoji = '📢';
-        switch (announcementType) {
-          case 'Critical':
-            emoji = '🚨';
-            break;
-          case 'Event':
-            emoji = '📅';
-            break;
-          case 'Reminder':
-            emoji = '⏰';
-            break;
-          case 'General':
-            emoji = '📢';
-            break;
-        }
-
-        schedulePushNotification(
-          `${emoji} ${announcementType} Announcement`,
-          announcement.title || 'A new announcement has been posted',
-          { type: 'announcement', announcementId: change.doc.id },
-          'announcements'
-        );
+  announcementsUnsubscribe = onSnapshot(
+    announcementsQuery,
+    async snapshot => {
+      const notificationsEnabled = await getNotificationPreference('announcements');
+      if (!notificationsEnabled) {
+        return;
       }
-    });
-  });
+
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const announcement = change.doc.data();
+          const currentUser = auth.currentUser;
+
+          if (announcement.authorId === currentUser?.uid) {
+            return;
+          }
+
+          // Only notify about announcements created AFTER listener started
+          const announcementCreatedAt = announcement.createdAt?.toDate
+            ? announcement.createdAt.toDate()
+            : new Date(announcement.createdAt);
+
+          if (announcementCreatedAt <= listenerStartTime) {
+            return;
+          }
+
+          const announcementType = announcement.announcementType || announcement.type || 'General';
+          let emoji = '📢';
+          switch (announcementType) {
+            case 'Critical':
+              emoji = '🚨';
+              break;
+            case 'Event':
+              emoji = '📅';
+              break;
+            case 'Reminder':
+              emoji = '⏰';
+              break;
+            case 'General':
+              emoji = '📢';
+              break;
+          }
+
+          console.log('🔔 Sending Announcement notification:', {
+            type: announcementType,
+            title: announcement.title,
+          });
+
+          schedulePushNotification(
+            `${emoji} ${announcementType} Announcement`,
+            announcement.title || 'A new announcement has been posted',
+            { type: 'announcement', announcementId: change.doc.id },
+            'announcements'
+          );
+        }
+      });
+    },
+    error => {
+      console.error('Announcements listener error:', error);
+    }
+  );
 }
 
 /**
@@ -145,47 +173,61 @@ export function startFreedomWallListener() {
     return; // Already listening
   }
 
+  // Track the timestamp when listener starts to only notify about NEW posts
+  const listenerStartTime = new Date();
+
   const freedomWallQuery = query(
     collection(db, 'freedom-wall-posts'),
     orderBy('createdAt', 'desc'),
-    limit(1)
+    limit(10) // Increased to catch multiple posts
   );
 
-  let isFirstLoad = true;
-
-  freedomWallUnsubscribe = onSnapshot(freedomWallQuery, async snapshot => {
-    // Skip the first load
-    if (isFirstLoad) {
-      isFirstLoad = false;
-      return;
-    }
-
-    const notificationsEnabled = await getNotificationPreference('freedom_wall');
-    if (!notificationsEnabled) {
-      return;
-    }
-
-    snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        const post = change.doc.data();
-        const currentUser = auth.currentUser;
-
-        if (post.authorId === currentUser?.uid) {
-          return;
-        }
-
-        const content = post.content || post.note || 'New post';
-        const preview = content.substring(0, 60);
-        const author = post.nickname || post.displayName || 'Anonymous';
-        schedulePushNotification(
-          '💬 Freedom Wall',
-          `${author}: ${preview}${content.length > 60 ? '...' : ''}`,
-          { type: 'freedomWall', postId: change.doc.id },
-          'freedomwall'
-        );
+  freedomWallUnsubscribe = onSnapshot(
+    freedomWallQuery,
+    async snapshot => {
+      const notificationsEnabled = await getNotificationPreference('freedom_wall');
+      if (!notificationsEnabled) {
+        return;
       }
-    });
-  });
+
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const post = change.doc.data();
+          const currentUser = auth.currentUser;
+
+          // Don't notify about own posts
+          if (post.authorId === currentUser?.uid) {
+            return;
+          }
+
+          // Only notify about posts created AFTER listener started
+          const postCreatedAt = post.createdAt?.toDate
+            ? post.createdAt.toDate()
+            : new Date(post.createdAt);
+
+          if (postCreatedAt <= listenerStartTime) {
+            return; // Post existed before listener started
+          }
+
+          const content = post.content || post.note || 'New post';
+          const preview = content.substring(0, 60);
+          const author = post.nickname || post.displayName || 'Anonymous';
+
+          console.log('🔔 Sending Freedom Wall notification:', { author, preview });
+
+          schedulePushNotification(
+            '💬 New Freedom Wall Post',
+            `${author}: ${preview}${content.length > 60 ? '...' : ''}`,
+            { type: 'freedomWall', postId: change.doc.id },
+            'freedomwall'
+          );
+        }
+      });
+    },
+    error => {
+      console.error('Freedom Wall listener error:', error);
+    }
+  );
 }
 
 /**
