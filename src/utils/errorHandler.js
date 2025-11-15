@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Comprehensive error handling utility
@@ -96,8 +97,55 @@ export function logError(error, context = 'Unknown') {
     timestamp: details.timestamp,
   });
 
+  // Store error logs locally for offline debugging
+  saveErrorLog(details).catch(e => {
+    console.error('Failed to save error log:', e);
+  });
+
   // In production, you could send this to error tracking service
   // e.g., Sentry, LogRocket, Firebase Crashlytics
+}
+
+/**
+ * Save error log to local storage
+ * @param {object} errorDetails - Error details object
+ */
+async function saveErrorLog(errorDetails) {
+  try {
+    const logs = await AsyncStorage.getItem('error_logs');
+    const errorLogs = logs ? JSON.parse(logs) : [];
+    errorLogs.push(errorDetails);
+    // Keep only last 50 errors to prevent storage bloat
+    await AsyncStorage.setItem('error_logs', JSON.stringify(errorLogs.slice(-50)));
+  } catch (e) {
+    // Silently fail if storage is full or unavailable
+    console.error('Storage error:', e);
+  }
+}
+
+/**
+ * Retrieve stored error logs
+ * @returns {Promise<Array>} Array of error log objects
+ */
+export async function getErrorLogs() {
+  try {
+    const logs = await AsyncStorage.getItem('error_logs');
+    return logs ? JSON.parse(logs) : [];
+  } catch (e) {
+    console.error('Failed to retrieve error logs:', e);
+    return [];
+  }
+}
+
+/**
+ * Clear all stored error logs
+ */
+export async function clearErrorLogs() {
+  try {
+    await AsyncStorage.removeItem('error_logs');
+  } catch (e) {
+    console.error('Failed to clear error logs:', e);
+  }
 }
 
 /**

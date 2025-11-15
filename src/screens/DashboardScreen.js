@@ -51,49 +51,58 @@ export default function DashboardScreen({ navigation }) {
   });
 
   useEffect(() => {
-    let unsubscribers = [];
+    let isMounted = true;
+    const unsubscribers = new Set();
 
     // Wait for auth state before fetching data
     const unsubscribeAuth = onAuthStateChanged(auth, async user => {
+      if (!isMounted) return;
+
       if (user) {
         setIsAuthenticated(true);
 
         // Fetch user's first name from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
+          if (isMounted && userDoc.exists()) {
             const userData = userDoc.data();
             const firstName = userData.firstName || userData.displayName?.split(' ')[0] || 'User';
             setUserName(firstName);
-          } else {
+          } else if (isMounted) {
             setUserName(user.displayName?.split(' ')[0] || 'User');
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
-          setUserName('User');
+          if (isMounted) {
+            console.error('Error fetching user data:', error);
+            setUserName('User');
+          }
         }
 
-        unsubscribers = fetchRecentData();
+        const unsubs = await fetchRecentData();
+        if (isMounted && Array.isArray(unsubs)) {
+          unsubs.forEach(unsub => unsubscribers.add(unsub));
+        }
       } else {
         // User logged out, cleanup all listeners
-        if (unsubscribers && unsubscribers.length > 0) {
-          unsubscribers.forEach(unsub => unsub && unsub());
-          unsubscribers = [];
+        unsubscribers.forEach(unsub => unsub && unsub());
+        unsubscribers.clear();
+
+        if (isMounted) {
+          setIsAuthenticated(false);
+          setRecentUpdates([]);
+          setTotalTasks(0);
+          setTotalAnnouncements(0);
+          setTotalPosts(0);
+          setLoading(false);
+          navigation.replace('Login');
         }
-        setIsAuthenticated(false);
-        setRecentUpdates([]);
-        setTotalTasks(0);
-        setTotalAnnouncements(0);
-        setTotalPosts(0);
-        setLoading(false);
-        navigation.replace('Login');
       }
     });
 
     return () => {
-      if (unsubscribers && unsubscribers.length > 0) {
-        unsubscribers.forEach(unsub => unsub && unsub());
-      }
+      isMounted = false;
+      unsubscribers.forEach(unsub => unsub && unsub());
+      unsubscribers.clear();
       unsubscribeAuth();
     };
   }, []);

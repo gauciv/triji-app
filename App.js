@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import {
   SplashScreen,
   LoginScreen,
@@ -41,6 +41,64 @@ export default function App() {
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   const [isInitiallyOffline, setIsInitiallyOffline] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Global error handler for unhandled promise rejections and errors
+  useEffect(() => {
+    const logErrorToStorage = async (error, context) => {
+      try {
+        const logs = await AsyncStorage.getItem('error_logs');
+        const errorLogs = logs ? JSON.parse(logs) : [];
+        errorLogs.push({
+          timestamp: new Date().toISOString(),
+          context,
+          message: error.message || String(error),
+          stack: error.stack || 'No stack trace',
+        });
+        // Keep only last 50 errors
+        await AsyncStorage.setItem('error_logs', JSON.stringify(errorLogs.slice(-50)));
+      } catch (e) {
+        console.error('Failed to log error to storage:', e);
+      }
+    };
+
+    // Handle unhandled promise rejections
+    const handleUnhandledRejection = event => {
+      const error = event.reason || event;
+      console.error('Unhandled promise rejection:', error);
+      logErrorToStorage(error, 'Unhandled Promise Rejection');
+
+      if (__DEV__) {
+        Alert.alert('Unhandled Error', error.message || String(error));
+      }
+    };
+
+    // Handle global errors
+    const handleGlobalError = (error, isFatal) => {
+      console.error('Global error caught:', error, 'isFatal:', isFatal);
+      logErrorToStorage(error, isFatal ? 'Fatal Error' : 'Non-Fatal Error');
+
+      if (isFatal && !__DEV__) {
+        // In production, log but don't crash the app
+        console.error('Fatal error prevented app crash');
+      }
+    };
+
+    // Set up error listeners
+    if (typeof ErrorUtils !== 'undefined') {
+      ErrorUtils.setGlobalHandler(handleGlobalError);
+    }
+
+    // Add event listener for promise rejections (web/modern RN)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      }
+    };
+  }, []);
 
   // Listen to auth state changes and manage Firestore listeners
   useEffect(() => {

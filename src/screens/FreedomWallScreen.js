@@ -144,6 +144,7 @@ export default function FreedomWallScreen({ navigation }) {
         q,
         querySnapshot => {
           const postsList = [];
+          const postsToDelete = [];
           const now = new Date();
           const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -171,15 +172,23 @@ export default function FreedomWallScreen({ navigation }) {
                 reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
               });
             } else {
-              // Delete expired post from Firebase
-              deleteDoc(doc(db, 'freedom-wall-posts', docSnapshot.id)).catch(error => {
-                logError(error, 'Delete Expired Post');
-              });
+              // Collect expired posts for batch deletion
+              postsToDelete.push(docSnapshot.id);
             }
           });
+
           setPosts(postsList);
           setLoading(false);
           setIsInitialLoading(false);
+
+          // Batch delete expired posts after snapshot processing
+          if (postsToDelete.length > 0) {
+            Promise.all(
+              postsToDelete.map(id => deleteDoc(doc(db, 'freedom-wall-posts', id)))
+            ).catch(error => {
+              logError(error, 'Batch Delete Expired Posts');
+            });
+          }
         },
         error => {
           logError(error, 'Fetch Posts');
